@@ -173,14 +173,29 @@ export const api = {
   },
 
   reports: {
-    revenueBook: (startDate: string, endDate: string) =>
-      callFunction('reports/revenue-book', { start_date: startDate, end_date: endDate }),
-    cashBook: (startDate: string, endDate: string) =>
-      callFunction('reports/cash-book', { start_date: startDate, end_date: endDate }),
-    bankBook: (startDate: string, endDate: string, bankAccountId?: string) =>
-      callFunction('reports/bank-book', { start_date: startDate, end_date: endDate, bank_account_id: bankAccountId }),
-    taxBook: (quarter: number, year: number) =>
-      callFunction('reports/tax-book', { quarter, year }),
+    // Dashboard
+    dashboardSummary: () =>
+      callFunction<DashboardSummary>('reports', { action: 'dashboard_summary' }),
+    salesAnalytics: (dateFrom: string, dateTo: string) =>
+      callFunction<SalesAnalytics>('reports', { action: 'sales_analytics', date_from: dateFrom, date_to: dateTo }),
+    financialAnalytics: (dateFrom: string, dateTo: string) =>
+      callFunction<FinancialAnalytics>('reports', { action: 'financial_analytics', date_from: dateFrom, date_to: dateTo }),
+
+    // 7 Accounting Books
+    revenueBook: (dateFrom: string, dateTo: string) =>
+      callFunction<RevenueBookReport>('reports', { action: 'revenue_book', date_from: dateFrom, date_to: dateTo }),
+    cashBook: (dateFrom: string, dateTo: string) =>
+      callFunction<CashBookReport>('reports', { action: 'cash_book', date_from: dateFrom, date_to: dateTo }),
+    bankBook: (dateFrom: string, dateTo: string, bankAccountId?: string) =>
+      callFunction<BankBookReport>('reports', { action: 'bank_book', date_from: dateFrom, date_to: dateTo, bank_account_id: bankAccountId }),
+    expenseBook: (dateFrom: string, dateTo: string) =>
+      callFunction<ExpenseBookReport>('reports', { action: 'expense_book', date_from: dateFrom, date_to: dateTo }),
+    inventoryBook: (dateFrom: string, dateTo: string) =>
+      callFunction<InventoryBookReport>('reports', { action: 'inventory_book', date_from: dateFrom, date_to: dateTo }),
+    taxBookReport: (year: number) =>
+      callFunction<TaxBookReport>('reports', { action: 'tax_book', year }),
+    salaryBookReport: (month: number, year: number) =>
+      callFunction<SalaryBookReport>('reports', { action: 'salary_book', month, year }),
   },
 
   tax: {
@@ -196,6 +211,46 @@ export const api = {
       callFunction<{ revenue_book: RevenueBook }>('tax', { action: 'revenue_book', date_from: dateFrom, date_to: dateTo }),
     getTaxBook: (year: number) =>
       callFunction<{ tax_book: TaxBook }>('tax', { action: 'tax_book', year }),
+  },
+
+  hr: {
+    // Employees
+    listEmployees: (params?: { active_only?: boolean; position?: string }) =>
+      callFunction<{ employees: Employee[] }>('hr', { action: 'list_employees', ...params }),
+    getEmployee: (id: string) =>
+      callFunction<{ employee: Employee }>('hr', { action: 'get_employee', id }),
+    createEmployee: (data: CreateEmployeeData) =>
+      callFunction<{ employee: Employee }>('hr', { action: 'create_employee', ...data }),
+    updateEmployee: (id: string, data: Partial<CreateEmployeeData>) =>
+      callFunction<{ employee: Employee }>('hr', { action: 'update_employee', id, ...data }),
+    deactivateEmployee: (id: string, data?: { termination_date?: string; termination_reason?: string }) =>
+      callFunction<{ employee: Employee }>('hr', { action: 'deactivate_employee', id, ...data }),
+    listPositions: () =>
+      callFunction<{ positions: string[] }>('hr', { action: 'list_positions' }),
+
+    // Attendance
+    checkIn: (employeeId: string, notes?: string) =>
+      callFunction<{ attendance: Attendance }>('hr', { action: 'check_in', employee_id: employeeId, notes }),
+    checkOut: (employeeId: string, notes?: string) =>
+      callFunction<{ attendance: Attendance }>('hr', { action: 'check_out', employee_id: employeeId, notes }),
+    getAttendance: (params?: { employee_id?: string; date_from?: string; date_to?: string }) =>
+      callFunction<{ attendance: AttendanceWithEmployee[] }>('hr', { action: 'get_attendance', ...params }),
+    attendanceSummary: (employeeId: string, month: number, year: number) =>
+      callFunction<{ summary: AttendanceSummary; attendance: Attendance[] }>('hr', { action: 'attendance_summary', employee_id: employeeId, month, year }),
+
+    // Payroll
+    calculateSalary: (employeeId: string, month: number, year: number) =>
+      callFunction<{ payroll: Payroll; employee: Employee }>('hr', { action: 'calculate_salary', employee_id: employeeId, month, year }),
+    calculateAllSalaries: (month: number, year: number) =>
+      callFunction<{ calculated: number; results: Array<{ employee_id: string; net_salary: number }> }>('hr', { action: 'calculate_all_salaries', month, year }),
+    approvePayroll: (payrollIds: string[]) =>
+      callFunction<{ approved: number; payrolls: Payroll[] }>('hr', { action: 'approve_payroll', payroll_ids: payrollIds }),
+    markPaid: (payrollId: string, paymentMethod: 'cash' | 'bank_transfer', paymentDate?: string) =>
+      callFunction<{ payroll: Payroll }>('hr', { action: 'mark_paid', payroll_id: payrollId, payment_method: paymentMethod, payment_date: paymentDate }),
+    getPayroll: (month: number, year: number) =>
+      callFunction<{ payrolls: PayrollWithEmployee[]; totals: PayrollTotals; period: string }>('hr', { action: 'get_payroll', month, year }),
+    getSalaryBook: (month: number, year: number) =>
+      callFunction<{ salary_book: SalaryBookEntry[]; totals: SalaryBookTotals; period: string; employee_count: number }>('hr', { action: 'salary_book', month, year }),
   },
 }
 
@@ -352,5 +407,385 @@ export interface TaxBook {
   summary: {
     total_revenue: number
     total_tax: number
+  }
+}
+
+// HR types
+export interface Employee {
+  id: string
+  store_id: string
+  user_id: string | null
+  name: string
+  phone: string
+  id_card: string
+  date_of_birth: string | null
+  address: string | null
+  position: string
+  department: string | null
+  hire_date: string
+  termination_date: string | null
+  termination_reason: string | null
+  contract_type: 'full_time' | 'part_time' | 'contract'
+  base_salary: number
+  allowances: number
+  dependents: number
+  bank_account: string | null
+  bank_name: string | null
+  social_insurance_no: string | null
+  active: boolean
+  created_at: string
+  created_by: string
+}
+
+export interface CreateEmployeeData {
+  name: string
+  phone: string
+  id_card: string
+  date_of_birth?: string
+  address?: string
+  position: string
+  department?: string
+  hire_date: string
+  contract_type: 'full_time' | 'part_time' | 'contract'
+  base_salary: number
+  allowances?: number
+  dependents?: number
+  bank_account?: string
+  bank_name?: string
+  social_insurance_no?: string
+}
+
+export interface Attendance {
+  id: string
+  store_id: string
+  employee_id: string
+  work_date: string
+  check_in: string | null
+  check_out: string | null
+  working_hours: number | null
+  status: 'present' | 'absent' | 'half_day' | 'leave'
+  is_late: boolean
+  notes: string | null
+  created_at: string
+}
+
+export interface AttendanceWithEmployee extends Attendance {
+  employees: { id: string; name: string; position: string } | null
+}
+
+export interface AttendanceSummary {
+  total_days: number
+  present: number
+  half_day: number
+  absent: number
+  late: number
+  total_working_days: number
+  total_working_hours: number
+}
+
+export interface Payroll {
+  id: string
+  store_id: string
+  employee_id: string
+  period_month: number
+  period_year: number
+  working_days: number
+  standard_days: number
+  base_salary: number
+  pro_rated_salary: number
+  allowances: number
+  gross_salary: number
+  social_insurance: number
+  health_insurance: number
+  unemployment_insurance: number
+  employer_social_insurance: number
+  employer_health_insurance: number
+  employer_unemployment_insurance: number
+  taxable_income: number
+  personal_deduction: number
+  dependent_deduction: number
+  pit: number
+  total_deductions: number
+  net_salary: number
+  status: 'calculated' | 'approved' | 'paid'
+  approved_by: string | null
+  approved_at: string | null
+  payment_method: 'cash' | 'bank_transfer' | null
+  paid_date: string | null
+  created_at: string
+}
+
+export interface PayrollWithEmployee extends Payroll {
+  employees: {
+    id: string
+    name: string
+    position: string
+    bank_account: string | null
+    bank_name: string | null
+  } | null
+}
+
+export interface PayrollTotals {
+  total_gross: number
+  total_net: number
+  total_insurance_employee: number
+  total_insurance_employer: number
+  total_pit: number
+}
+
+export interface SalaryBookEntry {
+  stt: number
+  name: string
+  position: string
+  working_days: string
+  base_salary: number
+  allowances: number
+  gross_salary: number
+  social_insurance: number
+  health_insurance: number
+  unemployment_insurance: number
+  pit: number
+  net_salary: number
+  status: string
+}
+
+export interface SalaryBookTotals {
+  total_base_salary: number
+  total_allowances: number
+  total_gross: number
+  total_social_insurance: number
+  total_health_insurance: number
+  total_unemployment_insurance: number
+  total_pit: number
+  total_net_salary: number
+}
+
+// Report types
+export interface DashboardSummary {
+  today: {
+    revenue: number
+    orders: number
+    avgOrderValue: number
+  }
+  thisMonth: {
+    revenue: number
+    expenses: number
+    profit: number
+    orders: number
+  }
+  comparison: {
+    revenueChange: number
+  }
+  alerts: {
+    lowStockCount: number
+    taxDeadlineDays: number
+  }
+  recentSales: Array<{
+    id: string
+    invoice_no: string
+    total: number
+    completed_at: string
+    customer_name: string | null
+  }>
+}
+
+export interface SalesAnalytics {
+  period: { start: string; end: string }
+  dailySales: Array<{
+    date: string
+    revenue: number
+    orders: number
+  }>
+  byCategory: Array<{
+    category: string
+    revenue: number
+    percentage: number
+  }>
+  byHour: Array<{
+    hour: number
+    orders: number
+    revenue: number
+  }>
+  byPaymentMethod: Array<{
+    method: string
+    count: number
+    amount: number
+    percentage: number
+  }>
+  summary: {
+    totalRevenue: number
+    totalOrders: number
+  }
+}
+
+export interface FinancialAnalytics {
+  period: { start: string; end: string }
+  summary: {
+    totalRevenue: number
+    totalExpenses: number
+    grossProfit: number
+    profitMargin: number
+  }
+  monthlyTrend: Array<{
+    month: string
+    revenue: number
+    expenses: number
+    profit: number
+  }>
+  expenseBreakdown: Array<{
+    category: string
+    amount: number
+    percentage: number
+  }>
+}
+
+export interface RevenueBookReport {
+  period: { from: string; to: string }
+  entries: Array<{
+    stt: number
+    date: string
+    invoice_no: string
+    customer_name: string
+    subtotal: number
+    vat_amount: number
+    total: number
+    payment_method: string
+  }>
+  totals: {
+    total_subtotal: number
+    total_vat: number
+    total_revenue: number
+    sale_count: number
+  }
+}
+
+export interface CashBookReport {
+  period: { from: string; to: string }
+  entries: Array<{
+    stt: number
+    date: string
+    description: string
+    debit: number
+    credit: number
+    balance: number
+    reference_type: string | null
+  }>
+  totals: {
+    total_debit: number
+    total_credit: number
+    closing_balance: number
+  }
+}
+
+export interface BankBookReport {
+  period: { from: string; to: string }
+  entries: Array<{
+    stt: number
+    date: string
+    bank_name: string
+    account_number: string
+    description: string
+    debit: number
+    credit: number
+    bank_ref: string | null
+  }>
+  totals: {
+    total_debit: number
+    total_credit: number
+  }
+}
+
+export interface ExpenseBookReport {
+  period: { from: string; to: string }
+  entries: Array<{
+    stt: number
+    date: string
+    category: string
+    description: string
+    amount: number
+    vat_amount: number
+    payment_method: string
+    invoice_no: string | null
+    supplier_name: string | null
+  }>
+  byCategory: Array<{
+    category: string
+    amount: number
+  }>
+  totals: {
+    total_amount: number
+    total_vat: number
+    expense_count: number
+  }
+}
+
+export interface InventoryBookReport {
+  period: { from: string; to: string }
+  entries: Array<{
+    stt: number
+    date: string
+    product_name: string
+    sku: string
+    movement_type: string
+    quantity: number
+    before_quantity: number
+    after_quantity: number
+    reason: string | null
+    reference_id: string | null
+  }>
+  summary: {
+    total_in: number
+    total_out: number
+    total_movements: number
+  }
+}
+
+export interface TaxBookReport {
+  year: number
+  quarters: Array<{
+    quarter: number
+    period_start: string
+    period_end: string
+    total_revenue: number
+    vat_collected: number
+    vat_deductible: number
+    vat_payable: number
+    pit_payable: number
+    total_tax: number
+    status: string
+  }>
+  summary: {
+    total_revenue: number
+    total_vat: number
+    total_pit: number
+    total_tax: number
+  }
+}
+
+export interface SalaryBookReport {
+  period: string
+  entries: Array<{
+    stt: number
+    name: string
+    position: string
+    working_days: string
+    base_salary: number
+    allowances: number
+    gross_salary: number
+    social_insurance: number
+    health_insurance: number
+    unemployment_insurance: number
+    pit: number
+    net_salary: number
+    status: string
+  }>
+  totals: {
+    total_base_salary: number
+    total_allowances: number
+    total_gross: number
+    total_insurance: number
+    total_pit: number
+    total_net: number
+    employee_count: number
   }
 }
