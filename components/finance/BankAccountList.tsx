@@ -7,18 +7,26 @@ import {
   PlusOutlined,
   StarFilled,
   MoreOutlined,
-  EditOutlined
+  EditOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { api, type BankAccount } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import { BankAccountForm } from './BankAccountForm'
+import { BankInForm } from './BankInForm'
+import { BankOutForm } from './BankOutForm'
+import { BankBalanceCard } from './BankBalanceCard'
 
 const { Text, Title } = Typography
 
 export function BankAccountList() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null)
+  const [bankInOpen, setBankInOpen] = useState(false)
+  const [bankOutOpen, setBankOutOpen] = useState(false)
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>()
 
   const { data, isLoading } = useQuery({
     queryKey: ['bank-accounts'],
@@ -26,10 +34,6 @@ export function BankAccountList() {
   })
 
   const accounts = data?.bank_accounts || []
-
-  const getTotalBalance = () => {
-    return accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0)
-  }
 
   const handleEdit = (account: BankAccount) => {
     setEditingAccount(account)
@@ -39,6 +43,22 @@ export function BankAccountList() {
   const handleFormClose = () => {
     setFormOpen(false)
     setEditingAccount(null)
+  }
+
+  const handleBankIn = (accountId?: string) => {
+    setSelectedAccountId(accountId)
+    setBankInOpen(true)
+  }
+
+  const handleBankOut = (accountId?: string) => {
+    setSelectedAccountId(accountId)
+    setBankOutOpen(true)
+  }
+
+  const handleBankFormClose = () => {
+    setBankInOpen(false)
+    setBankOutOpen(false)
+    setSelectedAccountId(undefined)
   }
 
   if (isLoading) {
@@ -51,22 +71,21 @@ export function BankAccountList() {
 
   return (
     <div>
-      <div className="bg-blue-50 p-4 rounded-lg mb-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <Text type="secondary">Tong so du ngan hang</Text>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(getTotalBalance())}
-            </div>
-          </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setFormOpen(true)}
-          >
-            Them TK
-          </Button>
-        </div>
+      <BankBalanceCard
+        onBankIn={() => handleBankIn()}
+        onBankOut={() => handleBankOut()}
+      />
+
+      <div className="flex justify-between items-center mb-3">
+        <Title level={5} className="!mb-0">Danh sach tai khoan</Title>
+        <Button
+          type="primary"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={() => setFormOpen(true)}
+        >
+          Them TK
+        </Button>
       </div>
 
       {accounts.length === 0 ? (
@@ -112,6 +131,19 @@ export function BankAccountList() {
                     menu={{
                       items: [
                         {
+                          key: 'deposit',
+                          icon: <ArrowUpOutlined className="text-green-500" />,
+                          label: 'Nap tien',
+                          onClick: () => handleBankIn(account.id),
+                        },
+                        {
+                          key: 'withdraw',
+                          icon: <ArrowDownOutlined className="text-red-500" />,
+                          label: 'Rut tien',
+                          onClick: () => handleBankOut(account.id),
+                        },
+                        { type: 'divider' },
+                        {
                           key: 'edit',
                           icon: <EditOutlined />,
                           label: 'Chinh sua',
@@ -134,6 +166,18 @@ export function BankAccountList() {
         open={formOpen}
         onClose={handleFormClose}
         editData={editingAccount}
+      />
+
+      <BankInForm
+        open={bankInOpen}
+        onClose={handleBankFormClose}
+        bankAccountId={selectedAccountId}
+      />
+
+      <BankOutForm
+        open={bankOutOpen}
+        onClose={handleBankFormClose}
+        bankAccountId={selectedAccountId}
       />
     </div>
   )

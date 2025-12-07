@@ -449,33 +449,25 @@ serve(async (req: Request) => {
             created_by: user.id,
           })
         } else if (payment_method === 'bank_transfer' && bank_account_id) {
-          // Update bank account balance
-          const { data: account } = await supabase
-            .from('bank_accounts')
-            .select('balance')
-            .eq('id', bank_account_id)
-            .eq('store_id', store_id)
-            .single()
+          // Atomically update bank account balance
+          const { error: balanceError } = await supabase.rpc('increment_bank_balance', {
+            p_bank_account_id: bank_account_id,
+            p_store_id: store_id,
+            p_amount: amount,
+          })
 
-          if (account) {
-            const newBalance = (account.balance || 0) + amount
+          if (balanceError) throw balanceError
 
-            await supabase
-              .from('bank_accounts')
-              .update({ balance: newBalance })
-              .eq('id', bank_account_id)
-
-            await supabase.from('bank_book').insert({
-              store_id,
-              bank_account_id,
-              description,
-              bank_ref,
-              reference_type: 'debt_payment',
-              reference_id: payment.id,
-              debit: amount,
-              credit: 0,
-            })
-          }
+          await supabase.from('bank_book').insert({
+            store_id,
+            bank_account_id,
+            description,
+            bank_ref,
+            reference_type: 'debt_payment',
+            reference_id: payment.id,
+            debit: amount,
+            credit: 0,
+          })
         }
 
         // Get updated debt info

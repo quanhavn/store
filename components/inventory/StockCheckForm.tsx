@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   Input,
   InputNumber,
@@ -17,6 +17,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   MinusCircleOutlined,
+  SyncOutlined,
 } from '@ant-design/icons'
 import { formatCurrency } from '@/lib/utils'
 
@@ -55,7 +56,14 @@ export function StockCheckForm({
   isUpdating,
 }: StockCheckFormProps) {
   const [search, setSearch] = useState('')
-  const [editingNotes, setEditingNotes] = useState<Record<string, string>>({})
+  // Local state for quantities being edited (productId -> quantity)
+  const [localQuantities, setLocalQuantities] = useState<Record<string, number | null>>({})
+  // Local state for notes being edited
+  const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
+  // Track which items have pending changes
+  const [pendingItems, setPendingItems] = useState<Set<string>>(new Set())
+  // Track which items are currently saving
+  const [savingItems, setSavingItems] = useState<Set<string>>(new Set())
 
   // Filter items based on search
   const filteredItems = useMemo(() => {
@@ -69,66 +77,224 @@ export function StockCheckForm({
     )
   }, [items, search])
 
-  // Calculate progress
-  const countedItems = useMemo(
-    () => items.filter((item) => item.actual_quantity !== null).length,
-    [items]
+  // Get displayed quantity (local or server value)
+  const getDisplayQuantity = useCallback(
+    (item: StockCheckItem): number | null => {
+      if (localQuantities[item.product_id] !== undefined) {
+        return localQuantities[item.product_id]
+      }
+      return item.actual_quantity
+    },
+    [localQuantities]
   )
+
+  // Calculate local difference for display
+  const getLocalDifference = useCallback(
+    (item: StockCheckItem): number | null => {
+      const qty = getDisplayQuantity(item)
+      if (qty === null) return null
+      return qty - item.system_quantity
+    },
+    [getDisplayQuantity]
+  )
+
+  // Calculate progress using both server and local values
+  const countedItems = useMemo(() => {
+    return items.filter((item) => {
+      const qty = localQuantities[item.product_id] !== undefined
+        ? localQuantities[item.product_id]
+        : item.actual_quantity
+      return qty !== null
+    }).length
+  }, [items, localQuantities])
+
   const totalItems = items.length
   const progressPercent = totalItems > 0 ? Math.round((countedItems / totalItems) * 100) : 0
 
   // Calculate items with differences
-  const itemsWithDifference = useMemo(
-    () =>
-      items.filter(
-        (item) => item.actual_quantity !== null && item.difference !== 0
-      ).length,
-    [items]
-  )
+  const itemsWithDifference = useMemo(() => {
+    return items.filter((item) => {
+      const qty = localQuantities[item.product_id] !== undefined
+        ? localQuantities[item.product_id]
+        : item.actual_quantity
+      if (qty === null) return false
+      const diff = qty - item.system_quantity
+      return diff !== 0
+    }).length
+  }, [items, localQuantities])
 
-  const handleQuantityChange = useCallback(
-    async (productId: string, value: number | null) => {
-      if (value === null || value < 0) return
-      const note = editingNotes[productId]
-      await onUpdateItem(productId, value, note)
-    },
-    [onUpdateItem, editingNotes]
-  )
-
-  const handleNoteChange = useCallback((productId: string, note: string) => {
-    setEditingNotes((prev) => ({ ...prev, [productId]: note }))
+  // Handle quantity change - only update local state
+  const handleQuantityChange = useCallback((productId: string, value: number | null) => {
+    setLocalQuantities((prev) => ({ ...prev, [productId]: value }))
+    if (value !== null && value >= 0) {
+      setPendingItems((prev) => new Set(prev).add(productId))
+    }
   }, [])
 
-  const handleNoteBlur = useCallback(
+  // Handle quantity blur - save to server
+  const handleQuantityBlur = useCallback(
     async (item: StockCheckItem) => {
-      const note = editingNotes[item.product_id]
-      if (note !== undefined && item.actual_quantity !== null) {
-        await onUpdateItem(item.product_id, item.actual_quantity, note)
+      const localQty = localQuantities[item.product_id]
+
+      // Skip if no local change or invalid value
+      if (localQty === undefined || localQty === null || localQty < 0) {
+        return
+      }
+
+      // Skip if value hasn't changed from server
+      if (localQty === item.actual_quantity) {
+        setLocalQuantities((prev) => {
+          const next = { ...prev }
+          delete next[item.product_id]
+          return next
+        })
+        setPendingItems((prev) => {
+          const next = new Set(prev)
+          next.delete(item.product_id)
+          return next
+        })
+        return
+      }
+
+      // Save to server
+      setSavingItems((prev) => new Set(prev).add(item.product_id))
+      try {
+        const note = localNotes[item.product_id]
+        await onUpdateItem(item.product_id, localQty, note)
+        // Clear local state after successful save
+        setLocalQuantities((prev) => {
+          const next = { ...prev }
+          delete next[item.product_id]
+          return next
+        })
+        setPendingItems((prev) => {
+          const next = new Set(prev)
+          next.delete(item.product_id)
+          return next
+        })
+      } finally {
+        setSavingItems((prev) => {
+          const next = new Set(prev)
+          next.delete(item.product_id)
+          return next
+        })
       }
     },
-    [onUpdateItem, editingNotes]
+    [localQuantities, localNotes, onUpdateItem]
+  )
+
+  // Handle note change - only update local state
+  const handleNoteChange = useCallback((productId: string, note: string) => {
+    setLocalNotes((prev) => ({ ...prev, [productId]: note }))
+    setPendingItems((prev) => new Set(prev).add(productId))
+  }, [])
+
+  // Handle note blur - save to server if quantity exists
+  const handleNoteBlur = useCallback(
+    async (item: StockCheckItem) => {
+      const localNote = localNotes[item.product_id]
+      if (localNote === undefined) return
+
+      const qty = localQuantities[item.product_id] !== undefined
+        ? localQuantities[item.product_id]
+        : item.actual_quantity
+
+      if (qty === null) return
+
+      // Skip if note hasn't changed
+      if (localNote === (item.note || '')) {
+        setLocalNotes((prev) => {
+          const next = { ...prev }
+          delete next[item.product_id]
+          return next
+        })
+        setPendingItems((prev) => {
+          const next = new Set(prev)
+          next.delete(item.product_id)
+          return next
+        })
+        return
+      }
+
+      setSavingItems((prev) => new Set(prev).add(item.product_id))
+      try {
+        await onUpdateItem(item.product_id, qty, localNote)
+        setLocalNotes((prev) => {
+          const next = { ...prev }
+          delete next[item.product_id]
+          return next
+        })
+        setPendingItems((prev) => {
+          const next = new Set(prev)
+          next.delete(item.product_id)
+          return next
+        })
+      } finally {
+        setSavingItems((prev) => {
+          const next = new Set(prev)
+          next.delete(item.product_id)
+          return next
+        })
+      }
+    },
+    [localNotes, localQuantities, onUpdateItem]
   )
 
   const getDifferenceDisplay = (item: StockCheckItem) => {
-    if (item.actual_quantity === null) {
+    const qty = getDisplayQuantity(item)
+    const diff = getLocalDifference(item)
+    const isSaving = savingItems.has(item.product_id)
+    const isPending = pendingItems.has(item.product_id) && !isSaving
+
+    if (isSaving) {
+      return { icon: <SyncOutlined spin />, color: 'processing', text: 'Đang lưu...' }
+    }
+    if (qty === null) {
       return { icon: <MinusCircleOutlined />, color: 'default', text: 'Chưa kiểm' }
     }
-    if (item.difference === 0) {
-      return { icon: <CheckCircleOutlined />, color: 'success', text: 'Khớp' }
+    if (diff === 0) {
+      return {
+        icon: <CheckCircleOutlined />,
+        color: isPending ? 'processing' : 'success',
+        text: isPending ? 'Khớp •' : 'Khớp'
+      }
     }
-    if (item.difference! > 0) {
+    if (diff! > 0) {
       return {
         icon: <CloseCircleOutlined />,
-        color: 'warning',
-        text: `+${item.difference}`,
+        color: isPending ? 'processing' : 'warning',
+        text: isPending ? `+${diff} •` : `+${diff}`,
       }
     }
     return {
       icon: <CloseCircleOutlined />,
-      color: 'error',
-      text: `${item.difference}`,
+      color: isPending ? 'processing' : 'error',
+      text: isPending ? `${diff} •` : `${diff}`,
     }
   }
+
+  // Handle Enter key to move to next item
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent, item: StockCheckItem, index: number) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        // Trigger blur to save
+        ;(e.target as HTMLInputElement).blur()
+        // Focus next item's input
+        const nextIndex = index + 1
+        if (nextIndex < filteredItems.length) {
+          setTimeout(() => {
+            const nextInput = document.querySelector(
+              `[data-product-id="${filteredItems[nextIndex].product_id}"] input`
+            ) as HTMLInputElement
+            nextInput?.focus()
+            nextInput?.select()
+          }, 100)
+        }
+      }
+    },
+    [filteredItems]
+  )
 
   return (
     <div className="flex flex-col h-full">
@@ -148,7 +314,13 @@ export function StockCheckForm({
         <div className="flex justify-between mt-2 text-sm">
           <Text type="secondary">
             <CheckCircleOutlined className="text-green-500 mr-1" />
-            Khớp: {items.filter((i) => i.actual_quantity !== null && i.difference === 0).length}
+            Khớp: {items.filter((i) => {
+              const qty = localQuantities[i.product_id] !== undefined
+                ? localQuantities[i.product_id]
+                : i.actual_quantity
+              if (qty === null) return false
+              return qty - i.system_quantity === 0
+            }).length}
           </Text>
           <Text type="secondary">
             <CloseCircleOutlined className="text-red-500 mr-1" />
@@ -174,11 +346,15 @@ export function StockCheckForm({
         ) : (
           <List
             dataSource={filteredItems}
-            renderItem={(item) => {
+            renderItem={(item, index) => {
               const status = getDifferenceDisplay(item)
+              const displayQty = getDisplayQuantity(item)
+              const localDiff = getLocalDifference(item)
+              const isSaving = savingItems.has(item.product_id)
+
               return (
                 <List.Item className="!px-0 !py-3 border-b">
-                  <div className="w-full">
+                  <div className="w-full" data-product-id={item.product_id}>
                     {/* Product Info Row */}
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0 pr-2">
@@ -195,7 +371,7 @@ export function StockCheckForm({
                           </Tag>
                         )}
                       </div>
-                      <Tag color={status.color as 'default' | 'success' | 'warning' | 'error'}>
+                      <Tag color={status.color as 'default' | 'success' | 'warning' | 'error' | 'processing'}>
                         {status.icon} {status.text}
                       </Tag>
                     </div>
@@ -219,14 +395,16 @@ export function StockCheckForm({
                         </Text>
                         <InputNumber
                           min={0}
-                          value={item.actual_quantity}
+                          value={displayQty}
                           onChange={(value) => handleQuantityChange(item.product_id, value)}
+                          onBlur={() => handleQuantityBlur(item)}
+                          onKeyDown={(e) => handleKeyDown(e, item, index)}
                           className="w-full"
                           placeholder="Nhập số lượng"
-                          disabled={isUpdating}
+                          disabled={isSaving}
                         />
                       </div>
-                      {item.actual_quantity !== null && item.difference !== 0 && (
+                      {displayQty !== null && localDiff !== 0 && (
                         <div className="flex-1">
                           <Text type="secondary" className="text-xs block">
                             Chênh lệch
@@ -234,30 +412,30 @@ export function StockCheckForm({
                           <Text
                             strong
                             className={`text-lg ${
-                              item.difference! > 0 ? 'text-orange-500' : 'text-red-500'
+                              localDiff! > 0 ? 'text-orange-500' : 'text-red-500'
                             }`}
                           >
-                            {item.difference! > 0 ? '+' : ''}
-                            {item.difference}
+                            {localDiff! > 0 ? '+' : ''}
+                            {localDiff}
                           </Text>
                         </div>
                       )}
                     </div>
 
                     {/* Note Row - Show when there's a difference */}
-                    {item.actual_quantity !== null && item.difference !== 0 && (
+                    {displayQty !== null && localDiff !== 0 && (
                       <div className="mt-2">
                         <Input
                           placeholder="Ghi chú (lý do chênh lệch)"
                           value={
-                            editingNotes[item.product_id] !== undefined
-                              ? editingNotes[item.product_id]
+                            localNotes[item.product_id] !== undefined
+                              ? localNotes[item.product_id]
                               : item.note || ''
                           }
                           onChange={(e) => handleNoteChange(item.product_id, e.target.value)}
                           onBlur={() => handleNoteBlur(item)}
                           size="small"
-                          disabled={isUpdating}
+                          disabled={isSaving}
                         />
                       </div>
                     )}
@@ -265,10 +443,10 @@ export function StockCheckForm({
                     {/* Cost info */}
                     <div className="text-xs text-gray-400 mt-2">
                       Giá vốn: {formatCurrency(item.products.cost_price)}
-                      {item.actual_quantity !== null && item.difference !== 0 && (
+                      {displayQty !== null && localDiff !== 0 && (
                         <span className="ml-2">
                           | Giá trị chênh lệch:{' '}
-                          {formatCurrency(Math.abs(item.difference!) * item.products.cost_price)}
+                          {formatCurrency(Math.abs(localDiff!) * item.products.cost_price)}
                         </span>
                       )}
                     </div>
@@ -287,10 +465,13 @@ export function StockCheckForm({
           block
           size="large"
           onClick={onSubmit}
-          disabled={countedItems === 0}
+          disabled={countedItems === 0 || pendingItems.size > 0}
           loading={isUpdating}
         >
-          Xem tổng hợp & Hoàn tất ({countedItems}/{totalItems} đã kiểm)
+          {pendingItems.size > 0
+            ? `Đang lưu ${pendingItems.size} thay đổi...`
+            : `Xem tổng hợp & Hoàn tất (${countedItems}/${totalItems} đã kiểm)`
+          }
         </Button>
       </div>
 

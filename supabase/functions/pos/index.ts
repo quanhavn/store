@@ -396,6 +396,16 @@ serve(async (req: Request) => {
                 created_by: user.id,
               })
             } else if (payment.method === 'bank_transfer' && payment.bank_account_id) {
+              // Atomically update bank account balance
+              const { error: balanceError } = await supabase.rpc('increment_bank_balance', {
+                p_bank_account_id: payment.bank_account_id,
+                p_store_id: store_id,
+                p_amount: payment.amount,
+              })
+
+              if (balanceError) throw balanceError
+
+              // Create bank book entry
               await supabase.from('bank_book').insert({
                 store_id,
                 bank_account_id: payment.bank_account_id,

@@ -111,7 +111,7 @@ export default function InventoryPage() {
 
       if (!response.ok) throw new Error('Failed to fetch active stock check')
       const result = await response.json()
-      return result.data as { stock_check: StockCheck | null; items: StockCheckItem[] }
+      return result as { stock_check: StockCheck | null; items: StockCheckItem[] }
     },
   })
 
@@ -141,7 +141,7 @@ export default function InventoryPage() {
         throw new Error(error.error || 'Failed to create stock check')
       }
       const result = await response.json()
-      return result.data as { stock_check: StockCheck; items: StockCheckItem[] }
+      return result as { stock_check: StockCheck; items: StockCheckItem[] }
     },
     onSuccess: (data) => {
       setCurrentStockCheck(data.stock_check)
@@ -194,7 +194,7 @@ export default function InventoryPage() {
         throw new Error(error.error || 'Failed to update item')
       }
       const result = await response.json()
-      return result.data.item as StockCheckItem
+      return result.item as StockCheckItem
     },
     onSuccess: (updatedItem) => {
       setStockCheckItems((prev) =>
@@ -234,7 +234,7 @@ export default function InventoryPage() {
         throw new Error(error.error || 'Failed to submit stock check')
       }
       const result = await response.json()
-      return result.data
+      return result
     },
     onSuccess: (data) => {
       const { summary } = data

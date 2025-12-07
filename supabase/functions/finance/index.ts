@@ -546,22 +546,14 @@ serve(async (req: Request) => {
       case 'bank_in': {
         const { bank_account_id, amount, description, bank_ref, reference_type, reference_id } = body
 
-        // Update bank account balance
-        const { data: account, error: accountError } = await supabase
-          .from('bank_accounts')
-          .select('balance')
-          .eq('id', bank_account_id)
-          .eq('store_id', store_id)
-          .single()
+        // Atomically update bank account balance
+        const { data: newBalance, error: balanceError } = await supabase.rpc('increment_bank_balance', {
+          p_bank_account_id: bank_account_id,
+          p_store_id: store_id,
+          p_amount: amount,
+        })
 
-        if (accountError) throw accountError
-
-        const newBalance = (account.balance || 0) + amount
-
-        await supabase
-          .from('bank_accounts')
-          .update({ balance: newBalance })
-          .eq('id', bank_account_id)
+        if (balanceError) throw balanceError
 
         // Create bank book entry
         const { data, error } = await supabase
@@ -587,26 +579,19 @@ serve(async (req: Request) => {
       case 'bank_out': {
         const { bank_account_id, amount, description, bank_ref, reference_type, reference_id } = body
 
-        // Get and validate bank account balance
-        const { data: account, error: accountError } = await supabase
-          .from('bank_accounts')
-          .select('balance')
-          .eq('id', bank_account_id)
-          .eq('store_id', store_id)
-          .single()
+        // Atomically decrement bank account balance (with validation)
+        const { data: newBalance, error: balanceError } = await supabase.rpc('decrement_bank_balance', {
+          p_bank_account_id: bank_account_id,
+          p_store_id: store_id,
+          p_amount: amount,
+        })
 
-        if (accountError) throw accountError
-
-        if ((account.balance || 0) < amount) {
-          return errorResponse('Không đủ số dư trong tài khoản', 400)
+        if (balanceError) {
+          if (balanceError.message?.includes('Insufficient balance')) {
+            return errorResponse('Không đủ số dư trong tài khoản', 400)
+          }
+          throw balanceError
         }
-
-        const newBalance = (account.balance || 0) - amount
-
-        await supabase
-          .from('bank_accounts')
-          .update({ balance: newBalance })
-          .eq('id', bank_account_id)
 
         // Create bank book entry
         const { data, error } = await supabase
