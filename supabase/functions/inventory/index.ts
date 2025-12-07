@@ -381,13 +381,11 @@ serve(async (req: Request) => {
         if (productsError) throw productsError
 
         // Create stock check items for all products
+        // Note: difference is a generated column, don't include it in insert
         const stockCheckItems = products?.map((product) => ({
           stock_check_id: stockCheck.id,
           product_id: product.id,
           system_quantity: product.quantity,
-          actual_quantity: null,
-          difference: null,
-          note: null,
         })) || []
 
         if (stockCheckItems.length > 0) {
@@ -502,15 +500,11 @@ serve(async (req: Request) => {
           return errorResponse('Sản phẩm không nằm trong phiên kiểm kê', 404)
         }
 
-        // Calculate difference
-        const difference = actual_quantity - existingItem.system_quantity
-
-        // Update stock check item
+        // Update stock check item (difference is a generated column, don't update it)
         const { data: updatedItem, error: updateError } = await supabase
           .from('stock_check_items')
           .update({
             actual_quantity,
-            difference,
             note: note || null,
           })
           .eq('id', existingItem.id)

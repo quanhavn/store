@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, Typography, Row, Col, Statistic, Alert } from 'antd'
+import { Card, Typography, Row, Col, Statistic, Alert, Spin } from 'antd'
 import { 
   ShoppingCartOutlined, 
   InboxOutlined, 
@@ -11,6 +11,9 @@ import {
   FileTextOutlined
 } from '@ant-design/icons'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/supabase/functions'
+import { formatCurrency } from '@/lib/utils'
 
 const { Title, Text } = Typography
 
@@ -19,6 +22,27 @@ interface DashboardContentProps {
 }
 
 export function DashboardContent({ storeName }: DashboardContentProps) {
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: () => api.reports.dashboardSummary(),
+  })
+
+  const { data: financeData, isLoading: isFinanceLoading } = useQuery({
+    queryKey: ['finance-summary'],
+    queryFn: () => api.finance.summary('day'),
+  })
+
+  const { data: inventoryData, isLoading: isInventoryLoading } = useQuery({
+    queryKey: ['inventory-summary'],
+    queryFn: () => api.inventory.summary(),
+  })
+
+  const todayRevenue = dashboardData?.today?.revenue || 0
+  const todayOrders = dashboardData?.today?.orders || 0
+  const cashBalance = financeData?.summary?.cash_balance || 0
+  const totalProducts = inventoryData?.summary?.total_products || 0
+  const lowStockCount = dashboardData?.alerts?.lowStockCount || 0
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -38,61 +62,94 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
       <Row gutter={[12, 12]}>
         <Col span={12}>
           <Card size="small">
-            <Statistic
-              title={<span className="text-xs"><RiseOutlined /> Doanh thu hôm nay</span>}
-              value={0}
-              suffix="đ"
-              valueStyle={{ fontSize: 20 }}
-            />
+            {isDashboardLoading ? (
+              <div className="py-2"><Spin size="small" /></div>
+            ) : (
+              <Statistic
+                title={<span className="text-xs"><RiseOutlined /> Doanh thu hôm nay</span>}
+                value={todayRevenue}
+                formatter={(value) => formatCurrency(Number(value))}
+                valueStyle={{ fontSize: 18, color: '#3ecf8e' }}
+              />
+            )}
           </Card>
         </Col>
         <Col span={12}>
           <Card size="small">
-            <Statistic
-              title={<span className="text-xs"><ShoppingCartOutlined /> Đơn hàng</span>}
-              value={0}
-              suffix="đơn"
-              valueStyle={{ fontSize: 20 }}
-            />
+            {isDashboardLoading ? (
+              <div className="py-2"><Spin size="small" /></div>
+            ) : (
+              <Statistic
+                title={<span className="text-xs"><ShoppingCartOutlined /> Đơn hàng</span>}
+                value={todayOrders}
+                suffix="đơn"
+                valueStyle={{ fontSize: 18 }}
+              />
+            )}
           </Card>
         </Col>
         <Col span={12}>
           <Card size="small">
-            <Statistic
-              title={<span className="text-xs"><WalletOutlined /> Tiền mặt</span>}
-              value={0}
-              suffix="đ"
-              valueStyle={{ fontSize: 20 }}
-            />
+            {isFinanceLoading ? (
+              <div className="py-2"><Spin size="small" /></div>
+            ) : (
+              <Statistic
+                title={<span className="text-xs"><WalletOutlined /> Tiền mặt</span>}
+                value={cashBalance}
+                formatter={(value) => formatCurrency(Number(value))}
+                valueStyle={{ fontSize: 18 }}
+              />
+            )}
           </Card>
         </Col>
         <Col span={12}>
           <Card size="small">
-            <Statistic
-              title={<span className="text-xs"><InboxOutlined /> Sản phẩm</span>}
-              value={0}
-              suffix="SP"
-              valueStyle={{ fontSize: 20 }}
-            />
+            {isInventoryLoading ? (
+              <div className="py-2"><Spin size="small" /></div>
+            ) : (
+              <Statistic
+                title={<span className="text-xs"><InboxOutlined /> Sản phẩm</span>}
+                value={totalProducts}
+                suffix="SP"
+                valueStyle={{ fontSize: 18 }}
+              />
+            )}
           </Card>
         </Col>
       </Row>
 
-      <Alert
-        message="Cảnh báo tồn kho"
-        description={
-          <div>
-            <Text>Chưa có sản phẩm nào. Bắt đầu thêm sản phẩm để quản lý kho.</Text>
-            <br />
-            <Link href="/inventory" className="text-blue-500 font-medium">
-              Thêm sản phẩm →
-            </Link>
-          </div>
-        }
-        type="warning"
-        icon={<WarningOutlined />}
-        showIcon
-      />
+      {lowStockCount > 0 ? (
+        <Alert
+          message="Cảnh báo tồn kho"
+          description={
+            <div>
+              <Text>Có {lowStockCount} sản phẩm sắp hết hàng.</Text>
+              <br />
+              <Link href="/inventory" className="text-blue-500 font-medium">
+                Xem chi tiết →
+              </Link>
+            </div>
+          }
+          type="warning"
+          icon={<WarningOutlined />}
+          showIcon
+        />
+      ) : totalProducts === 0 ? (
+        <Alert
+          message="Bắt đầu kinh doanh"
+          description={
+            <div>
+              <Text>Chưa có sản phẩm nào. Bắt đầu thêm sản phẩm để quản lý kho.</Text>
+              <br />
+              <Link href="/products" className="text-blue-500 font-medium">
+                Thêm sản phẩm →
+              </Link>
+            </div>
+          }
+          type="info"
+          showIcon
+        />
+      ) : null}
 
       <div>
         <Title level={5}>Truy cập nhanh</Title>

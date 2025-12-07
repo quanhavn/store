@@ -26,10 +26,10 @@ Phase 4 ████████████████████ 100% [Finan
 Phase 5 ████████████████████ 100% [Tax - Complete]
 Phase 6 ████████████████████ 100% [HR - Complete]
 Phase 7 ████████████████████ 100% [Reports - Complete]
-Phase 8 ██████████░░░░░░░░░░  50% [Launch - In Progress]
+Phase 8 ██████████████████░░  90% [Launch - In Progress]
 ```
 
-**Overall Progress: ~95%**
+**Overall Progress: ~99%**
 
 ---
 
@@ -159,8 +159,8 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 | Tax Deadline Widget (TaxDeadlineWidget) | ✅ |
 | Tax Obligation Book | ✅ |
 | Tax Reminders | ✅ |
-| E-Invoice Provider Setup | ⬜ Pending |
-| E-Invoice Creation | ⬜ Pending |
+| E-Invoice Provider Setup (Viettel SINVOICE) | ✅ |
+| E-Invoice Creation | ✅ |
 | Testing & Integration | ✅ |
 
 ---
@@ -194,8 +194,8 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 | Charts (SalesLineChart, RevenueExpenseChart, CategoryPieChart, PaymentMethodsPieChart) | ✅ |
 | Today Sales Widget (TodaySalesWidget) | ✅ |
 | Recent Sales Widget (RecentSalesWidget) | ✅ |
-| Export Excel/PDF | ⬜ Pending |
-| Report Templates | ⬜ Pending |
+| Export Excel/PDF | ✅ |
+| Report Templates (PDF for 7 books) | ✅ |
 | Testing & Polish | ✅ |
 
 ---
@@ -205,7 +205,7 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 
 | Tasks | Status |
 |-------|--------|
-| UAT Testing | 🔄 In Progress |
+| UAT Testing (E2E with Playwright) | ✅ |
 | Performance Optimization | ✅ |
 | Security Audit | ✅ |
 | Bug Fixes | 🔄 Ongoing |
@@ -269,7 +269,7 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 - [x] tax/update_settings
 - [x] tax/quarterly_summary
 - [x] tax/deadlines
-- [ ] tax/e-invoice (pending)
+- [x] tax/e-invoice (Viettel SINVOICE)
 
 ### Phase 6
 - [x] hr/list_employees
@@ -361,6 +361,12 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 - [x] AttendanceCalendar
 - [x] CheckInOutButton
 
+### Invoice
+- [x] CreateInvoiceSheet
+- [x] InvoiceDetail
+- [x] InvoiceActions
+- [x] InvoiceList
+
 ### Reports
 - [x] DashboardSummary
 - [x] ReportsHub
@@ -404,8 +410,8 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 ## PENDING ITEMS
 
 ### High Priority
-- [ ] E-Invoice provider integration (MISA, Viettel, VNPT)
-- [ ] Excel/PDF export functionality
+- [x] E-Invoice provider integration (Viettel SINVOICE implemented)
+- [x] Excel/PDF export functionality
 - [ ] Production deployment & Go-Live
 
 ### Medium Priority
@@ -423,7 +429,7 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 ## NOTES & DECISIONS
 
 ### Decisions Made
-- E-Invoice provider: To be determined based on customer preference
+- E-Invoice provider: Viettel SINVOICE (implemented)
 - SMS OTP provider: To be determined
 - Hosting: Vercel + Supabase
 - UI Framework: Ant Design + Tailwind CSS
@@ -431,14 +437,14 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 - Offline Storage: IndexedDB (Dexie.js)
 
 ### Known Issues
-- E-Invoice API integration pending
-- Excel/PDF export pending implementation
-- Vietnamese font in PDF export needs testing
+- Vietnamese font in PDF export uses normalized text (full Unicode font can be embedded for better display)
 
 ### Risks Mitigated
 - ✅ Offline sync implemented with queue system
 - ✅ RLS policies implemented for data security
 - ✅ Error tracking with Sentry
+- ✅ E-Invoice integration with Viettel SINVOICE
+- ✅ Excel/PDF export for all 7 accounting books
 
 ---
 
@@ -453,4 +459,4 @@ Phase 8 ██████████░░░░░░░░░░  50% [Launc
 
 ---
 
-*Last Updated: December 7, 2024*
+*Last Updated: December 8, 2024*

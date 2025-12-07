@@ -5,8 +5,9 @@ import { LogoutOutlined, ShopOutlined, UserOutlined, DollarOutlined } from '@ant
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { TaxSettingsForm, QuarterlyTaxSummary, TaxDeadlineWidget } from '@/components/tax'
+import { StoreInfoForm } from '@/components/settings'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -28,15 +29,7 @@ export default function SettingsPage() {
           Cua hang
         </span>
       ),
-      children: (
-        <Card>
-          <div className="flex items-center gap-3 mb-4">
-            <ShopOutlined className="text-xl" />
-            <Title level={5} className="!mb-0">Thong tin cua hang</Title>
-          </div>
-          <Text type="secondary">Chua thiet lap thong tin cua hang</Text>
-        </Card>
-      ),
+      children: <StoreInfoForm />,
     },
     {
       key: 'tax',

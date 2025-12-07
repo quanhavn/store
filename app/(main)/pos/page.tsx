@@ -9,11 +9,13 @@ import { callFunction } from '@/lib/supabase/functions'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { ProductSearch } from '@/components/products/ProductSearch'
 import { CategoryFilter } from '@/components/products/CategoryFilter'
-import { CartSheet } from '@/components/pos/CartSheet'
-import { PaymentMethods, type PaymentInfo } from '@/components/pos/PaymentMethods'
+import { OrderTabs } from '@/components/pos/OrderTabs'
+import { MultiOrderCartSheet } from '@/components/pos/MultiOrderCartSheet'
+import { PaymentMethods, type PaymentInfo, type DebtInfo, type DebtPaymentInfo } from '@/components/pos/PaymentMethods'
+import { CustomerQuickAdd } from '@/components/customers'
 import { CheckoutSuccess } from '@/components/pos/CheckoutSuccess'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
-import { useCartStore } from '@/lib/stores/cart'
+import { useMultiOrderStore } from '@/lib/stores/multiOrder'
 import { useOnlineStatus, useAutoSync } from '@/lib/offline/hooks'
 import {
   getCachedProducts,
@@ -51,23 +53,30 @@ export default function POSPage() {
   const [categoryId, setCategoryId] = useState<string>()
   const [step, setStep] = useState<CheckoutStep>('pos')
   const [cartOpen, setCartOpen] = useState(false)
-  const [completedSale, setCompletedSale] = useState<{ invoice_no: string; total: number }>()
+  const [completedSale, setCompletedSale] = useState<{ invoice_no: string; total: number; debt_amount?: number; debt_paid?: number }>()
+  const [showCustomerQuickAdd, setShowCustomerQuickAdd] = useState(false)
 
   const supabase = createClient()
   const queryClient = useQueryClient()
-  const cart = useCartStore()
-  const itemCount = cart.getItemCount()
-  const total = cart.getTotal()
+  const multiOrder = useMultiOrderStore()
+  const activeOrder = multiOrder.getActiveOrder()
+  const itemCount = multiOrder.getItemCount()
+  const total = multiOrder.getTotal()
+  const orderCount = multiOrder.getOrderCount()
   const isOnline = useOnlineStatus()
 
-  // Auto-sync when coming back online
+  useEffect(() => {
+    if (orderCount === 0) {
+      multiOrder.createOrder()
+    }
+  }, [orderCount, multiOrder])
+
   const { syncing: autoSyncing } = useAutoSync({
     enabled: true,
     onSyncComplete: (result) => {
       if (result.sales.synced > 0) {
         message.success(`Da dong bo ${result.sales.synced} don hang offline`)
       }
-      // Refresh queries
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
     },
@@ -76,7 +85,6 @@ export default function POSPage() {
     },
   })
 
-  // Initial sync of products and categories to cache
   useEffect(() => {
     if (isOnline) {
       syncProducts().catch(console.error)
@@ -84,11 +92,9 @@ export default function POSPage() {
     }
   }, [isOnline])
 
-  // Fetch products - use online API when available, fallback to cache
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['products', search, categoryId, isOnline],
     queryFn: async () => {
-      // Try online first
       if (isOnline) {
         try {
           let query = supabase
@@ -110,11 +116,9 @@ export default function POSPage() {
           return data as Product[]
         } catch (error) {
           console.error('Online products fetch failed, using cache:', error)
-          // Fall through to cache
         }
       }
 
-      // Offline or online fetch failed - use cache
       const cachedProducts = await getCachedProducts(search, categoryId)
       return cachedProducts.map((p: CachedProduct) => ({
         id: p.id,
@@ -133,11 +137,9 @@ export default function POSPage() {
     },
   })
 
-  // Fetch categories - use online API when available, fallback to cache
   const { data: categories = [] } = useQuery({
     queryKey: ['categories', isOnline],
     queryFn: async () => {
-      // Try online first
       if (isOnline) {
         try {
           const { data, error } = await supabase
@@ -150,17 +152,14 @@ export default function POSPage() {
           return data as Category[]
         } catch (error) {
           console.error('Online categories fetch failed, using cache:', error)
-          // Fall through to cache
         }
       }
 
-      // Offline or online fetch failed - use cache
       const cachedCategories = await getCachedCategories()
       return cachedCategories as Category[]
     },
   })
 
-  // Fetch bank accounts for payment
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ['bank_accounts'],
     queryFn: async () => {
@@ -175,21 +174,21 @@ export default function POSPage() {
     enabled: isOnline,
   })
 
-  // Create sale mutation - handles both online and offline
   const createSaleMutation = useMutation({
-    mutationFn: async (payments: PaymentInfo[]) => {
-      // If offline, save to pending sales
+    mutationFn: async ({ payments, debtInfo, debtPayment }: { payments: PaymentInfo[]; debtInfo?: DebtInfo; debtPayment?: DebtPaymentInfo }) => {
+      if (!activeOrder) throw new Error('Không có đơn hàng')
+
       if (!isOnline) {
         const pendingSale = await addPendingSale(
-          cart.items,
+          activeOrder.items,
           payments,
           {
-            name: cart.customer_name || undefined,
-            phone: cart.customer_phone || undefined,
-            tax_code: cart.customer_tax_code || undefined,
+            name: activeOrder.customer_name || undefined,
+            phone: activeOrder.customer_phone || undefined,
+            tax_code: activeOrder.customer_tax_code || undefined,
           },
-          cart.discount,
-          cart.note || undefined
+          activeOrder.discount,
+          activeOrder.note || undefined
         )
 
         return {
@@ -199,12 +198,11 @@ export default function POSPage() {
         }
       }
 
-      // Online - create sale via Edge Function
-      const saleTotal = cart.getTotal()
+      const saleTotal = multiOrder.getTotal()
 
-      const result = await callFunction<{ sale: { id: string }; invoice_no: string }>('pos', {
+      const result = await callFunction<{ sale: { id: string }; invoice_no: string; debt?: { debt: { id: string } }; debt_payment?: { amount: number } }>('pos', {
         action: 'create',
-        items: cart.items.map(item => ({
+        items: activeOrder.items.map(item => ({
           product_id: item.product_id,
           product_name: item.product_name,
           quantity: item.quantity,
@@ -218,22 +216,43 @@ export default function POSPage() {
           bank_account_id: p.bank_account_id,
           bank_ref: p.bank_ref,
         })),
-        customer_name: cart.customer_name,
-        customer_phone: cart.customer_phone,
-        customer_tax_code: cart.customer_tax_code,
-        discount: cart.discount,
-        note: cart.note,
+        customer_name: activeOrder.customer_name,
+        customer_phone: activeOrder.customer_phone,
+        customer_tax_code: activeOrder.customer_tax_code,
+        customer_id: activeOrder.customer_id,
+        create_debt: !!debtInfo,
+        debt_type: debtInfo?.debt_type,
+        debt_options: debtInfo ? {
+          due_date: debtInfo.due_date,
+          installments: debtInfo.installments,
+          frequency: debtInfo.frequency,
+          first_due_date: debtInfo.first_due_date,
+        } : undefined,
+        debt_payment: debtPayment ? {
+          amount: debtPayment.amount,
+        } : undefined,
+        discount: activeOrder.discount,
+        note: activeOrder.note,
       })
 
-      return { invoice_no: result.invoice_no, total: saleTotal, offline: false }
+      return {
+        invoice_no: result.invoice_no,
+        total: saleTotal,
+        offline: false,
+        debt_amount: debtInfo?.amount,
+        debt_paid: result.debt_payment?.amount,
+      }
     },
     onSuccess: (data) => {
-      setCompletedSale({ invoice_no: data.invoice_no, total: data.total })
+      setCompletedSale({ invoice_no: data.invoice_no, total: data.total, debt_amount: data.debt_amount, debt_paid: data.debt_paid })
       setStep('success')
-      cart.clear()
+      multiOrder.clearActiveOrder()
 
       if (data.offline) {
         message.info('Don hang da duoc luu offline. Se dong bo khi co mang.')
+      }
+      if (data.debt_paid) {
+        message.success(`Da tru ${data.debt_paid.toLocaleString('vi-VN')}đ vao no cu`)
       }
     },
     onError: (error) => {
@@ -246,10 +265,8 @@ export default function POSPage() {
   }, [])
 
   const handleBarcodeScanned = useCallback((barcode: string) => {
-    // When barcode is scanned, search for the product
     setSearch(barcode)
 
-    // Also try to auto-add to cart if product is found
     if (productsData) {
       const product = productsData.find(
         (p) => p.barcode === barcode || p.sku === barcode
@@ -259,7 +276,7 @@ export default function POSPage() {
           message.warning('San pham da het hang')
           return
         }
-        cart.addItem({
+        multiOrder.addItem({
           id: product.id,
           name: product.name,
           sell_price: product.sell_price,
@@ -269,14 +286,14 @@ export default function POSPage() {
         message.success(`Da them ${product.name}`)
       }
     }
-  }, [productsData, cart])
+  }, [productsData, multiOrder])
 
   const handleProductClick = (product: Product) => {
     if (product.quantity <= 0) {
       message.warning('San pham da het hang')
       return
     }
-    cart.addItem({
+    multiOrder.addItem({
       id: product.id,
       name: product.name,
       sell_price: product.sell_price,
@@ -291,17 +308,36 @@ export default function POSPage() {
     setStep('payment')
   }
 
-  const handlePaymentConfirm = (payments: PaymentInfo[]) => {
-    createSaleMutation.mutate(payments)
+  const handlePaymentConfirm = (payments: PaymentInfo[], debtInfo?: DebtInfo, debtPayment?: DebtPaymentInfo) => {
+    createSaleMutation.mutate({ payments, debtInfo, debtPayment })
+  }
+
+  const handleCustomerSelect = (customer: import('@/lib/supabase/functions').Customer | null) => {
+    if (activeOrder) {
+      multiOrder.setCustomer(activeOrder.id, customer)
+    }
+  }
+
+  const handleCustomerCreate = () => {
+    setShowCustomerQuickAdd(true)
+  }
+
+  const handleCustomerCreated = (customer: import('@/lib/supabase/functions').Customer) => {
+    setShowCustomerQuickAdd(false)
+    if (activeOrder) {
+      multiOrder.setCustomer(activeOrder.id, customer)
+    }
   }
 
   const handleNewSale = () => {
     setStep('pos')
     setCompletedSale(undefined)
+    if (multiOrder.getOrderCount() === 0) {
+      multiOrder.createOrder()
+    }
   }
 
   const handleSyncComplete = useCallback(() => {
-    // Refresh product list after sync
     queryClient.invalidateQueries({ queryKey: ['products'] })
     queryClient.invalidateQueries({ queryKey: ['categories'] })
   }, [queryClient])
@@ -320,25 +356,35 @@ export default function POSPage() {
   if (step === 'payment') {
     return (
       <div className="p-4 max-w-md mx-auto">
-        <h1 className="text-xl font-bold mb-4">Thanh toan</h1>
+        <h1 className="text-xl font-bold mb-4">Thanh toan - {activeOrder?.label}</h1>
         {!isOnline && (
           <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
             Ban dang offline. Don hang se duoc luu va dong bo khi co mang.
           </div>
         )}
-        <PaymentMethods
-          total={total}
-          onConfirm={handlePaymentConfirm}
-          loading={createSaleMutation.isPending}
-          bankAccounts={isOnline ? bankAccounts : []}
-        />
+        {showCustomerQuickAdd ? (
+          <CustomerQuickAdd
+            onSuccess={handleCustomerCreated}
+            onCancel={() => setShowCustomerQuickAdd(false)}
+          />
+        ) : (
+          <PaymentMethods
+            total={total}
+            onConfirm={handlePaymentConfirm}
+            loading={createSaleMutation.isPending}
+            bankAccounts={isOnline ? bankAccounts : []}
+            customer={activeOrder?.customer || null}
+            onCustomerSelect={handleCustomerSelect}
+            onCustomerCreate={handleCustomerCreate}
+            allowPartialPayment={isOnline}
+          />
+        )}
       </div>
     )
   }
 
   return (
     <div className="p-4 pb-24">
-      {/* Offline Indicator */}
       <div className="mb-4">
         <OfflineIndicator
           showBanner={!isOnline}
@@ -352,6 +398,11 @@ export default function POSPage() {
           Ban hang
           {autoSyncing && <span className="text-sm font-normal text-gray-500 ml-2">(dang dong bo...)</span>}
         </h1>
+      </div>
+
+      <OrderTabs />
+
+      <div className="mb-4">
         <ProductSearch
           onSearch={handleSearch}
           onBarcodeScanned={handleBarcodeScanned}
@@ -385,7 +436,7 @@ export default function POSPage() {
         style={{ right: 24, bottom: 80, width: 56, height: 56 }}
       />
 
-      <CartSheet
+      <MultiOrderCartSheet
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         onCheckout={handleCheckout}

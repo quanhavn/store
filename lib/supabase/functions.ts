@@ -53,6 +53,8 @@ export const api = {
 
   store: {
     getUserStore: () => callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('get-user-store'),
+    updateStore: (data: { name?: string; phone?: string; email?: string; address?: string; tax_code?: string }) =>
+      callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('get-user-store', { action: 'update', ...data }),
   },
 
   products: {
@@ -308,6 +310,52 @@ export const api = {
       callFunction<{ payrolls: PayrollWithEmployee[]; totals: PayrollTotals; period: string }>('hr', { action: 'get_payroll', month, year }),
     getSalaryBook: (month: number, year: number) =>
       callFunction<{ salary_book: SalaryBookEntry[]; totals: SalaryBookTotals; period: string; employee_count: number }>('hr', { action: 'salary_book', month, year }),
+  },
+
+  customers: {
+    list: (params?: { search?: string; has_debt?: boolean; page?: number; limit?: number }) =>
+      callFunction<{ customers: Customer[]; pagination: Pagination }>('customer', { action: 'list', ...params }),
+
+    get: (id: string) =>
+      callFunction<{ customer: CustomerDetail }>('customer', { action: 'get', id }),
+
+    create: (data: CreateCustomerData) =>
+      callFunction<{ customer: Customer }>('customer', { action: 'create', ...data }),
+
+    update: (id: string, data: Partial<CreateCustomerData>) =>
+      callFunction<{ customer: Customer }>('customer', { action: 'update', id, ...data }),
+
+    search: (params: { query: string; limit?: number }) =>
+      callFunction<{ customers: Customer[] }>('customer', { action: 'search', ...params }),
+  },
+
+  debts: {
+    createCredit: (data: CreateCreditDebtData) =>
+      callFunction<{ debt: CustomerDebt }>('debt', { action: 'create_credit', ...data }),
+
+    createInstallment: (data: CreateInstallmentDebtData) =>
+      callFunction<{ debt: CustomerDebt; installments: DebtInstallment[] }>('debt', { action: 'create_installment', ...data }),
+
+    recordPayment: (data: RecordPaymentData) =>
+      callFunction<{ payment: DebtPayment; debt: CustomerDebt }>('debt', { action: 'record_payment', ...data }),
+
+    list: (params?: { customer_id?: string; status?: string; page?: number; limit?: number }) =>
+      callFunction<{ debts: DebtWithCustomer[]; pagination: Pagination }>('debt', { action: 'list', ...params }),
+
+    get: (id: string) =>
+      callFunction<{ debt: DebtDetail; payments: DebtPayment[] }>('debt', { action: 'get', id }),
+
+    getCustomerDebts: (customerId: string) =>
+      callFunction<{ debts: CustomerDebt[]; summary: CustomerDebtSummary }>('debt', { action: 'get_customer_debts', customer_id: customerId }),
+
+    cancel: (id: string) =>
+      callFunction<{ debt: CustomerDebt }>('debt', { action: 'cancel', id }),
+
+    summary: () =>
+      callFunction<{ summary: StoreDebtSummary }>('debt', { action: 'summary' }),
+
+    listCustomersWithDebt: () =>
+      callFunction<{ customers: Array<{ id: string; name: string; phone: string | null }> }>('debt', { action: 'list_customers_with_debt' }),
   },
 }
 
@@ -962,5 +1010,142 @@ export interface LowStockProduct {
   min_stock: number
   unit: string
   image_url: string | null
+}
+
+// Customer types
+export interface Customer {
+  id: string
+  store_id: string
+  name: string
+  phone: string
+  address: string | null
+  tax_code: string | null
+  notes: string | null
+  total_debt: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateCustomerData {
+  name: string
+  phone: string
+  address?: string
+  tax_code?: string
+  notes?: string
+}
+
+export interface CustomerWithDebts extends Customer {
+  active_debts: number
+  overdue_debts: number
+}
+
+export interface CustomerDetail extends Customer {
+  active_debts: number
+  overdue_debts: number
+  debts?: Array<{
+    id: string
+    invoice_no: string
+    total_amount: number
+    remaining_amount: number
+    created_at: string
+    is_overdue: boolean
+  }>
+}
+
+// Debt types
+export interface CustomerDebt {
+  id: string
+  store_id: string
+  customer_id: string
+  sale_id: string | null
+  debt_type: 'credit' | 'installment'
+  original_amount: number
+  remaining_amount: number
+  due_date: string | null
+  notes: string | null
+  status: 'active' | 'paid' | 'overdue' | 'cancelled'
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DebtWithCustomer extends CustomerDebt {
+  customer: Customer
+}
+
+export interface DebtInstallment {
+  id: string
+  debt_id: string
+  installment_number: number
+  amount: number
+  due_date: string
+  paid_amount: number
+  paid_date: string | null
+  status: 'pending' | 'paid' | 'partial' | 'overdue'
+  notes: string | null
+}
+
+export interface DebtPayment {
+  id: string
+  debt_id: string
+  installment_id: string | null
+  amount: number
+  payment_method: 'cash' | 'bank_transfer'
+  bank_account_id: string | null
+  bank_ref: string | null
+  notes: string | null
+  paid_at: string
+  created_by: string | null
+}
+
+export interface DebtDetail extends CustomerDebt {
+  customer: Customer
+  installments: DebtInstallment[]
+  payments: DebtPayment[]
+}
+
+export interface CustomerDebtSummary {
+  total_debt: number
+  active_debts: number
+  overdue_debts: number
+  paid_debts: number
+}
+
+export interface StoreDebtSummary {
+  total_outstanding: number
+  total_customers_with_debt: number
+  active_debts: number
+  overdue_debts: number
+  overdue_amount: number
+  collected_this_month: number
+}
+
+// Request types
+export interface CreateCreditDebtData {
+  customer_id: string
+  sale_id?: string
+  amount: number
+  due_date?: string
+  notes?: string
+}
+
+export interface CreateInstallmentDebtData {
+  customer_id: string
+  sale_id?: string
+  amount: number
+  installments: number
+  first_due_date: string
+  frequency: 'weekly' | 'biweekly' | 'monthly'
+  notes?: string
+}
+
+export interface RecordPaymentData {
+  debt_id: string
+  installment_id?: string
+  amount: number
+  payment_method: 'cash' | 'bank_transfer'
+  bank_account_id?: string
+  bank_ref?: string
+  notes?: string
 }
 

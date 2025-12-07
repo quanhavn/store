@@ -93,11 +93,21 @@ serve(async (req: Request) => {
 
     switch (body.action) {
       case 'dashboard_summary': {
+        // Use Vietnam timezone (GMT+7) for date calculations
+        const VIETNAM_TZ_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
         const now = new Date()
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString()
+        const vietnamNow = new Date(now.getTime() + VIETNAM_TZ_OFFSET)
+        
+        // Get date parts in Vietnam timezone
+        const year = vietnamNow.getUTCFullYear()
+        const month = vietnamNow.getUTCMonth()
+        const day = vietnamNow.getUTCDate()
+        
+        // Create dates in Vietnam timezone, then convert back to UTC for querying
+        const todayStart = new Date(Date.UTC(year, month, day) - VIETNAM_TZ_OFFSET).toISOString()
+        const monthStart = new Date(Date.UTC(year, month, 1) - VIETNAM_TZ_OFFSET).toISOString()
+        const lastMonthStart = new Date(Date.UTC(year, month - 1, 1) - VIETNAM_TZ_OFFSET).toISOString()
+        const lastMonthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59) - VIETNAM_TZ_OFFSET).toISOString()
 
         // Today's sales
         const { data: todaySales } = await supabase
@@ -158,8 +168,8 @@ serve(async (req: Request) => {
           .order('completed_at', { ascending: false })
           .limit(5)
 
-        // Tax deadline (next quarter)
-        const currentQuarter = Math.ceil((now.getMonth() + 1) / 3)
+        // Tax deadline (next quarter) - use Vietnam timezone
+        const currentQuarter = Math.ceil((month + 1) / 3)
         const taxDeadlines: Record<number, { month: number; day: number }> = {
           1: { month: 3, day: 30 }, // Q1 -> April 30
           2: { month: 6, day: 30 }, // Q2 -> July 30
@@ -168,9 +178,9 @@ serve(async (req: Request) => {
         }
 
         const deadline = taxDeadlines[currentQuarter]
-        const taxDeadlineYear = currentQuarter === 4 ? now.getFullYear() + 1 : now.getFullYear()
+        const taxDeadlineYear = currentQuarter === 4 ? year + 1 : year
         const taxDeadlineDate = new Date(taxDeadlineYear, deadline.month, deadline.day)
-        const taxDeadlineDays = Math.ceil((taxDeadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        const taxDeadlineDays = Math.ceil((taxDeadlineDate.getTime() - vietnamNow.getTime()) / (1000 * 60 * 60 * 24))
 
         return successResponse({
           today: {

@@ -181,6 +181,9 @@ enabled = true
 policy = "oneshot"
 inspector_port = 8083
 
+#[functions.env]
+#ALLOWED_ORIGIN = "http://localhost:3000"
+
 [analytics]
 enabled = false
 port = 54327

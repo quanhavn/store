@@ -1,0 +1,1 @@
+export { StoreInfoForm } from './StoreInfoForm'

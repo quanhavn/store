@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Steps, Button, Card, Typography, App, Result } from 'antd'
+import { Steps, Button, Card, Typography, App, Result, Spin } from 'antd'
 import { ShopOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { StoreInfoStep } from '@/components/onboarding/StoreInfoStep'
 import { TaxInfoStep } from '@/components/onboarding/TaxInfoStep'
@@ -44,6 +44,31 @@ export default function SetupPage() {
   const [data, setData] = useState<OnboardingData>(initialData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user?.user_metadata) {
+          const { store_name, phone } = user.user_metadata
+          setData((prev) => ({
+            ...prev,
+            storeName: store_name || '',
+            phone: phone || '',
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadUserData()
+  }, [])
 
   const updateData = (updates: Partial<OnboardingData>) => {
     setData((prev) => ({ ...prev, ...updates }))
@@ -90,6 +115,14 @@ export default function SetupPage() {
   const goToDashboard = () => {
     router.push('/')
     router.refresh()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (isComplete) {

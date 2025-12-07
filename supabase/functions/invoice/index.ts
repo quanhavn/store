@@ -8,12 +8,12 @@ import {
   handleCors,
 } from '../_shared/supabase.ts'
 import {
-  ViettelClient,
+  ViettelInvoiceClient,
   ViettelInvoiceRequest,
   ViettelInvoiceItem,
   ViettelTaxBreakdown,
-  getViettelCredentialsFromStore,
-  formatDateForViettel,
+  ViettelConfig,
+  formatViettelDate,
 } from '../_shared/viettel-client.ts'
 import { numberToVietnameseWords } from '../_shared/number-to-words.ts'
 
@@ -119,6 +119,29 @@ function getPaymentMethodName(payments: { method: string }[]): string {
   return 'TM/CK'
 }
 
+function getViettelCredentialsFromStore(config: Record<string, unknown> | null | undefined): ViettelConfig | null {
+  if (!config) return null
+  const baseUrl = config.viettel_base_url as string
+  const username = config.viettel_username as string
+  const password = config.viettel_password as string
+  const supplierTaxCode = config.viettel_supplier_tax_code as string
+  const templateCode = config.viettel_template_code as string
+  const invoiceSeries = config.viettel_invoice_series as string
+
+  if (!baseUrl || !username || !password || !supplierTaxCode) {
+    return null
+  }
+
+  return {
+    baseUrl,
+    username,
+    password,
+    supplierTaxCode,
+    defaultTemplate: templateCode,
+    defaultSerial: invoiceSeries,
+  }
+}
+
 function buildInvoiceRequest(
   sale: Sale,
   store: Store,
@@ -167,7 +190,7 @@ function buildInvoiceRequest(
       templateCode: credentials.templateCode,
       invoiceSeries: credentials.invoiceSeries,
       currencyCode: 'VND',
-      invoiceIssuedDate: formatDateForViettel(new Date()),
+      invoiceIssuedDate: formatViettelDate(new Date()),
       paymentMethodName: getPaymentMethodName(sale.payments),
     },
     buyerInfo: {
@@ -265,12 +288,12 @@ serve(async (req: Request) => {
           buyer_phone,
         })
 
-        const client = new ViettelClient(credentials)
+        const client = new ViettelInvoiceClient(credentials)
 
         try {
           const isDraft = body.action === 'create_draft'
           const viettelResponse = isDraft
-            ? await client.createInvoiceDraft(invoiceRequest)
+            ? await client.createDraft(invoiceRequest)
             : await client.createInvoice(invoiceRequest)
 
           if (viettelResponse.errorCode !== '0') {
@@ -361,10 +384,14 @@ serve(async (req: Request) => {
           return errorResponse('Cửa hàng chưa cấu hình thông tin hóa đơn điện tử Viettel', 400)
         }
 
-        const client = new ViettelClient(credentials)
+        const client = new ViettelInvoiceClient(credentials)
 
         try {
-          const viettelResponse = await client.cancelInvoice(invoice.provider_invoice_id, reason)
+          const viettelResponse = await client.cancelInvoice(
+            invoice.invoice_no, 
+            invoice.invoice_symbol || credentials.defaultTemplate || '', 
+            reason
+          )
 
           if (viettelResponse.errorCode !== '0') {
             await supabase
@@ -425,18 +452,23 @@ serve(async (req: Request) => {
           return errorResponse('Cửa hàng chưa cấu hình thông tin hóa đơn điện tử Viettel', 400)
         }
 
-        const client = new ViettelClient(credentials)
-        const fileResponse = await client.getInvoicePdf(invoice.provider_invoice_id)
+        const client = new ViettelInvoiceClient(credentials)
+        
+        try {
+          const pdfBytes = await client.getInvoicePdf(
+            invoice.invoice_no,
+            invoice.invoice_symbol || credentials.defaultTemplate || ''
+          )
+          const base64Data = btoa(String.fromCharCode(...pdfBytes))
 
-        if (fileResponse.errorCode !== '0') {
-          return errorResponse(`Lỗi từ Viettel: ${fileResponse.description}`, 400)
+          return successResponse({
+            file_name: `invoice_${invoice.invoice_no}.pdf`,
+            file_data: base64Data,
+            content_type: 'application/pdf',
+          })
+        } catch (err) {
+          return errorResponse(`Lỗi từ Viettel: ${err instanceof Error ? err.message : 'Unknown error'}`, 400)
         }
-
-        return successResponse({
-          file_name: fileResponse.fileName || `invoice_${invoice.invoice_no}.pdf`,
-          file_data: fileResponse.fileToBytes,
-          content_type: 'application/pdf',
-        })
       }
 
       case 'download_xml': {
@@ -477,26 +509,27 @@ serve(async (req: Request) => {
           return errorResponse('Cửa hàng chưa cấu hình thông tin hóa đơn điện tử Viettel', 400)
         }
 
-        const client = new ViettelClient(credentials)
-        const fileResponse = await client.getInvoiceXml(invoice.provider_invoice_id)
+        const client = new ViettelInvoiceClient(credentials)
+        
+        try {
+          const xmlContent = await client.getInvoiceXml(
+            invoice.invoice_no,
+            invoice.invoice_symbol || credentials.defaultTemplate || ''
+          )
 
-        if (fileResponse.errorCode !== '0') {
-          return errorResponse(`Lỗi từ Viettel: ${fileResponse.description}`, 400)
-        }
-
-        if (fileResponse.fileToBytes) {
-          const xmlContent = atob(fileResponse.fileToBytes)
           await supabase
             .from('e_invoices')
             .update({ xml_content: xmlContent })
             .eq('id', invoice_id)
-        }
 
-        return successResponse({
-          file_name: fileResponse.fileName || `invoice_${invoice.invoice_no}.xml`,
-          file_data: fileResponse.fileToBytes,
-          content_type: 'application/xml',
-        })
+          return successResponse({
+            file_name: `invoice_${invoice.invoice_no}.xml`,
+            file_data: btoa(xmlContent),
+            content_type: 'application/xml',
+          })
+        } catch (err) {
+          return errorResponse(`Lỗi từ Viettel: ${err instanceof Error ? err.message : 'Unknown error'}`, 400)
+        }
       }
 
       case 'list': {

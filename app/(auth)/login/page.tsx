@@ -191,7 +191,7 @@ export default function LoginPage() {
 
         <Text type="secondary" className="block text-center text-xs mt-6">
           Bằng việc đăng ký, bạn đồng ý với{' '}
-          <Link href="#">Điều khoản dịch vụ</Link>
+          <Link href="/terms">Điều khoản dịch vụ</Link>
         </Text>
       </div>
     </div>

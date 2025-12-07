@@ -179,11 +179,8 @@ serve(async (req: Request) => {
           query = query.eq('category_id', category_id)
         }
 
-        if (low_stock) {
-          query = query.lt('quantity', supabase.rpc('get_min_stock_threshold'))
-          // Fallback: filter products where quantity < min_stock
-          // This will be handled in the response
-        }
+        // low_stock filtering is done in application layer after fetch
+        // since we need to compare quantity < min_stock per product
 
         const offset = (page - 1) * limit
         query = query.range(offset, offset + limit - 1)
