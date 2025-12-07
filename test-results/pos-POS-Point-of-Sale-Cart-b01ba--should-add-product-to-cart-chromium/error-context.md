@@ -1,0 +1,162 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e8]:
+          - generic [ref=e13]: Dang ket noi
+          - button "sync Dong bo" [ref=e14] [cursor=pointer]:
+            - img "sync" [ref=e16]:
+              - img [ref=e17]
+            - generic [ref=e19]: Dong bo
+        - generic [ref=e20]:
+          - heading "Ban hang" [level=1] [ref=e21]
+          - generic [ref=e22]:
+            - generic [ref=e23]:
+              - img "search" [ref=e25]:
+                - img [ref=e26]
+              - textbox "Tim san pham, ma vach..." [ref=e28]
+            - button "scan" [ref=e30] [cursor=pointer]:
+              - img "scan" [ref=e32]:
+                - img [ref=e33]
+        - generic [ref=e37]:
+          - generic [ref=e39] [cursor=pointer]:
+            - img "check-circle" [ref=e40]:
+              - img [ref=e41]
+            - text: Tất cả
+          - generic [ref=e45] [cursor=pointer]: Gia dụng
+          - generic [ref=e47] [cursor=pointer]: Thực phẩm
+          - generic [ref=e49] [cursor=pointer]: Đồ uống
+        - generic [ref=e50]:
+          - radiogroup "segmented control" [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e54] [cursor=pointer]:
+                - radio "appstore" [checked]
+                - radio "appstore" [checked] [ref=e55]:
+                  - img "appstore" [ref=e57]:
+                    - img [ref=e58]
+              - generic [ref=e60] [cursor=pointer]:
+                - radio "bars"
+                - radio "bars" [ref=e61]:
+                  - img "bars" [ref=e63]:
+                    - img [ref=e64]
+          - generic [ref=e66]:
+            - generic [ref=e68] [cursor=pointer]:
+              - img "shopping-cart" [ref=e71]:
+                - img [ref=e72]
+              - generic [ref=e76]:
+                - generic [ref=e78]: Bánh mì
+                - generic [ref=e80]:
+                  - generic [ref=e81]:
+                    - strong [ref=e83]: 15.000đ
+                    - generic [ref=e84]: /ổ
+                  - generic [ref=e86]: Còn 50
+                  - generic [ref=e87]: Thực phẩm
+              - list [ref=e88]:
+                - listitem [ref=e89]:
+                  - generic [ref=e91]:
+                    - img "shopping-cart" [ref=e92]:
+                      - img [ref=e93]
+                    - text: Thêm
+            - generic [ref=e96] [cursor=pointer]:
+              - img "shopping-cart" [ref=e99]:
+                - img [ref=e100]
+              - generic [ref=e104]:
+                - generic [ref=e106]: Coca Cola
+                - generic [ref=e108]:
+                  - generic [ref=e109]:
+                    - strong [ref=e111]: 12.000đ
+                    - generic [ref=e112]: /chai
+                  - generic [ref=e114]: Còn 80
+                  - generic [ref=e115]: Đồ uống
+              - list [ref=e116]:
+                - listitem [ref=e117]:
+                  - generic [ref=e119]:
+                    - img "shopping-cart" [ref=e120]:
+                      - img [ref=e121]
+                    - text: Thêm
+            - generic [ref=e124] [cursor=pointer]:
+              - img "shopping-cart" [ref=e127]:
+                - img [ref=e128]
+              - generic [ref=e132]:
+                - generic [ref=e134]: Mì gói
+                - generic [ref=e136]:
+                  - generic [ref=e137]:
+                    - strong [ref=e139]: 5.000đ
+                    - generic [ref=e140]: /gói
+                  - generic [ref=e142]: Còn 100
+                  - generic [ref=e143]: Thực phẩm
+              - list [ref=e144]:
+                - listitem [ref=e145]:
+                  - generic [ref=e147]:
+                    - img "shopping-cart" [ref=e148]:
+                      - img [ref=e149]
+                    - text: Thêm
+            - generic [ref=e152] [cursor=pointer]:
+              - img "shopping-cart" [ref=e155]:
+                - img [ref=e156]
+              - generic [ref=e160]:
+                - generic [ref=e162]: Trà đá
+                - generic [ref=e164]:
+                  - generic [ref=e165]:
+                    - strong [ref=e167]: 3.000đ
+                    - generic [ref=e168]: /ly
+                  - generic [ref=e170]: Còn 200
+                  - generic [ref=e171]: Đồ uống
+              - list [ref=e172]:
+                - listitem [ref=e173]:
+                  - generic [ref=e175]:
+                    - img "shopping-cart" [ref=e176]:
+                      - img [ref=e177]
+                    - text: Thêm
+        - button "shopping-cart 1" [ref=e179] [cursor=pointer]:
+          - generic [ref=e181]:
+            - img "shopping-cart" [ref=e182]:
+              - img [ref=e183]
+            - superscript [ref=e185]:
+              - generic [ref=e187]: "1"
+    - navigation [ref=e188]:
+      - generic [ref=e189]:
+        - link "home Trang chu" [ref=e190] [cursor=pointer]:
+          - /url: /
+          - img "home" [ref=e191]:
+            - img [ref=e192]
+          - generic [ref=e194]: Trang chu
+        - link "shopping-cart Ban hang" [ref=e195] [cursor=pointer]:
+          - /url: /pos
+          - img "shopping-cart" [ref=e196]:
+            - img [ref=e197]
+          - generic [ref=e199]: Ban hang
+        - link "inbox Kho" [ref=e200] [cursor=pointer]:
+          - /url: /inventory
+          - img "inbox" [ref=e201]:
+            - img [ref=e202]
+          - generic [ref=e204]: Kho
+        - link "wallet Thu chi" [ref=e205] [cursor=pointer]:
+          - /url: /finance
+          - img "wallet" [ref=e206]:
+            - img [ref=e207]
+          - generic [ref=e209]: Thu chi
+        - link "file-text Hóa đơn" [ref=e210] [cursor=pointer]:
+          - /url: /invoices
+          - img "file-text" [ref=e211]:
+            - img [ref=e212]
+          - generic [ref=e214]: Hóa đơn
+        - link "calculator Thue" [ref=e215] [cursor=pointer]:
+          - /url: /tax
+          - img "calculator" [ref=e216]:
+            - img [ref=e217]
+          - generic [ref=e219]: Thue
+        - link "bar-chart Bao cao" [ref=e220] [cursor=pointer]:
+          - /url: /reports
+          - img "bar-chart" [ref=e221]:
+            - img [ref=e222]
+          - generic [ref=e224]: Bao cao
+  - alert [ref=e225]
+  - generic [ref=e227]:
+    - img "check-circle" [ref=e228]:
+      - img [ref=e229]
+    - generic [ref=e231]: Da them Bánh mì
+```

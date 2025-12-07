@@ -1,0 +1,148 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Bao cao" [level=4] [ref=e6]
+        - generic [ref=e7]:
+          - tablist [ref=e8]:
+            - generic [ref=e10]:
+              - tab "dashboard Tong quan" [ref=e12] [cursor=pointer]:
+                - generic [ref=e13]:
+                  - img "dashboard" [ref=e14]:
+                    - img [ref=e15]
+                  - text: Tong quan
+              - tab "file-text So sach" [active] [selected] [ref=e18] [cursor=pointer]:
+                - generic [ref=e19]:
+                  - img "file-text" [ref=e20]:
+                    - img [ref=e21]
+                  - text: So sach
+          - tabpanel "file-text So sach" [ref=e25]:
+            - generic [ref=e26]:
+              - generic [ref=e29]:
+                - text: "Chon ky bao cao:"
+                - radiogroup "segmented control" [ref=e30]:
+                  - generic [ref=e31]:
+                    - generic [ref=e32] [cursor=pointer]:
+                      - radio "Hom nay"
+                      - radio "Hom nay" [ref=e33]
+                    - generic [ref=e34] [cursor=pointer]:
+                      - radio "Tuan"
+                      - radio "Tuan" [ref=e35]
+                    - generic [ref=e36] [cursor=pointer]:
+                      - radio "Thang" [checked]
+                      - radio "Thang" [checked] [ref=e37]
+                    - generic [ref=e38] [cursor=pointer]:
+                      - radio "Quy"
+                      - radio "Quy" [ref=e39]
+                - generic [ref=e40]:
+                  - button "Ca nam" [ref=e41] [cursor=pointer]:
+                    - generic [ref=e42]: Ca nam
+                  - button "Tuy chon" [ref=e43] [cursor=pointer]:
+                    - generic [ref=e44]: Tuy chon
+              - list [ref=e48]:
+                - generic [ref=e51] [cursor=pointer]:
+                  - img "dollar" [ref=e53]:
+                    - img [ref=e54]
+                  - generic [ref=e56]:
+                    - strong [ref=e58]: So doanh thu
+                    - generic [ref=e59]: Doanh thu ban hang
+                  - button "download" [ref=e60]:
+                    - img "download" [ref=e62]:
+                      - img [ref=e63]
+                - generic [ref=e67] [cursor=pointer]:
+                  - img "wallet" [ref=e69]:
+                    - img [ref=e70]
+                  - generic [ref=e72]:
+                    - strong [ref=e74]: So tien mat
+                    - generic [ref=e75]: Thu chi tien mat
+                  - button "download" [ref=e76]:
+                    - img "download" [ref=e78]:
+                      - img [ref=e79]
+                - generic [ref=e83] [cursor=pointer]:
+                  - img "bank" [ref=e85]:
+                    - img [ref=e86]
+                  - generic [ref=e88]:
+                    - strong [ref=e90]: So tien gui
+                    - generic [ref=e91]: Thu chi ngan hang
+                  - button "download" [ref=e92]:
+                    - img "download" [ref=e94]:
+                      - img [ref=e95]
+                - generic [ref=e99] [cursor=pointer]:
+                  - img "file-text" [ref=e101]:
+                    - img [ref=e102]
+                  - generic [ref=e104]:
+                    - strong [ref=e106]: So chi phi
+                    - generic [ref=e107]: Chi phi theo danh muc
+                  - button "download" [ref=e108]:
+                    - img "download" [ref=e110]:
+                      - img [ref=e111]
+                - generic [ref=e115] [cursor=pointer]:
+                  - img "inbox" [ref=e117]:
+                    - img [ref=e118]
+                  - generic [ref=e120]:
+                    - strong [ref=e122]: So ton kho
+                    - generic [ref=e123]: Xuat nhap ton
+                  - button "download" [ref=e124]:
+                    - img "download" [ref=e126]:
+                      - img [ref=e127]
+                - generic [ref=e131] [cursor=pointer]:
+                  - img "percentage" [ref=e133]:
+                    - img [ref=e134]
+                  - generic [ref=e136]:
+                    - strong [ref=e138]: So nghia vu thue
+                    - generic [ref=e139]: VAT, TNCN theo quy
+                  - button "download" [ref=e140]:
+                    - img "download" [ref=e142]:
+                      - img [ref=e143]
+                - generic [ref=e147] [cursor=pointer]:
+                  - img "team" [ref=e149]:
+                    - img [ref=e150]
+                  - generic [ref=e152]:
+                    - strong [ref=e154]: So luong
+                    - generic [ref=e155]: Luong nhan vien
+                  - button "download" [ref=e156]:
+                    - img "download" [ref=e158]:
+                      - img [ref=e159]
+    - navigation [ref=e161]:
+      - generic [ref=e162]:
+        - link "home Trang chu" [ref=e163] [cursor=pointer]:
+          - /url: /
+          - img "home" [ref=e164]:
+            - img [ref=e165]
+          - generic [ref=e167]: Trang chu
+        - link "shopping-cart Ban hang" [ref=e168] [cursor=pointer]:
+          - /url: /pos
+          - img "shopping-cart" [ref=e169]:
+            - img [ref=e170]
+          - generic [ref=e172]: Ban hang
+        - link "inbox Kho" [ref=e173] [cursor=pointer]:
+          - /url: /inventory
+          - img "inbox" [ref=e174]:
+            - img [ref=e175]
+          - generic [ref=e177]: Kho
+        - link "wallet Thu chi" [ref=e178] [cursor=pointer]:
+          - /url: /finance
+          - img "wallet" [ref=e179]:
+            - img [ref=e180]
+          - generic [ref=e182]: Thu chi
+        - link "file-text Hóa đơn" [ref=e183] [cursor=pointer]:
+          - /url: /invoices
+          - img "file-text" [ref=e184]:
+            - img [ref=e185]
+          - generic [ref=e187]: Hóa đơn
+        - link "calculator Thue" [ref=e188] [cursor=pointer]:
+          - /url: /tax
+          - img "calculator" [ref=e189]:
+            - img [ref=e190]
+          - generic [ref=e192]: Thue
+        - link "bar-chart Bao cao" [ref=e193] [cursor=pointer]:
+          - /url: /reports
+          - img "bar-chart" [ref=e194]:
+            - img [ref=e195]
+          - generic [ref=e197]: Bao cao
+  - alert [ref=e198]
+  - generic [ref=e199]: T12
+```

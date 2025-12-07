@@ -21,7 +21,7 @@ import {
   CheckOutlined
 } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/supabase/functions'
 import { useInventoryStore, AdjustmentType } from '@/lib/stores/inventory'
 import { formatCurrency } from '@/lib/utils'
 
@@ -40,7 +40,6 @@ interface Product {
 export function StockAdjustment() {
   const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   const {
@@ -62,68 +61,36 @@ export function StockAdjustment() {
     queryKey: ['products-search', searchTerm],
     queryFn: async () => {
       if (!searchTerm) return []
-
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, sku, quantity, cost_price, unit')
-        .eq('active', true)
-        .or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%`)
-        .limit(20)
-
-      if (error) throw error
-      return data as Product[]
+      const result = await api.products.list({ search: searchTerm, limit: 20 })
+      return result.products as Product[]
     },
     enabled: searchTerm.length > 0,
   })
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const items = adjustmentItems.map((item) => ({
-        product_id: item.product_id,
-        type: adjustmentType,
-        quantity: adjustmentType === 'export' ? -item.adjustment_quantity : item.adjustment_quantity,
-        unit_cost: item.unit_cost,
-        total_value: (item.unit_cost || 0) * item.adjustment_quantity,
-        note: item.note || adjustmentNote,
-      }))
-
-      // Create inventory logs
-      const logRecords = items.map((item) => ({
-        product_id: item.product_id,
-        type: item.type as 'import' | 'export' | 'sale' | 'return' | 'adjustment',
-        quantity: Math.abs(item.quantity),
-        unit_cost: item.unit_cost,
-        total_value: item.total_value,
-        note: item.note,
-      }))
-
-      const { error: logError } = await supabase
-        .from('inventory_logs')
-        .insert(logRecords as never)
-
-      if (logError) throw logError
-
-      // Update product quantities
       for (const item of adjustmentItems) {
-        const quantityChange = adjustmentType === 'export'
-          ? -item.adjustment_quantity
-          : item.adjustment_quantity
-
-        // Fetch current quantity and update
-        const { data: product } = await supabase
-          .from('products')
-          .select('quantity')
-          .eq('id', item.product_id)
-          .single() as { data: { quantity: number } | null }
-
-        if (product) {
-          await supabase
-            .from('products')
-            .update({ quantity: product.quantity + quantityChange } as never)
-            .eq('id', item.product_id)
+        if (adjustmentType === 'import') {
+          await api.inventory.import({
+            product_id: item.product_id,
+            quantity: item.adjustment_quantity,
+            unit_cost: item.unit_cost ?? undefined,
+            note: item.note || adjustmentNote,
+          })
+        } else if (adjustmentType === 'export') {
+          await api.inventory.export({
+            product_id: item.product_id,
+            quantity: item.adjustment_quantity,
+            note: item.note || adjustmentNote,
+          })
+        } else {
+          await api.inventory.adjust({
+            product_id: item.product_id,
+            new_quantity: item.current_quantity + item.adjustment_quantity,
+            note: item.note || adjustmentNote,
+          })
         }
       }
-
       return true
     },
     onSuccess: () => {

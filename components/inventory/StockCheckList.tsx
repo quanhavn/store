@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { List, Input, Spin, Empty, Tag, Typography } from 'antd'
 import { SearchOutlined, InboxOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
 const { Text } = Typography
@@ -19,29 +19,17 @@ interface Product {
   min_stock: number
   cost_price: number
   sell_price: number
-  categories?: { name: string } | null
+  categories?: { id: string; name: string } | null
 }
 
 export function StockCheckList() {
   const [search, setSearch] = useState('')
-  const supabase = createClient()
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products-stock', search],
     queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('id, name, sku, barcode, unit, quantity, min_stock, cost_price, sell_price, categories(name)')
-        .eq('active', true)
-        .order('name')
-
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,barcode.ilike.%${search}%`)
-      }
-
-      const { data, error } = await query.limit(100)
-      if (error) throw error
-      return data as Product[]
+      const result = await api.products.list({ search: search || undefined, limit: 100 })
+      return result.products as Product[]
     },
   })
 

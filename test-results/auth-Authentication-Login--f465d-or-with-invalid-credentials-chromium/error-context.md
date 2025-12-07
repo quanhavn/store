@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img "shop" [ref=e7]:
+        - img [ref=e8]
+      - heading "Quản Lý Cửa Hàng" [level=3] [ref=e10]
+      - generic [ref=e11]: Đăng nhập để tiếp tục
+    - generic [ref=e13]:
+      - heading "Đăng nhập" [level=4] [ref=e14]
+      - generic [ref=e15]: Nhập số điện thoại và mật khẩu
+      - generic [ref=e16]:
+        - generic [ref=e18]:
+          - generic "Số điện thoại" [ref=e20]
+          - generic [ref=e24]:
+            - img "phone" [ref=e26]:
+              - img [ref=e27]
+            - textbox "Số điện thoại" [ref=e29]:
+              - /placeholder: "0912345678"
+              - text: "0999999999"
+        - generic [ref=e31]:
+          - generic "Mật khẩu" [ref=e33]
+          - generic [ref=e37]:
+            - img "lock" [ref=e39]:
+              - img [ref=e40]
+            - textbox "Mật khẩu" [ref=e42]:
+              - /placeholder: ••••••••
+              - text: wrongpassword
+            - img "eye-invisible" [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+        - button "Đăng nhập" [active] [ref=e53] [cursor=pointer]:
+          - generic [ref=e56]: Đăng nhập
+      - separator [ref=e57]:
+        - generic [ref=e59]: hoặc
+      - generic [ref=e61]: Chưa có tài khoản? Đăng ký
+    - generic [ref=e62]:
+      - text: Bằng việc đăng ký, bạn đồng ý với
+      - link "Điều khoản dịch vụ" [ref=e63] [cursor=pointer]:
+        - /url: "#"
+  - alert [ref=e64]
+  - generic [ref=e66]:
+    - img "close-circle" [ref=e67]:
+      - img [ref=e68]
+    - generic [ref=e70]: Invalid login credentials
+```

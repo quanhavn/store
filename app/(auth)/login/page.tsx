@@ -5,12 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Form, Input, Button, Card, Typography, App, Divider } from 'antd'
 import { ShopOutlined, PhoneOutlined, LockOutlined } from '@ant-design/icons'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/types/database'
 
 const { Title, Text, Link } = Typography
-
-type StoreInsert = Database['public']['Tables']['stores']['Insert']
-type UserInsert = Database['public']['Tables']['users']['Insert']
 
 // Convert phone number to email format for Supabase auth
 const phoneToEmail = (phone: string) => {
@@ -62,6 +58,7 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
 
+      // Step 1: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: phoneToEmail(values.phone),
         password: values.password,
@@ -76,35 +73,15 @@ export default function LoginPage() {
       if (authError) throw authError
 
       if (authData.user) {
-        // Create store for the new user
-        // Note: Type assertions needed due to Supabase RLS type generation limitations
-        const storePayload: StoreInsert = {
-          name: values.storeName,
-          phone: values.phone,
-        }
+        // Step 2: Call the secure registration function to create store + user profile
+        // This function runs with SECURITY DEFINER to bypass RLS during registration
+        const { error: registerError } = await supabase
+          .rpc('register_store_and_user', {
+            p_store_name: values.storeName,
+            p_phone: values.phone,
+          } as never)
 
-        const { data: store, error: storeError } = await supabase
-          .from('stores')
-          .insert(storePayload as never)
-          .select('id')
-          .single()
-
-        if (storeError || !store) throw storeError ?? new Error('Failed to create store')
-
-        // Create user profile linked to the store
-        const userPayload: UserInsert = {
-          id: authData.user.id,
-          store_id: (store as { id: string }).id,
-          name: values.storeName,
-          phone: values.phone,
-          role: 'owner',
-        }
-
-        const { error: userError } = await supabase
-          .from('users')
-          .insert(userPayload as never)
-
-        if (userError) throw userError
+        if (registerError) throw registerError
       }
 
       message.success('Đăng ký thành công')

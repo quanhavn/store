@@ -1,23 +1,33 @@
 'use client'
 
-import { Input } from 'antd'
+import { Input, Button, Tooltip } from 'antd'
 import { SearchOutlined, ScanOutlined } from '@ant-design/icons'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+
+// Dynamic import for BarcodeScanner (client-only, no SSR)
+const BarcodeScanner = dynamic(
+  () => import('@/components/pos/BarcodeScanner'),
+  { ssr: false }
+)
 
 interface ProductSearchProps {
   onSearch: (value: string) => void
-  onScan?: () => void
+  onBarcodeScanned?: (barcode: string) => void
   placeholder?: string
   debounceMs?: number
+  showScanner?: boolean
 }
 
 export function ProductSearch({
   onSearch,
-  onScan,
-  placeholder = 'Tìm sản phẩm, mã vạch...',
+  onBarcodeScanned,
+  placeholder = 'Tim san pham, ma vach...',
   debounceMs = 300,
+  showScanner = false,
 }: ProductSearchProps) {
   const [value, setValue] = useState('')
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,23 +37,55 @@ export function ProductSearch({
     return () => clearTimeout(timer)
   }, [value, onSearch, debounceMs])
 
+  const handleOpenScanner = useCallback(() => {
+    setScannerOpen(true)
+  }, [])
+
+  const handleCloseScanner = useCallback(() => {
+    setScannerOpen(false)
+  }, [])
+
+  const handleBarcodeScanned = useCallback((barcode: string) => {
+    // Set the barcode in the search input
+    setValue(barcode)
+
+    // Call the callback if provided
+    if (onBarcodeScanned) {
+      onBarcodeScanned(barcode)
+    }
+  }, [onBarcodeScanned])
+
   return (
-    <Input
-      size="large"
-      placeholder={placeholder}
-      prefix={<SearchOutlined className="text-gray-400" />}
-      suffix={
-        onScan && (
-          <ScanOutlined
-            className="text-gray-400 cursor-pointer hover:text-blue-500"
-            onClick={onScan}
-          />
-        )
-      }
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      allowClear
-      className="rounded-lg"
-    />
+    <>
+      <div className="flex gap-2">
+        <Input
+          size="large"
+          placeholder={placeholder}
+          prefix={<SearchOutlined className="text-gray-400" />}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          allowClear
+          className="rounded-lg flex-1"
+        />
+        {showScanner && (
+          <Tooltip title="Quet ma vach">
+            <Button
+              size="large"
+              icon={<ScanOutlined />}
+              onClick={handleOpenScanner}
+              className="flex items-center justify-center"
+            />
+          </Tooltip>
+        )}
+      </div>
+
+      {showScanner && (
+        <BarcodeScanner
+          open={scannerOpen}
+          onClose={handleCloseScanner}
+          onScan={handleBarcodeScanned}
+        />
+      )}
+    </>
   )
 }

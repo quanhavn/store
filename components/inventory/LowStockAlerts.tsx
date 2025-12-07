@@ -3,7 +3,7 @@
 import { List, Empty, Tag, Badge, Typography, Spin, Button } from 'antd'
 import { WarningOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/supabase/functions'
 import { useInventoryStore } from '@/lib/stores/inventory'
 
 const { Text } = Typography
@@ -11,34 +11,22 @@ const { Text } = Typography
 interface LowStockProduct {
   id: string
   name: string
-  sku: string | null
+  sku?: string | null
   unit: string
   quantity: number
   min_stock: number
-  cost_price: number
+  cost_price?: number
   categories?: { name: string } | null
 }
 
 export function LowStockAlerts() {
-  const supabase = createClient()
   const { addAdjustmentItem, setAdjustmentType } = useInventoryStore()
 
   const { data: lowStockProducts = [], isLoading } = useQuery({
     queryKey: ['low-stock-products'],
     queryFn: async () => {
-      // Get products where quantity <= min_stock
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, sku, unit, quantity, min_stock, cost_price, categories(name)')
-        .eq('active', true)
-        .order('quantity', { ascending: true })
-
-      if (error) throw error
-
-      // Filter for low stock items (quantity <= min_stock)
-      return (data as LowStockProduct[]).filter(
-        (product) => product.quantity <= product.min_stock
-      )
+      const result = await api.inventory.lowStock()
+      return result.products as LowStockProduct[]
     },
     refetchInterval: 60000, // Refetch every minute
   })
@@ -52,7 +40,7 @@ export function LowStockAlerts() {
       id: product.id,
       name: product.name,
       quantity: product.quantity,
-      cost_price: product.cost_price,
+      cost_price: product.cost_price || 0,
     })
   }
 

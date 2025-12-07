@@ -1,0 +1,146 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - heading "Quan ly kho" [level=4] [ref=e7]
+          - button "plus Thêm down" [ref=e9] [cursor=pointer]:
+            - img "plus" [ref=e11]:
+              - img [ref=e12]
+            - generic [ref=e15]: Thêm
+            - img "down" [ref=e16]:
+              - img [ref=e17]
+        - generic [ref=e19]:
+          - tablist [ref=e20]:
+            - generic [ref=e22]:
+              - tab "unordered-list Ton kho" [selected] [ref=e24] [cursor=pointer]:
+                - generic [ref=e25]:
+                  - img "unordered-list" [ref=e26]:
+                    - img [ref=e27]
+                  - text: Ton kho
+              - tab "swap Nhap/Xuat" [ref=e30] [cursor=pointer]:
+                - generic [ref=e31]:
+                  - img "swap" [ref=e32]:
+                    - img [ref=e33]
+                  - text: Nhap/Xuat
+              - tab "warning Canh bao" [ref=e36] [cursor=pointer]:
+                - generic [ref=e37]:
+                  - img "warning" [ref=e38]:
+                    - img [ref=e39]
+                  - text: Canh bao
+          - tabpanel "unordered-list Ton kho" [ref=e43]:
+            - generic [ref=e44]:
+              - generic [ref=e45]:
+                - img "search" [ref=e47]:
+                  - img [ref=e48]
+                - textbox "Tìm sản phẩm..." [ref=e50]
+              - generic [ref=e52]:
+                - generic [ref=e53]:
+                  - generic [ref=e54]: "Tổng giá trị tồn kho:"
+                  - strong [ref=e56]: 1.590.000 ₫
+                - generic [ref=e57]:
+                  - generic [ref=e58]: "Số sản phẩm:"
+                  - generic [ref=e59]: "4"
+              - list [ref=e63]:
+                - listitem [ref=e64]:
+                  - generic [ref=e65]:
+                    - generic [ref=e66]:
+                      - generic [ref=e67]:
+                        - generic [ref=e68]: Bánh mì
+                        - generic [ref=e69]:
+                          - generic [ref=e70]: "SKU: BM001"
+                          - generic [ref=e71]: "| 8934567890124"
+                        - generic [ref=e72]: Thực phẩm
+                      - generic [ref=e73]:
+                        - generic [ref=e74]: 50 ổ
+                        - generic [ref=e75]: Còn hàng
+                    - generic [ref=e76]:
+                      - generic [ref=e77]: "Tối thiểu: 10 ổ"
+                      - generic [ref=e78]: "Giá vốn: 10.000 ₫"
+                - listitem [ref=e79]:
+                  - generic [ref=e80]:
+                    - generic [ref=e81]:
+                      - generic [ref=e82]:
+                        - generic [ref=e83]: Coca Cola
+                        - generic [ref=e84]:
+                          - generic [ref=e85]: "SKU: CC001"
+                          - generic [ref=e86]: "| 8934567890125"
+                        - generic [ref=e87]: Đồ uống
+                      - generic [ref=e88]:
+                        - generic [ref=e89]: 80 chai
+                        - generic [ref=e90]: Còn hàng
+                    - generic [ref=e91]:
+                      - generic [ref=e92]: "Tối thiểu: 15 chai"
+                      - generic [ref=e93]: "Giá vốn: 8.000 ₫"
+                - listitem [ref=e94]:
+                  - generic [ref=e95]:
+                    - generic [ref=e96]:
+                      - generic [ref=e97]:
+                        - generic [ref=e98]: Mì gói
+                        - generic [ref=e99]:
+                          - generic [ref=e100]: "SKU: MI001"
+                          - generic [ref=e101]: "| 8934567890123"
+                        - generic [ref=e102]: Thực phẩm
+                      - generic [ref=e103]:
+                        - generic [ref=e104]: 100 gói
+                        - generic [ref=e105]: Còn hàng
+                    - generic [ref=e106]:
+                      - generic [ref=e107]: "Tối thiểu: 20 gói"
+                      - generic [ref=e108]: "Giá vốn: 3.500 ₫"
+                - listitem [ref=e109]:
+                  - generic [ref=e110]:
+                    - generic [ref=e111]:
+                      - generic [ref=e112]:
+                        - generic [ref=e113]: Trà đá
+                        - generic [ref=e114]:
+                          - generic [ref=e115]: "SKU: TD001"
+                          - generic [ref=e116]: "| 8934567890126"
+                        - generic [ref=e117]: Đồ uống
+                      - generic [ref=e118]:
+                        - generic [ref=e119]: 200 ly
+                        - generic [ref=e120]: Còn hàng
+                    - generic [ref=e121]:
+                      - generic [ref=e122]: "Tối thiểu: 50 ly"
+                      - generic [ref=e123]: "Giá vốn: 500 ₫"
+    - navigation [ref=e124]:
+      - generic [ref=e125]:
+        - link "home Trang chu" [ref=e126] [cursor=pointer]:
+          - /url: /
+          - img "home" [ref=e127]:
+            - img [ref=e128]
+          - generic [ref=e130]: Trang chu
+        - link "shopping-cart Ban hang" [ref=e131] [cursor=pointer]:
+          - /url: /pos
+          - img "shopping-cart" [ref=e132]:
+            - img [ref=e133]
+          - generic [ref=e135]: Ban hang
+        - link "inbox Kho" [ref=e136] [cursor=pointer]:
+          - /url: /inventory
+          - img "inbox" [ref=e137]:
+            - img [ref=e138]
+          - generic [ref=e140]: Kho
+        - link "wallet Thu chi" [ref=e141] [cursor=pointer]:
+          - /url: /finance
+          - img "wallet" [ref=e142]:
+            - img [ref=e143]
+          - generic [ref=e145]: Thu chi
+        - link "file-text Hóa đơn" [ref=e146] [cursor=pointer]:
+          - /url: /invoices
+          - img "file-text" [ref=e147]:
+            - img [ref=e148]
+          - generic [ref=e150]: Hóa đơn
+        - link "calculator Thue" [ref=e151] [cursor=pointer]:
+          - /url: /tax
+          - img "calculator" [ref=e152]:
+            - img [ref=e153]
+          - generic [ref=e155]: Thue
+        - link "bar-chart Bao cao" [ref=e156] [cursor=pointer]:
+          - /url: /reports
+          - img "bar-chart" [ref=e157]:
+            - img [ref=e158]
+          - generic [ref=e160]: Bao cao
+  - alert [ref=e161]
+```

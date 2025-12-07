@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { Button, FloatButton, message } from 'antd'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/supabase/functions'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { ProductSearch } from '@/components/products/ProductSearch'
 import { CategoryFilter } from '@/components/products/CategoryFilter'
@@ -36,30 +36,18 @@ export default function ProductsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product>()
 
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   // Fetch products
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['products', search, categoryId],
     queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('*, categories(id, name)')
-        .eq('active', true)
-        .order('name')
-
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,barcode.ilike.%${search}%`)
-      }
-
-      if (categoryId) {
-        query = query.eq('category_id', categoryId)
-      }
-
-      const { data, error } = await query.limit(50)
-      if (error) throw error
-      return data as Product[]
+      const result = await api.products.list({
+        search: search || undefined,
+        category_id: categoryId,
+        limit: 50,
+      })
+      return result.products as Product[]
     },
   })
 
@@ -67,28 +55,16 @@ export default function ProductsPage() {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name')
-        .order('sort_order')
-        .order('name')
-
-      if (error) throw error
-      return data as Category[]
+      const result = await api.categories.list()
+      return result.categories as Category[]
     },
   })
 
   // Create product mutation
   const createMutation = useMutation({
     mutationFn: async (data: Omit<Product, 'id'>) => {
-      const { data: result, error } = await supabase
-        .from('products')
-        .insert(data as never)
-        .select()
-        .single()
-
-      if (error) throw error
-      return result
+      const result = await api.products.create(data)
+      return result.product
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -98,15 +74,8 @@ export default function ProductsPage() {
   // Update product mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<Product> & { id: string }) => {
-      const { data: result, error } = await supabase
-        .from('products')
-        .update(data as never)
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) throw error
-      return result
+      const result = await api.products.update(id, data)
+      return result.product
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -134,6 +103,10 @@ export default function ProductsPage() {
     setFormOpen(false)
     setEditProduct(undefined)
   }
+
+  const handleCategoryCreated = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] })
+  }, [queryClient])
 
   return (
     <div className="p-4 pb-20">
@@ -171,6 +144,7 @@ export default function ProductsPage() {
         onClose={handleFormClose}
         onSubmit={handleFormSubmit}
         categories={categories}
+        onCategoryCreated={handleCategoryCreated}
         initialValues={editProduct}
         title={editProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}
       />

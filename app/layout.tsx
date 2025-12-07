@@ -3,8 +3,33 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AntdProvider } from '@/components/providers/antd-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
 
-const inter = Inter({ subsets: ['latin', 'vietnamese'] })
+/**
+ * Font Optimization
+ *
+ * Using next/font for optimal font loading:
+ * - Automatic self-hosting (no external requests to Google)
+ * - Zero layout shift with CSS size-adjust
+ * - font-display: swap for faster perceived loading
+ * - Preloading of fonts for critical text
+ * - Subsets reduce font file size
+ */
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap', // Show fallback font immediately, swap when loaded
+  preload: true, // Preload font files
+  variable: '--font-inter', // CSS variable for flexible usage
+  fallback: [
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'Segoe UI',
+    'Roboto',
+    'Oxygen',
+    'Ubuntu',
+    'sans-serif',
+  ],
+})
 
 export const metadata: Metadata = {
   title: 'Quản Lý Cửa Hàng',
@@ -31,8 +56,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning className={inter.variable}>
       <body className={inter.className}>
+        <GoogleAnalytics />
         <QueryProvider>
           <AntdProvider>
             {children}

@@ -1,0 +1,92 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - heading "Quan ly kho" [level=4] [ref=e7]
+          - button "plus Thêm down" [ref=e9] [cursor=pointer]:
+            - img "plus" [ref=e11]:
+              - img [ref=e12]
+            - generic [ref=e15]: Thêm
+            - img "down" [ref=e16]:
+              - img [ref=e17]
+        - generic [ref=e19]:
+          - tablist [ref=e20]:
+            - generic [ref=e22]:
+              - tab "unordered-list Ton kho" [ref=e24] [cursor=pointer]:
+                - generic [ref=e25]:
+                  - img "unordered-list" [ref=e26]:
+                    - img [ref=e27]
+                  - text: Ton kho
+              - tab "swap Nhap/Xuat" [active] [selected] [ref=e30] [cursor=pointer]:
+                - generic [ref=e31]:
+                  - img "swap" [ref=e32]:
+                    - img [ref=e33]
+                  - text: Nhap/Xuat
+              - tab "warning Canh bao" [ref=e36] [cursor=pointer]:
+                - generic [ref=e37]:
+                  - img "warning" [ref=e38]:
+                    - img [ref=e39]
+                  - text: Canh bao
+          - tabpanel "swap Nhap/Xuat" [ref=e43]:
+            - generic [ref=e44]:
+              - radiogroup "segmented control" [ref=e45]:
+                - generic [ref=e46]:
+                  - generic [ref=e47] [cursor=pointer]:
+                    - radio "Nhập kho" [checked]
+                    - radio "Nhập kho" [checked] [ref=e48]
+                  - generic [ref=e49] [cursor=pointer]:
+                    - radio "Xuất kho"
+                    - radio "Xuất kho" [ref=e50]
+                  - generic [ref=e51] [cursor=pointer]:
+                    - radio "Điều chỉnh"
+                    - radio "Điều chỉnh" [ref=e52]
+              - button "plus Thêm sản phẩm" [ref=e53] [cursor=pointer]:
+                - img "plus" [ref=e55]:
+                  - img [ref=e56]
+                - generic [ref=e59]: Thêm sản phẩm
+              - generic [ref=e60]:
+                - img "Trống" [ref=e62]
+                - generic [ref=e74]: Chưa có sản phẩm nào
+    - navigation [ref=e75]:
+      - generic [ref=e76]:
+        - link "home Trang chu" [ref=e77] [cursor=pointer]:
+          - /url: /
+          - img "home" [ref=e78]:
+            - img [ref=e79]
+          - generic [ref=e81]: Trang chu
+        - link "shopping-cart Ban hang" [ref=e82] [cursor=pointer]:
+          - /url: /pos
+          - img "shopping-cart" [ref=e83]:
+            - img [ref=e84]
+          - generic [ref=e86]: Ban hang
+        - link "inbox Kho" [ref=e87] [cursor=pointer]:
+          - /url: /inventory
+          - img "inbox" [ref=e88]:
+            - img [ref=e89]
+          - generic [ref=e91]: Kho
+        - link "wallet Thu chi" [ref=e92] [cursor=pointer]:
+          - /url: /finance
+          - img "wallet" [ref=e93]:
+            - img [ref=e94]
+          - generic [ref=e96]: Thu chi
+        - link "file-text Hóa đơn" [ref=e97] [cursor=pointer]:
+          - /url: /invoices
+          - img "file-text" [ref=e98]:
+            - img [ref=e99]
+          - generic [ref=e101]: Hóa đơn
+        - link "calculator Thue" [ref=e102] [cursor=pointer]:
+          - /url: /tax
+          - img "calculator" [ref=e103]:
+            - img [ref=e104]
+          - generic [ref=e106]: Thue
+        - link "bar-chart Bao cao" [ref=e107] [cursor=pointer]:
+          - /url: /reports
+          - img "bar-chart" [ref=e108]:
+            - img [ref=e109]
+          - generic [ref=e111]: Bao cao
+  - alert [ref=e112]
+```

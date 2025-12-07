@@ -56,23 +56,63 @@ export const api = {
   },
 
   products: {
-    list: (params: { page?: number; limit?: number; search?: string; category_id?: string }) =>
-      callFunction<{ products: Database['public']['Tables']['products']['Row'][]; total: number }>('products/list', params),
-    get: (id: string) =>
-      callFunction<{ product: Database['public']['Tables']['products']['Row'] }>('products/get', { id }),
-    create: (data: Partial<Database['public']['Tables']['products']['Insert']>) =>
-      callFunction<{ product: Database['public']['Tables']['products']['Row'] }>('products/create', data),
-    update: (id: string, data: Partial<Database['public']['Tables']['products']['Update']>) =>
-      callFunction<{ product: Database['public']['Tables']['products']['Row'] }>('products/update', { id, ...data }),
+    list: (params: { page?: number; limit?: number; search?: string; category_id?: string; include_variants?: boolean; include_units?: boolean }) =>
+      callFunction<{ products: Database['public']['Tables']['products']['Row'][]; total: number }>('products', { action: 'list', ...params }),
+    get: (id: string, options?: { include_variants?: boolean; include_units?: boolean }) =>
+      callFunction<{ product: Database['public']['Tables']['products']['Row'] }>('products', { action: 'get', id, ...options }),
+    create: (data: Partial<Database['public']['Tables']['products']['Insert']> & {
+      has_variants?: boolean
+      has_units?: boolean
+      units?: ProductUnitInput[]
+      variants?: ProductVariantInput[]
+    }) =>
+      callFunction<{ product: Database['public']['Tables']['products']['Row'] }>('products', { action: 'create', ...data }),
+    update: (id: string, data: Partial<Database['public']['Tables']['products']['Update']> & {
+      has_variants?: boolean
+      has_units?: boolean
+      units?: ProductUnitInput[]
+      variants?: ProductVariantInput[]
+    }) =>
+      callFunction<{ product: Database['public']['Tables']['products']['Row'] }>('products', { action: 'update', id, ...data }),
     delete: (id: string) =>
-      callFunction<{ success: boolean }>('products/delete', { id }),
+      callFunction<{ success: boolean }>('products', { action: 'delete', id }),
+  },
+
+  attributes: {
+    list: () =>
+      callFunction<{ attributes: ProductAttribute[] }>('attributes', { action: 'list' }),
+    create: (data: { name: string; values?: string[] }) =>
+      callFunction<{ attribute: ProductAttribute }>('attributes', { action: 'create', ...data }),
+    update: (id: string, data: { name?: string; display_order?: number }) =>
+      callFunction<{ attribute: ProductAttribute }>('attributes', { action: 'update', id, ...data }),
+    delete: (id: string) =>
+      callFunction<{ deleted: boolean }>('attributes', { action: 'delete', id }),
+    addValue: (attribute_id: string, value: string) =>
+      callFunction<{ value: ProductAttributeValue }>('attributes', { action: 'add_value', attribute_id, value }),
+    removeValue: (value_id: string) =>
+      callFunction<{ deleted: boolean }>('attributes', { action: 'remove_value', value_id }),
   },
 
   categories: {
     list: () =>
-      callFunction<{ categories: Database['public']['Tables']['categories']['Row'][] }>('categories/list'),
+      callFunction<{ categories: Database['public']['Tables']['categories']['Row'][] }>('categories', { action: 'list' }),
     create: (data: { name: string; parent_id?: string }) =>
-      callFunction<{ category: Database['public']['Tables']['categories']['Row'] }>('categories/create', data),
+      callFunction<{ category: Database['public']['Tables']['categories']['Row'] }>('categories', { action: 'create', ...data }),
+  },
+
+  inventory: {
+    import: (data: { product_id: string; quantity: number; unit_cost?: number; note?: string }) =>
+      callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'import', ...data }),
+    export: (data: { product_id: string; quantity: number; note?: string }) =>
+      callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'export', ...data }),
+    adjust: (data: { product_id: string; new_quantity: number; note?: string }) =>
+      callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'adjust', ...data }),
+    logs: (params?: { product_id?: string; type?: string; date_from?: string; date_to?: string; page?: number; limit?: number }) =>
+      callFunction<{ logs: InventoryLog[]; pagination: Pagination }>('inventory', { action: 'logs', ...params }),
+    summary: () =>
+      callFunction<{ summary: { total_products: number; total_value: number; low_stock_count: number; out_of_stock_count: number } }>('inventory', { action: 'summary' }),
+    lowStock: () =>
+      callFunction<{ products: LowStockProduct[] }>('inventory', { action: 'low_stock' }),
   },
 
   pos: {
@@ -211,6 +251,23 @@ export const api = {
       callFunction<{ revenue_book: RevenueBook }>('tax', { action: 'revenue_book', date_from: dateFrom, date_to: dateTo }),
     getTaxBook: (year: number) =>
       callFunction<{ tax_book: TaxBook }>('tax', { action: 'tax_book', year }),
+  },
+
+  invoice: {
+    list: (params: { page?: number; limit?: number; status?: 'pending' | 'issued' | 'cancelled' | 'error'; date_from?: string; date_to?: string }) =>
+      callFunction<{ invoices: Invoice[]; pagination: Pagination }>('invoice', { action: 'list', ...params }),
+    get: (id: string) =>
+      callFunction<{ invoice: InvoiceDetail }>('invoice', { action: 'get', id }),
+    create: (data: { sale_id: string; buyer_name?: string; buyer_tax_code?: string; buyer_address?: string; buyer_email?: string; buyer_phone?: string }) =>
+      callFunction<{ invoice: Invoice; viettel_response?: { invoice_no?: string; reservation_code?: string } }>('invoice', { action: 'create', ...data }),
+    createDraft: (data: { sale_id: string; buyer_name?: string; buyer_tax_code?: string; buyer_address?: string; buyer_email?: string; buyer_phone?: string }) =>
+      callFunction<{ invoice: Invoice; viettel_response?: { invoice_no?: string; reservation_code?: string } }>('invoice', { action: 'create_draft', ...data }),
+    cancel: (invoice_id: string, reason: string) =>
+      callFunction<{ invoice: Invoice }>('invoice', { action: 'cancel', invoice_id, reason }),
+    downloadPdf: (invoice_id: string) =>
+      callFunction<{ file_name: string; file_data: string; content_type: string }>('invoice', { action: 'download_pdf', invoice_id }),
+    downloadXml: (invoice_id: string) =>
+      callFunction<{ file_name: string; file_data: string; content_type: string }>('invoice', { action: 'download_xml', invoice_id }),
   },
 
   hr: {
@@ -601,6 +658,11 @@ export interface SalesAnalytics {
     revenue: number
     percentage: number
   }>
+  topProducts: Array<{
+    product_name: string
+    quantity_sold: number
+    revenue: number
+  }>
   byHour: Array<{
     hour: number
     orders: number
@@ -789,3 +851,116 @@ export interface SalaryBookReport {
     employee_count: number
   }
 }
+
+// Invoice types
+export interface Invoice {
+  id: string
+  store_id: string
+  sale_id: string
+  invoice_no: string | null
+  invoice_symbol: string | null
+  issue_date: string | null
+  provider: string
+  provider_invoice_id: string | null
+  lookup_code: string | null
+  status: 'pending' | 'issued' | 'cancelled' | 'error'
+  error_message: string | null
+  xml_content: string | null
+  created_at: string
+  sales?: {
+    invoice_no?: string
+    customer_name?: string
+    total?: number
+  } | null
+}
+
+export interface InvoiceDetail extends Invoice {
+  sales: {
+    id: string
+    invoice_no: string
+    customer_name?: string
+    customer_phone?: string
+    customer_tax_code?: string
+    subtotal: number
+    vat_amount: number
+    discount: number
+    total: number
+    completed_at: string
+    sale_items: Array<{
+      product_name: string
+      quantity: number
+      unit_price: number
+      vat_rate: number
+      vat_amount: number
+      total: number
+    }>
+  } | null
+}
+
+// Product Units and Variants types
+export interface ProductUnitInput {
+  id?: string
+  unit_name: string
+  conversion_rate: number
+  barcode?: string
+  sell_price?: number
+  cost_price?: number
+  is_base_unit: boolean
+  is_default: boolean
+}
+
+export interface ProductVariantInput {
+  id?: string
+  sku?: string
+  barcode?: string
+  name?: string
+  cost_price?: number
+  sell_price?: number
+  quantity: number
+  min_stock?: number
+  attribute_values?: { attribute_id: string; value_id: string }[]
+}
+
+export interface ProductAttribute {
+  id: string
+  store_id: string
+  name: string
+  display_order: number
+  created_at: string
+  values?: ProductAttributeValue[]
+}
+
+export interface ProductAttributeValue {
+  id: string
+  attribute_id: string
+  value: string
+  display_order: number
+  created_at: string
+}
+
+// Inventory types
+export interface InventoryLog {
+  id: string
+  store_id: string
+  product_id: string
+  type: 'import' | 'export' | 'sale' | 'return' | 'adjustment'
+  quantity: number
+  unit_cost: number | null
+  total_value: number | null
+  note: string | null
+  reference_type: string | null
+  reference_id: string | null
+  created_by: string | null
+  created_at: string
+  products?: { id: string; name: string } | null
+}
+
+export interface LowStockProduct {
+  id: string
+  name: string
+  quantity: number
+  min_stock: number
+  unit: string
+  image_url: string | null
+}
+

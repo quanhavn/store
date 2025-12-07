@@ -1,13 +1,16 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Result, Button, Typography, Divider } from 'antd'
 import { PrinterOutlined, ShareAltOutlined, PlusOutlined } from '@ant-design/icons'
+import { trackSaleCompleted } from '@/lib/analytics'
 
 const { Text, Title } = Typography
 
 interface CheckoutSuccessProps {
   invoiceNo: string
   total: number
+  itemCount?: number
   onNewSale: () => void
   onPrint?: () => void
   onShare?: () => void
@@ -16,10 +19,15 @@ interface CheckoutSuccessProps {
 export function CheckoutSuccess({
   invoiceNo,
   total,
+  itemCount = 1,
   onNewSale,
   onPrint,
   onShare,
 }: CheckoutSuccessProps) {
+  useEffect(() => {
+    trackSaleCompleted(total, itemCount)
+  }, [total, itemCount])
+
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
       <Result

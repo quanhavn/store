@@ -28,6 +28,9 @@ serve(async (req) => {
       throw userError
     }
 
+    const store = userData.stores
+    const needsOnboarding = !store || !store.onboarding_completed
+
     return successResponse({
       user: {
         id: userData.id,
@@ -35,8 +38,9 @@ serve(async (req) => {
         phone: userData.phone,
         role: userData.role,
       },
-      store: userData.stores,
+      store: store,
       needs_setup: !userData.store_id,
+      needs_onboarding: needsOnboarding,
     })
   } catch (error) {
     return errorResponse(error.message, 401)

@@ -203,7 +203,7 @@ serve(async (req: Request) => {
         // Daily sales
         const { data: sales } = await supabase
           .from('sales')
-          .select('id, total, completed_at, sale_items(quantity, product_id, products(category_id, categories(name))), payments(method, amount)')
+          .select('id, total, completed_at, sale_items(quantity, unit_price, product_id, products(id, name, category_id, categories(name))), payments(method, amount)')
           .eq('store_id', store_id)
           .eq('status', 'completed')
           .gte('completed_at', date_from)
@@ -234,9 +234,21 @@ serve(async (req: Request) => {
 
           // Categories and products
           for (const item of sale.sale_items || []) {
-            const categoryName = (item.products as { category_id: string; categories: { name: string } })?.categories?.name || 'Khac'
+            const product = item.products as { id: string; name: string; category_id: string; categories: { name: string } }
+            const categoryName = product?.categories?.name || 'Khac'
+            const itemRevenue = item.quantity * item.unit_price
+
+            // Category aggregation
             const categoryRevenue = categoryMap.get(categoryName) || 0
-            categoryMap.set(categoryName, categoryRevenue + (item.quantity * (sale.total / (sale.sale_items?.length || 1))))
+            categoryMap.set(categoryName, categoryRevenue + itemRevenue)
+
+            // Product aggregation
+            if (product?.id) {
+              const productData = productMap.get(product.id) || { name: product.name, quantity: 0, revenue: 0 }
+              productData.quantity += item.quantity
+              productData.revenue += itemRevenue
+              productMap.set(product.id, productData)
+            }
           }
 
           // Payment methods
@@ -250,6 +262,16 @@ serve(async (req: Request) => {
 
         const totalRevenue = Array.from(dailySalesMap.values()).reduce((sum, d) => sum + d.revenue, 0)
 
+        // Get top 10 products sorted by revenue
+        const topProducts = Array.from(productMap.entries())
+          .map(([_, data]) => ({
+            product_name: data.name,
+            quantity_sold: data.quantity,
+            revenue: data.revenue,
+          }))
+          .sort((a, b) => b.revenue - a.revenue)
+          .slice(0, 10)
+
         return successResponse({
           period: { start: date_from, end: date_to },
           dailySales: Array.from(dailySalesMap.entries()).map(([date, data]) => ({
@@ -262,6 +284,7 @@ serve(async (req: Request) => {
             revenue,
             percentage: totalRevenue > 0 ? Math.round((revenue / totalRevenue) * 100) : 0,
           })),
+          topProducts,
           byHour: Array.from(hourMap.entries()).map(([hour, data]) => ({
             hour,
             orders: data.orders,

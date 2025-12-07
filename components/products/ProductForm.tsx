@@ -1,9 +1,11 @@
 'use client'
 
-import { Form, Input, InputNumber, Select, Button, Upload, message, Drawer } from 'antd'
+import { Form, Input, InputNumber, Select, Button, Upload, message, Drawer, Divider, Space } from 'antd'
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { UploadFile } from 'antd/es/upload/interface'
+import type { InputRef } from 'antd'
+import { api } from '@/lib/supabase/functions'
 
 interface Category {
   id: string
@@ -29,6 +31,7 @@ interface ProductFormProps {
   onClose: () => void
   onSubmit: (data: ProductFormData) => Promise<void>
   categories: Category[]
+  onCategoryCreated?: (category: Category) => void
   initialValues?: Partial<ProductFormData>
   title?: string
 }
@@ -63,12 +66,50 @@ export function ProductForm({
   onClose,
   onSubmit,
   categories,
+  onCategoryCreated,
   initialValues,
   title = 'Thêm sản phẩm',
 }: ProductFormProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const inputRef = useRef<InputRef>(null)
+
+  const handleCreateCategory = async (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
+    e.preventDefault()
+    const trimmedName = newCategoryName.trim()
+    if (!trimmedName) {
+      message.warning('Vui lòng nhập tên danh mục')
+      return
+    }
+
+    // Check if category already exists
+    if (categories.some(c => c.name.toLowerCase() === trimmedName.toLowerCase())) {
+      message.warning('Danh mục này đã tồn tại')
+      return
+    }
+
+    setCreatingCategory(true)
+    try {
+      const result = await api.categories.create({ name: trimmedName })
+      const newCategory = { id: result.category.id, name: result.category.name }
+
+      // Notify parent to update categories list
+      onCategoryCreated?.(newCategory)
+
+      // Set the new category as selected
+      form.setFieldValue('category_id', newCategory.id)
+
+      setNewCategoryName('')
+      message.success(`Đã tạo danh mục "${trimmedName}"`)
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Không thể tạo danh mục')
+    } finally {
+      setCreatingCategory(false)
+    }
+  }
 
   const handleSubmit = async (values: ProductFormData) => {
     setLoading(true)
@@ -141,7 +182,35 @@ export function ProductForm({
           <Select
             placeholder="Chọn danh mục"
             allowClear
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+            }
             options={categories.map((c) => ({ label: c.name, value: c.id }))}
+            dropdownRender={(menu) => (
+              <>
+                {menu}
+                <Divider style={{ margin: '8px 0' }} />
+                <Space style={{ padding: '0 8px 4px' }}>
+                  <Input
+                    placeholder="Tên danh mục mới"
+                    ref={inputRef}
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ width: 180 }}
+                  />
+                  <Button
+                    type="text"
+                    icon={<PlusOutlined />}
+                    onClick={handleCreateCategory}
+                    loading={creatingCategory}
+                  >
+                    Thêm
+                  </Button>
+                </Space>
+              </>
+            )}
           />
         </Form.Item>
 

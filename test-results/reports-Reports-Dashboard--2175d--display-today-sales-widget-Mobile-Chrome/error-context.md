@@ -1,0 +1,175 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Bao cao" [level=4] [ref=e6]
+        - generic [ref=e7]:
+          - tablist [ref=e8]:
+            - generic [ref=e10]:
+              - tab "dashboard Tong quan" [active] [selected] [ref=e12] [cursor=pointer]:
+                - generic [ref=e13]:
+                  - img "dashboard" [ref=e14]:
+                    - img [ref=e15]
+                  - text: Tong quan
+              - tab "file-text So sach" [ref=e18] [cursor=pointer]:
+                - generic [ref=e19]:
+                  - img "file-text" [ref=e20]:
+                    - img [ref=e21]
+                  - text: So sach
+          - tabpanel "dashboard Tong quan" [ref=e25]:
+            - generic [ref=e26]:
+              - generic [ref=e28]:
+                - text: HOM NAY
+                - generic [ref=e29]:
+                  - generic [ref=e31]:
+                    - generic [ref=e33]: Doanh thu
+                    - generic [ref=e34]:
+                      - img "dollar" [ref=e36]:
+                        - img [ref=e37]
+                      - generic [ref=e39]: 29.160 ₫
+                  - generic [ref=e41]:
+                    - generic [ref=e43]: Don hang
+                    - generic [ref=e44]:
+                      - img "shopping-cart" [ref=e46]:
+                        - img [ref=e47]
+                      - generic [ref=e49]: "1"
+                      - generic [ref=e50]: don
+                - generic [ref=e51]: "TB: 29.160 ₫/don"
+              - generic [ref=e53]:
+                - text: THANG NAY
+                - generic [ref=e54]:
+                  - generic [ref=e55]:
+                    - generic [ref=e56]: Doanh thu
+                    - generic [ref=e57]: 29.160 ₫
+                  - generic [ref=e58]:
+                    - generic [ref=e59]: Chi phi
+                    - generic [ref=e60]: 0 ₫
+                  - generic [ref=e61]:
+                    - generic [ref=e62]: Loi nhuan
+                    - generic [ref=e63]: 29.160 ₫
+              - generic [ref=e64]:
+                - heading "Bieu do phan tich" [level=2] [ref=e65]
+                - generic [ref=e67]:
+                  - heading "Doanh thu theo ngay (30 ngay)" [level=3] [ref=e68]
+                  - application [ref=e72]:
+                    - generic [ref=e81]:
+                      - generic [ref=e84]: 7/12
+                      - generic [ref=e85]:
+                        - generic [ref=e87]: "0"
+                        - generic [ref=e89]: 8K
+                        - generic [ref=e91]: 15K
+                        - generic [ref=e93]: 23K
+                        - generic [ref=e95]: 30K
+                - generic [ref=e97]:
+                  - heading "Doanh thu vs Chi phi" [level=3] [ref=e98]
+                  - generic [ref=e101]:
+                    - list [ref=e103]:
+                      - listitem [ref=e104]:
+                        - img "[object Object] legend icon" [ref=e105]
+                        - generic [ref=e107]: Chi phi
+                      - listitem [ref=e108]:
+                        - img "[object Object] legend icon" [ref=e109]
+                        - generic [ref=e111]: Doanh thu
+                    - application [ref=e112]:
+                      - generic [ref=e123]:
+                        - generic [ref=e126]: T12
+                        - generic [ref=e127]:
+                          - generic [ref=e129]: "0"
+                          - generic [ref=e131]: 8K
+                          - generic [ref=e133]: 15K
+                          - generic [ref=e135]: 23K
+                          - generic [ref=e137]: 30K
+                - generic [ref=e138]:
+                  - generic [ref=e139]:
+                    - heading "Doanh thu theo danh muc" [level=3] [ref=e140]
+                    - generic [ref=e143]:
+                      - list [ref=e145]:
+                        - listitem [ref=e146]:
+                          - img "[object Object] legend icon" [ref=e147]
+                          - generic [ref=e149]: Thực phẩm
+                        - listitem [ref=e150]:
+                          - img "[object Object] legend icon" [ref=e151]
+                          - generic [ref=e153]: Đồ uống
+                      - application [ref=e154]:
+                        - generic [ref=e162]:
+                          - generic [ref=e164]: 56%
+                          - generic [ref=e166]: 44%
+                  - generic [ref=e167]:
+                    - heading "Phuong thuc thanh toan" [level=3] [ref=e168]
+                    - generic [ref=e171]:
+                      - list [ref=e173]:
+                        - listitem [ref=e174]:
+                          - img "[object Object] legend icon" [ref=e175]
+                          - generic [ref=e177]: Tien mat
+                      - application [ref=e178]:
+                        - generic [ref=e186]: 100%
+                - generic [ref=e188]:
+                  - heading "Top 10 san pham ban chay (doanh thu)" [level=3] [ref=e189]
+                  - application [ref=e193]:
+                    - generic [ref=e206]:
+                      - generic [ref=e207]:
+                        - generic [ref=e209]: "0"
+                        - generic [ref=e211]: 4K
+                        - generic [ref=e213]: 8K
+                        - generic [ref=e215]: 12K
+                        - generic [ref=e217]: 16K
+                      - generic [ref=e218]:
+                        - generic [ref=e220]: CocaCola
+                        - generic [ref=e222]: Bánh mì
+              - generic [ref=e223]:
+                - generic [ref=e227]:
+                  - img "shopping" [ref=e228]:
+                    - img [ref=e229]
+                  - generic [ref=e231]: Don hang gan day
+                - list [ref=e236]:
+                  - listitem [ref=e237]:
+                    - generic [ref=e238]:
+                      - generic [ref=e239]:
+                        - strong [ref=e241]: HD2025120001
+                        - generic [ref=e242]: 29.160 ₫
+                      - generic [ref=e243]:
+                        - generic [ref=e244]: Khach le
+                        - generic [ref=e245]: 10:25
+    - navigation [ref=e246]:
+      - generic [ref=e247]:
+        - link "home Trang chu" [ref=e248] [cursor=pointer]:
+          - /url: /
+          - img "home" [ref=e249]:
+            - img [ref=e250]
+          - generic [ref=e252]: Trang chu
+        - link "shopping-cart Ban hang" [ref=e253] [cursor=pointer]:
+          - /url: /pos
+          - img "shopping-cart" [ref=e254]:
+            - img [ref=e255]
+          - generic [ref=e257]: Ban hang
+        - link "inbox Kho" [ref=e258] [cursor=pointer]:
+          - /url: /inventory
+          - img "inbox" [ref=e259]:
+            - img [ref=e260]
+          - generic [ref=e262]: Kho
+        - link "wallet Thu chi" [ref=e263] [cursor=pointer]:
+          - /url: /finance
+          - img "wallet" [ref=e264]:
+            - img [ref=e265]
+          - generic [ref=e267]: Thu chi
+        - link "file-text Hóa đơn" [ref=e268] [cursor=pointer]:
+          - /url: /invoices
+          - img "file-text" [ref=e269]:
+            - img [ref=e270]
+          - generic [ref=e272]: Hóa đơn
+        - link "calculator Thue" [ref=e273] [cursor=pointer]:
+          - /url: /tax
+          - img "calculator" [ref=e274]:
+            - img [ref=e275]
+          - generic [ref=e277]: Thue
+        - link "bar-chart Bao cao" [ref=e278] [cursor=pointer]:
+          - /url: /reports
+          - img "bar-chart" [ref=e279]:
+            - img [ref=e280]
+          - generic [ref=e282]: Bao cao
+  - alert [ref=e283]
+  - generic [ref=e284]: T12
+```

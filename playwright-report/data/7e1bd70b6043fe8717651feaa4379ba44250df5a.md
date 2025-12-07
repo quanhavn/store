@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img "shop" [ref=e7]:
+        - img [ref=e8]
+      - heading "Quản Lý Cửa Hàng" [level=3] [ref=e10]
+      - generic [ref=e11]: Đăng nhập để tiếp tục
+    - generic [ref=e13]:
+      - heading "Đăng nhập" [level=4] [ref=e14]
+      - generic [ref=e15]: Nhập số điện thoại và mật khẩu
+      - generic [ref=e16]:
+        - generic [ref=e18]:
+          - generic "Số điện thoại" [ref=e20]
+          - generic [ref=e21]:
+            - generic [ref=e24]:
+              - img "phone" [ref=e26]:
+                - img [ref=e27]
+              - textbox "Số điện thoại" [ref=e29]:
+                - /placeholder: "0912345678"
+                - text: "123"
+            - generic [ref=e32]: Số điện thoại phải có 10-11 chữ số
+        - generic [ref=e34]:
+          - generic "Mật khẩu" [ref=e36]
+          - generic [ref=e40]:
+            - img "lock" [ref=e42]:
+              - img [ref=e43]
+            - textbox "Mật khẩu" [ref=e45]:
+              - /placeholder: ••••••••
+              - text: validpassword
+            - img "eye-invisible" [ref=e47] [cursor=pointer]:
+              - img [ref=e48]
+        - button "Đăng nhập" [active] [ref=e56] [cursor=pointer]:
+          - generic [ref=e59]: Đăng nhập
+      - separator [ref=e60]:
+        - generic [ref=e62]: hoặc
+      - generic [ref=e64]: Chưa có tài khoản? Đăng ký
+    - generic [ref=e65]:
+      - text: Bằng việc đăng ký, bạn đồng ý với
+      - link "Điều khoản dịch vụ" [ref=e66] [cursor=pointer]:
+        - /url: "#"
+  - alert [ref=e67]
+```

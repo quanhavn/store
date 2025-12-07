@@ -1,0 +1,72 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Cai dat" [level=4] [ref=e6]
+        - generic [ref=e7]:
+          - tablist [ref=e8]:
+            - generic [ref=e10]:
+              - tab "shop Cua hang" [selected] [ref=e12] [cursor=pointer]:
+                - generic [ref=e13]:
+                  - img "shop" [ref=e14]:
+                    - img [ref=e15]
+                  - text: Cua hang
+              - tab "dollar Thue" [ref=e18] [cursor=pointer]:
+                - generic [ref=e19]:
+                  - img "dollar" [ref=e20]:
+                    - img [ref=e21]
+                  - text: Thue
+              - tab "user Tai khoan" [ref=e24] [cursor=pointer]:
+                - generic [ref=e25]:
+                  - img "user" [ref=e26]:
+                    - img [ref=e27]
+                  - text: Tai khoan
+          - tabpanel "shop Cua hang" [ref=e31]:
+            - generic [ref=e33]:
+              - generic [ref=e34]:
+                - img "shop" [ref=e35]:
+                  - img [ref=e36]
+                - heading "Thong tin cua hang" [level=5] [ref=e38]
+              - text: Chua thiet lap thong tin cua hang
+    - navigation [ref=e39]:
+      - generic [ref=e40]:
+        - link "home Trang chu" [ref=e41] [cursor=pointer]:
+          - /url: /
+          - img "home" [ref=e42]:
+            - img [ref=e43]
+          - generic [ref=e45]: Trang chu
+        - link "shopping-cart Ban hang" [ref=e46] [cursor=pointer]:
+          - /url: /pos
+          - img "shopping-cart" [ref=e47]:
+            - img [ref=e48]
+          - generic [ref=e50]: Ban hang
+        - link "inbox Kho" [ref=e51] [cursor=pointer]:
+          - /url: /inventory
+          - img "inbox" [ref=e52]:
+            - img [ref=e53]
+          - generic [ref=e55]: Kho
+        - link "wallet Thu chi" [ref=e56] [cursor=pointer]:
+          - /url: /finance
+          - img "wallet" [ref=e57]:
+            - img [ref=e58]
+          - generic [ref=e60]: Thu chi
+        - link "file-text Hóa đơn" [ref=e61] [cursor=pointer]:
+          - /url: /invoices
+          - img "file-text" [ref=e62]:
+            - img [ref=e63]
+          - generic [ref=e65]: Hóa đơn
+        - link "calculator Thue" [ref=e66] [cursor=pointer]:
+          - /url: /tax
+          - img "calculator" [ref=e67]:
+            - img [ref=e68]
+          - generic [ref=e70]: Thue
+        - link "bar-chart Bao cao" [ref=e71] [cursor=pointer]:
+          - /url: /reports
+          - img "bar-chart" [ref=e72]:
+            - img [ref=e73]
+          - generic [ref=e75]: Bao cao
+  - alert [ref=e76]
+```

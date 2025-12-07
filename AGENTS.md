@@ -160,3 +160,5 @@ Use these slash commands in Amp for issue-driven development:
 2. Start work with `/issue-start` (creates feature branch)
 3. Implement with Amp assistance
 4. Complete with `/issue-done` (validates and closes)
+
+BEFORE ANYTHING ELSE: run 'bd onboard' and follow the instructions
