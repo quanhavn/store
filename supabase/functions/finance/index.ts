@@ -8,6 +8,10 @@ import {
   handleCors,
 } from '../_shared/supabase.ts'
 
+// ============================================================================
+// Request Interfaces
+// ============================================================================
+
 interface CashInRequest {
   action: 'cash_in'
   amount: number
@@ -64,7 +68,6 @@ interface GetFinanceSummaryRequest {
   period?: 'day' | 'week' | 'month' | 'year'
 }
 
-// Bank account interfaces
 interface ListBankAccountsRequest {
   action: 'list_bank_accounts'
 }
@@ -118,7 +121,6 @@ interface BankTransactionsRequest {
   limit?: number
 }
 
-// Expense categories interfaces
 interface ListExpenseCategoriesRequest {
   action: 'list_expense_categories'
 }
@@ -147,6 +149,10 @@ type FinanceRequest =
   | ListExpenseCategoriesRequest
   | CreateExpenseCategoryRequest
 
+// ============================================================================
+// Main Handler
+// ============================================================================
+
 serve(async (req: Request) => {
   const corsResponse = handleCors(req)
   if (corsResponse) return corsResponse
@@ -159,81 +165,62 @@ serve(async (req: Request) => {
     const body: FinanceRequest = await req.json()
 
     switch (body.action) {
+      // ========================================================================
+      // CASH IN - Uses RPC for atomic transaction
+      // ========================================================================
       case 'cash_in': {
         const { amount, description, reference_type, reference_id } = body
 
-        // Get current balance
-        const { data: lastEntry } = await supabase
-          .from('cash_book')
-          .select('balance')
-          .eq('store_id', store_id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
+        if (amount <= 0) {
+          return errorResponse('So tien phai lon hon 0', 400)
+        }
 
-        const currentBalance = lastEntry?.balance || 0
-        const newBalance = currentBalance + amount
-
-        const { data, error } = await supabase
-          .from('cash_book')
-          .insert({
-            store_id,
-            description,
-            reference_type,
-            reference_id,
-            debit: amount,
-            credit: 0,
-            balance: newBalance,
-            created_by: user.id,
-          })
-          .select()
-          .single()
+        const { data, error } = await supabase.rpc('cash_in', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_amount: amount,
+          p_description: description,
+          p_reference_type: reference_type || null,
+          p_reference_id: reference_id || null,
+        })
 
         if (error) throw error
 
-        return successResponse({ transaction: data, balance: newBalance })
+        return successResponse({ transaction: { id: data.entry_id }, balance: data.balance })
       }
 
+      // ========================================================================
+      // CASH OUT - Uses RPC for atomic transaction
+      // ========================================================================
       case 'cash_out': {
         const { amount, description, reference_type, reference_id } = body
 
-        // Get current balance
-        const { data: lastEntry } = await supabase
-          .from('cash_book')
-          .select('balance')
-          .eq('store_id', store_id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
-
-        const currentBalance = lastEntry?.balance || 0
-
-        if (currentBalance < amount) {
-          return errorResponse('Không đủ tiền mặt trong quỹ', 400)
+        if (amount <= 0) {
+          return errorResponse('So tien phai lon hon 0', 400)
         }
 
-        const newBalance = currentBalance - amount
+        const { data, error } = await supabase.rpc('cash_out', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_amount: amount,
+          p_description: description,
+          p_reference_type: reference_type || null,
+          p_reference_id: reference_id || null,
+        })
 
-        const { data, error } = await supabase
-          .from('cash_book')
-          .insert({
-            store_id,
-            description,
-            reference_type,
-            reference_id,
-            debit: 0,
-            credit: amount,
-            balance: newBalance,
-            created_by: user.id,
-          })
-          .select()
-          .single()
+        if (error) {
+          if (error.message?.includes('Insufficient cash balance')) {
+            return errorResponse('Khong du tien mat trong quy', 400)
+          }
+          throw error
+        }
 
-        if (error) throw error
-
-        return successResponse({ transaction: data, balance: newBalance })
+        return successResponse({ transaction: { id: data.entry_id }, balance: data.balance })
       }
 
+      // ========================================================================
+      // CASH BALANCE - Simple query via client
+      // ========================================================================
       case 'cash_balance': {
         const { data } = await supabase
           .from('cash_book')
@@ -246,6 +233,9 @@ serve(async (req: Request) => {
         return successResponse({ balance: data?.balance || 0 })
       }
 
+      // ========================================================================
+      // CASH TRANSACTIONS - Simple query via client
+      // ========================================================================
       case 'cash_transactions': {
         const { date_from, date_to, page = 1, limit = 20 } = body
 
@@ -281,6 +271,9 @@ serve(async (req: Request) => {
         })
       }
 
+      // ========================================================================
+      // CREATE EXPENSE - Uses RPC for atomic transaction
+      // ========================================================================
       case 'create_expense': {
         const {
           category_id,
@@ -295,67 +288,52 @@ serve(async (req: Request) => {
           expense_date,
         } = body
 
-        // Create expense record
-        const { data: expense, error: expenseError } = await supabase
-          .from('expenses')
-          .insert({
-            store_id,
-            category_id,
-            description,
-            amount,
-            vat_amount,
-            payment_method,
-            bank_account_id,
-            invoice_no,
-            supplier_name,
-            supplier_tax_code,
-            expense_date: expense_date || new Date().toISOString().split('T')[0],
-            created_by: user.id,
-          })
-          .select()
-          .single()
-
-        if (expenseError) throw expenseError
-
-        // Record to cash/bank book
-        if (payment_method === 'cash') {
-          // Get current cash balance
-          const { data: lastEntry } = await supabase
-            .from('cash_book')
-            .select('balance')
-            .eq('store_id', store_id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
-
-          const currentBalance = lastEntry?.balance || 0
-          const newBalance = currentBalance - amount
-
-          await supabase.from('cash_book').insert({
-            store_id,
-            description: `Chi phí: ${description}`,
-            reference_type: 'expense',
-            reference_id: expense.id,
-            debit: 0,
-            credit: amount,
-            balance: newBalance,
-            created_by: user.id,
-          })
-        } else if (payment_method === 'bank_transfer' && bank_account_id) {
-          await supabase.from('bank_book').insert({
-            store_id,
-            bank_account_id,
-            description: `Chi phí: ${description}`,
-            reference_type: 'expense',
-            reference_id: expense.id,
-            debit: 0,
-            credit: amount,
-          })
+        if (amount <= 0) {
+          return errorResponse('So tien phai lon hon 0', 400)
         }
+
+        if (payment_method === 'bank_transfer' && !bank_account_id) {
+          return errorResponse('Vui long chon tai khoan ngan hang', 400)
+        }
+
+        const { data, error } = await supabase.rpc('create_expense', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_description: description,
+          p_amount: amount,
+          p_payment_method: payment_method,
+          p_category_id: category_id || null,
+          p_vat_amount: vat_amount,
+          p_bank_account_id: bank_account_id || null,
+          p_invoice_no: invoice_no || null,
+          p_supplier_name: supplier_name || null,
+          p_supplier_tax_code: supplier_tax_code || null,
+          p_expense_date: expense_date || null,
+        })
+
+        if (error) {
+          if (error.message?.includes('Insufficient bank balance')) {
+            return errorResponse('Khong du so du trong tai khoan', 400)
+          }
+          if (error.message?.includes('Bank account not found')) {
+            return errorResponse('Khong tim thay tai khoan ngan hang', 404)
+          }
+          throw error
+        }
+
+        // Fetch the full expense record for response
+        const { data: expense } = await supabase
+          .from('expenses')
+          .select('*')
+          .eq('id', data.expense_id)
+          .single()
 
         return successResponse({ expense })
       }
 
+      // ========================================================================
+      // LIST EXPENSES - Simple query via client
+      // ========================================================================
       case 'list_expenses': {
         const { category_id, date_from, date_to, page = 1, limit = 20 } = body
 
@@ -395,10 +373,12 @@ serve(async (req: Request) => {
         })
       }
 
+      // ========================================================================
+      // SUMMARY - Simple queries via client
+      // ========================================================================
       case 'summary': {
         const { period = 'month' } = body
 
-        // Calculate date range
         const now = new Date()
         let startDate: Date
 
@@ -417,7 +397,6 @@ serve(async (req: Request) => {
             break
         }
 
-        // Get sales total
         const { data: sales } = await supabase
           .from('sales')
           .select('total')
@@ -427,7 +406,6 @@ serve(async (req: Request) => {
 
         const totalRevenue = sales?.reduce((sum, s) => sum + s.total, 0) || 0
 
-        // Get expenses total
         const { data: expenses } = await supabase
           .from('expenses')
           .select('amount')
@@ -436,7 +414,6 @@ serve(async (req: Request) => {
 
         const totalExpenses = expenses?.reduce((sum, e) => sum + e.amount, 0) || 0
 
-        // Get cash balance
         const { data: cashEntry } = await supabase
           .from('cash_book')
           .select('balance')
@@ -456,7 +433,9 @@ serve(async (req: Request) => {
         })
       }
 
-      // Bank account operations
+      // ========================================================================
+      // LIST BANK ACCOUNTS - Simple query via client
+      // ========================================================================
       case 'list_bank_accounts': {
         const { data, error } = await supabase
           .from('bank_accounts')
@@ -470,15 +449,14 @@ serve(async (req: Request) => {
         return successResponse({ bank_accounts: data })
       }
 
+      // ========================================================================
+      // CREATE BANK ACCOUNT - Simple insert via client
+      // ========================================================================
       case 'create_bank_account': {
         const { bank_name, account_number, account_name, branch, is_default, initial_balance = 0 } = body
 
-        // If this is set as default, unset other defaults
         if (is_default) {
-          await supabase
-            .from('bank_accounts')
-            .update({ is_default: false })
-            .eq('store_id', store_id)
+          await supabase.from('bank_accounts').update({ is_default: false }).eq('store_id', store_id)
         }
 
         const { data, error } = await supabase
@@ -497,12 +475,11 @@ serve(async (req: Request) => {
 
         if (error) throw error
 
-        // If initial balance, create bank book entry
         if (initial_balance > 0) {
           await supabase.from('bank_book').insert({
             store_id,
             bank_account_id: data.id,
-            description: 'Số dư đầu kỳ',
+            description: 'So du dau ky',
             reference_type: 'opening',
             debit: initial_balance,
             credit: 0,
@@ -512,15 +489,14 @@ serve(async (req: Request) => {
         return successResponse({ bank_account: data })
       }
 
+      // ========================================================================
+      // UPDATE BANK ACCOUNT - Simple update via client
+      // ========================================================================
       case 'update_bank_account': {
         const { id, bank_name, account_number, account_name, branch, is_default } = body
 
-        // If this is set as default, unset other defaults
         if (is_default) {
-          await supabase
-            .from('bank_accounts')
-            .update({ is_default: false })
-            .eq('store_id', store_id)
+          await supabase.from('bank_accounts').update({ is_default: false }).eq('store_id', store_id)
         }
 
         const updateData: Record<string, unknown> = {}
@@ -543,19 +519,29 @@ serve(async (req: Request) => {
         return successResponse({ bank_account: data })
       }
 
+      // ========================================================================
+      // BANK IN - Uses existing RPC for atomic balance update
+      // ========================================================================
       case 'bank_in': {
         const { bank_account_id, amount, description, bank_ref, reference_type, reference_id } = body
 
-        // Atomically update bank account balance
+        if (amount <= 0) {
+          return errorResponse('So tien phai lon hon 0', 400)
+        }
+
         const { data: newBalance, error: balanceError } = await supabase.rpc('increment_bank_balance', {
           p_bank_account_id: bank_account_id,
           p_store_id: store_id,
           p_amount: amount,
         })
 
-        if (balanceError) throw balanceError
+        if (balanceError) {
+          if (balanceError.message?.includes('Bank account not found')) {
+            return errorResponse('Khong tim thay tai khoan ngan hang', 404)
+          }
+          throw balanceError
+        }
 
-        // Create bank book entry
         const { data, error } = await supabase
           .from('bank_book')
           .insert({
@@ -576,10 +562,16 @@ serve(async (req: Request) => {
         return successResponse({ transaction: data, balance: newBalance })
       }
 
+      // ========================================================================
+      // BANK OUT - Uses existing RPC for atomic balance update
+      // ========================================================================
       case 'bank_out': {
         const { bank_account_id, amount, description, bank_ref, reference_type, reference_id } = body
 
-        // Atomically decrement bank account balance (with validation)
+        if (amount <= 0) {
+          return errorResponse('So tien phai lon hon 0', 400)
+        }
+
         const { data: newBalance, error: balanceError } = await supabase.rpc('decrement_bank_balance', {
           p_bank_account_id: bank_account_id,
           p_store_id: store_id,
@@ -588,12 +580,14 @@ serve(async (req: Request) => {
 
         if (balanceError) {
           if (balanceError.message?.includes('Insufficient balance')) {
-            return errorResponse('Không đủ số dư trong tài khoản', 400)
+            return errorResponse('Khong du so du trong tai khoan', 400)
+          }
+          if (balanceError.message?.includes('Bank account not found')) {
+            return errorResponse('Khong tim thay tai khoan ngan hang', 404)
           }
           throw balanceError
         }
 
-        // Create bank book entry
         const { data, error } = await supabase
           .from('bank_book')
           .insert({
@@ -614,6 +608,9 @@ serve(async (req: Request) => {
         return successResponse({ transaction: data, balance: newBalance })
       }
 
+      // ========================================================================
+      // BANK TRANSACTIONS - Simple query via client
+      // ========================================================================
       case 'bank_transactions': {
         const { bank_account_id, date_from, date_to, page = 1, limit = 20 } = body
 
@@ -653,7 +650,9 @@ serve(async (req: Request) => {
         })
       }
 
-      // Expense categories
+      // ========================================================================
+      // LIST EXPENSE CATEGORIES - Simple query via client
+      // ========================================================================
       case 'list_expense_categories': {
         const { data, error } = await supabase
           .from('expense_categories')
@@ -667,6 +666,9 @@ serve(async (req: Request) => {
         return successResponse({ categories: data })
       }
 
+      // ========================================================================
+      // CREATE EXPENSE CATEGORY - Simple insert via client
+      // ========================================================================
       case 'create_expense_category': {
         const { name, code, is_deductible = true } = body
 

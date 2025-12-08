@@ -18,7 +18,7 @@ interface CreateCreditDebtRequest {
   customer_id: string
   sale_id?: string
   amount: number
-  due_date?: string  // Defaults to 30 days from now
+  due_date?: string
   notes?: string
 }
 
@@ -27,7 +27,7 @@ interface CreateInstallmentDebtRequest {
   customer_id: string
   sale_id?: string
   amount: number
-  installments: number  // 2-12
+  installments: number
   first_due_date: string
   frequency: 'weekly' | 'biweekly' | 'monthly'
   notes?: string
@@ -86,9 +86,6 @@ type DebtRequest =
 // Helper Functions
 // ============================================================================
 
-/**
- * Calculates due dates for installments based on frequency
- */
 function calculateInstallmentDueDates(
   firstDueDate: string,
   count: number,
@@ -118,25 +115,18 @@ function calculateInstallmentDueDates(
   return dates
 }
 
-/**
- * Calculates installment amounts (divide evenly, last takes remainder)
- */
 function calculateInstallmentAmounts(totalAmount: number, count: number): number[] {
   const baseAmount = Math.floor(totalAmount / count)
   const remainder = totalAmount - baseAmount * count
 
   const amounts: number[] = []
   for (let i = 0; i < count; i++) {
-    // Last installment takes the remainder
     amounts.push(i === count - 1 ? baseAmount + remainder : baseAmount)
   }
 
   return amounts
 }
 
-/**
- * Gets the default due date (30 days from now)
- */
 function getDefaultDueDate(): string {
   const date = new Date()
   date.setDate(date.getDate() + 30)
@@ -160,17 +150,16 @@ serve(async (req: Request) => {
 
     switch (body.action) {
       // ========================================================================
-      // CREATE CREDIT DEBT
+      // CREATE CREDIT DEBT - Simple insert via client
       // ========================================================================
       case 'create_credit': {
         const { customer_id, sale_id, amount, due_date, notes } = body
 
-        // Validate amount
         if (amount <= 0) {
           return errorResponse('So tien phai lon hon 0', 400)
         }
 
-        // Verify customer exists and belongs to this store
+        // Verify customer exists
         const { data: customer, error: customerError } = await supabase
           .from('customers')
           .select('id, name')
@@ -182,7 +171,6 @@ serve(async (req: Request) => {
           return errorResponse('Khong tim thay khach hang', 404)
         }
 
-        // Create the credit debt
         const { data: debt, error: debtError } = await supabase
           .from('customer_debts')
           .insert({
@@ -202,14 +190,10 @@ serve(async (req: Request) => {
 
         if (debtError) throw debtError
 
-        // If linked to a sale, update sale payment status
         if (sale_id) {
           await supabase
             .from('sales')
-            .update({
-              payment_status: 'unpaid',
-              amount_due: amount,
-            })
+            .update({ payment_status: 'unpaid', amount_due: amount })
             .eq('id', sale_id)
             .eq('store_id', store_id)
         }
@@ -221,35 +205,23 @@ serve(async (req: Request) => {
       }
 
       // ========================================================================
-      // CREATE INSTALLMENT DEBT
+      // CREATE INSTALLMENT DEBT - Simple inserts via client
       // ========================================================================
       case 'create_installment': {
-        const {
-          customer_id,
-          sale_id,
-          amount,
-          installments,
-          first_due_date,
-          frequency,
-          notes,
-        } = body
+        const { customer_id, sale_id, amount, installments, first_due_date, frequency, notes } = body
 
-        // Validate amount
         if (amount <= 0) {
           return errorResponse('So tien phai lon hon 0', 400)
         }
 
-        // Validate installments count (2-12)
         if (installments < 2 || installments > 12) {
           return errorResponse('So ky tra gop phai tu 2 den 12', 400)
         }
 
-        // Validate frequency
         if (!['weekly', 'biweekly', 'monthly'].includes(frequency)) {
           return errorResponse('Tan suat tra gop khong hop le', 400)
         }
 
-        // Verify customer exists and belongs to this store
         const { data: customer, error: customerError } = await supabase
           .from('customers')
           .select('id, name')
@@ -261,7 +233,6 @@ serve(async (req: Request) => {
           return errorResponse('Khong tim thay khach hang', 404)
         }
 
-        // Create the installment debt
         const { data: debt, error: debtError } = await supabase
           .from('customer_debts')
           .insert({
@@ -271,7 +242,7 @@ serve(async (req: Request) => {
             debt_type: 'installment',
             original_amount: amount,
             remaining_amount: amount,
-            due_date: null, // Installments have their own due dates
+            due_date: null,
             notes,
             status: 'active',
             created_by: user.id,
@@ -281,11 +252,9 @@ serve(async (req: Request) => {
 
         if (debtError) throw debtError
 
-        // Calculate installment amounts and due dates
         const installmentAmounts = calculateInstallmentAmounts(amount, installments)
         const installmentDates = calculateInstallmentDueDates(first_due_date, installments, frequency)
 
-        // Create installment records
         const installmentRecords = installmentAmounts.map((amt, index) => ({
           debt_id: debt.id,
           installment_number: index + 1,
@@ -302,14 +271,10 @@ serve(async (req: Request) => {
 
         if (installmentsError) throw installmentsError
 
-        // If linked to a sale, update sale payment status
         if (sale_id) {
           await supabase
             .from('sales')
-            .update({
-              payment_status: 'unpaid',
-              amount_due: amount,
-            })
+            .update({ payment_status: 'unpaid', amount_due: amount })
             .eq('id', sale_id)
             .eq('store_id', store_id)
         }
@@ -322,186 +287,71 @@ serve(async (req: Request) => {
       }
 
       // ========================================================================
-      // RECORD PAYMENT
+      // RECORD PAYMENT - Uses RPC for atomic transaction
       // ========================================================================
       case 'record_payment': {
-        const {
-          debt_id,
-          installment_id,
-          amount,
-          payment_method,
-          bank_account_id,
-          bank_ref,
-          notes,
-        } = body
+        const { debt_id, installment_id, amount, payment_method, bank_account_id, bank_ref, notes } = body
 
-        // Validate amount
         if (amount <= 0) {
           return errorResponse('So tien phai lon hon 0', 400)
         }
 
-        // Validate payment method
         if (payment_method === 'bank_transfer' && !bank_account_id) {
           return errorResponse('Vui long chon tai khoan ngan hang', 400)
         }
 
-        // Get debt details
-        const { data: debt, error: debtError } = await supabase
-          .from('customer_debts')
-          .select('*, customers(id, name, total_debt)')
-          .eq('id', debt_id)
-          .eq('store_id', store_id)
-          .single()
+        // Call RPC for atomic transaction
+        const { data, error } = await supabase.rpc('record_debt_payment', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_debt_id: debt_id,
+          p_amount: amount,
+          p_payment_method: payment_method,
+          p_installment_id: installment_id || null,
+          p_bank_account_id: bank_account_id || null,
+          p_bank_ref: bank_ref || null,
+          p_notes: notes || null,
+        })
 
-        if (debtError || !debt) {
-          return errorResponse('Khong tim thay cong no', 404)
-        }
-
-        if (debt.status === 'paid') {
-          return errorResponse('Cong no da thanh toan het', 400)
-        }
-
-        if (debt.status === 'cancelled') {
-          return errorResponse('Cong no da bi huy', 400)
-        }
-
-        // Validate payment amount against remaining
-        if (amount > debt.remaining_amount) {
-          return errorResponse(
-            `So tien thanh toan vuot qua so tien con lai (${debt.remaining_amount.toLocaleString('vi-VN')} VND)`,
-            400
-          )
-        }
-
-        // If installment payment, validate installment
-        if (installment_id) {
-          const { data: installment, error: installmentError } = await supabase
-            .from('debt_installments')
-            .select('*')
-            .eq('id', installment_id)
-            .eq('debt_id', debt_id)
-            .single()
-
-          if (installmentError || !installment) {
+        if (error) {
+          const message = error.message || 'Loi ghi nhan thanh toan'
+          if (message.includes('Debt not found')) {
+            return errorResponse('Khong tim thay cong no', 404)
+          }
+          if (message.includes('already fully paid')) {
+            return errorResponse('Cong no da thanh toan het', 400)
+          }
+          if (message.includes('has been cancelled')) {
+            return errorResponse('Cong no da bi huy', 400)
+          }
+          if (message.includes('exceeds remaining debt')) {
+            return errorResponse(message.replace('Payment amount exceeds remaining debt', 'So tien vuot qua so con lai'), 400)
+          }
+          if (message.includes('Installment not found')) {
             return errorResponse('Khong tim thay ky tra gop', 404)
           }
-
-          const installmentRemaining = installment.amount - installment.paid_amount
-          if (amount > installmentRemaining) {
-            return errorResponse(
-              `So tien vuot qua so tien con lai cua ky (${installmentRemaining.toLocaleString('vi-VN')} VND)`,
-              400
-            )
+          if (message.includes('exceeds installment remaining')) {
+            return errorResponse(message.replace('Payment exceeds installment remaining', 'So tien vuot qua so con lai cua ky'), 400)
           }
+          throw error
         }
 
-        // Create debt payment record
-        const { data: payment, error: paymentError } = await supabase
-          .from('debt_payments')
-          .insert({
-            store_id,
-            debt_id,
-            installment_id,
-            amount,
-            payment_method,
-            bank_account_id,
-            bank_ref,
-            notes,
-            created_by: user.id,
-          })
-          .select()
-          .single()
-
-        if (paymentError) throw paymentError
-
-        // Note: The database trigger 'update_debt_on_payment' handles:
-        // - Updating remaining_amount on customer_debts
-        // - Updating paid_amount on debt_installments
-        // - Updating status on debt and installments
-        // And the trigger 'update_customer_debt_on_debt_change' handles:
-        // - Updating total_debt on customers table
-
-        // Record to cash_book or bank_book
-        const customerName = debt.customers?.name || 'Khach hang'
-        const description = `Thu no: ${customerName}`
-
-        if (payment_method === 'cash') {
-          // Get current cash balance
-          const { data: lastEntry } = await supabase
-            .from('cash_book')
-            .select('balance')
-            .eq('store_id', store_id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
-
-          const currentBalance = lastEntry?.balance || 0
-          const newBalance = currentBalance + amount
-
-          await supabase.from('cash_book').insert({
-            store_id,
-            description,
-            reference_type: 'debt_payment',
-            reference_id: payment.id,
-            debit: amount,
-            credit: 0,
-            balance: newBalance,
-            created_by: user.id,
-          })
-        } else if (payment_method === 'bank_transfer' && bank_account_id) {
-          // Atomically update bank account balance
-          const { error: balanceError } = await supabase.rpc('increment_bank_balance', {
-            p_bank_account_id: bank_account_id,
-            p_store_id: store_id,
-            p_amount: amount,
-          })
-
-          if (balanceError) throw balanceError
-
-          await supabase.from('bank_book').insert({
-            store_id,
-            bank_account_id,
-            description,
-            bank_ref,
-            reference_type: 'debt_payment',
-            reference_id: payment.id,
-            debit: amount,
-            credit: 0,
-          })
-        }
-
-        // Get updated debt info
+        // Get updated debt info for response
         const { data: updatedDebt } = await supabase
           .from('customer_debts')
           .select('*, customers(id, name, total_debt)')
           .eq('id', debt_id)
           .single()
 
-        // If linked to a sale, update sale payment status
-        if (debt.sale_id) {
-          const newAmountDue = updatedDebt?.remaining_amount || 0
-          const amountPaid = debt.original_amount - newAmountDue
-
-          await supabase
-            .from('sales')
-            .update({
-              payment_status: newAmountDue === 0 ? 'paid' : 'partial',
-              amount_paid: amountPaid,
-              amount_due: newAmountDue,
-            })
-            .eq('id', debt.sale_id)
-            .eq('store_id', store_id)
-        }
-
         return successResponse({
-          payment,
+          payment: { id: data.payment_id, amount: data.amount },
           debt: updatedDebt,
-          is_fully_paid: updatedDebt?.remaining_amount === 0,
+          is_fully_paid: data.is_fully_paid,
         })
       }
 
       // ========================================================================
-      // LIST DEBTS
+      // LIST DEBTS - Simple query via client
       // ========================================================================
       case 'list': {
         const { customer_id, status = 'all', page = 1, limit = 20 } = body
@@ -539,12 +389,11 @@ serve(async (req: Request) => {
       }
 
       // ========================================================================
-      // GET DEBT DETAIL
+      // GET DEBT DETAIL - Simple query via client
       // ========================================================================
       case 'get': {
         const { id } = body
 
-        // Get debt with customer info
         const { data: debt, error: debtError } = await supabase
           .from('customer_debts')
           .select('*, customers(id, name, phone, address)')
@@ -556,7 +405,6 @@ serve(async (req: Request) => {
           return errorResponse('Khong tim thay cong no', 404)
         }
 
-        // Get installments if installment debt
         let installments = null
         if (debt.debt_type === 'installment') {
           const { data: installmentsData } = await supabase
@@ -568,27 +416,21 @@ serve(async (req: Request) => {
           installments = installmentsData
         }
 
-        // Get payment history
         const { data: payments } = await supabase
           .from('debt_payments')
           .select('*, debt_installments(installment_number)')
           .eq('debt_id', id)
           .order('paid_at', { ascending: false })
 
-        return successResponse({
-          debt,
-          installments,
-          payments,
-        })
+        return successResponse({ debt, installments, payments })
       }
 
       // ========================================================================
-      // GET CUSTOMER DEBTS
+      // GET CUSTOMER DEBTS - Simple query via client
       // ========================================================================
       case 'get_customer_debts': {
         const { customer_id } = body
 
-        // Verify customer exists
         const { data: customer, error: customerError } = await supabase
           .from('customers')
           .select('id, name, phone, address, total_debt')
@@ -600,7 +442,6 @@ serve(async (req: Request) => {
           return errorResponse('Khong tim thay khach hang', 404)
         }
 
-        // Get all debts for this customer
         const { data: debts, error: debtsError } = await supabase
           .from('customer_debts')
           .select('*')
@@ -610,10 +451,7 @@ serve(async (req: Request) => {
 
         if (debtsError) throw debtsError
 
-        // Get installments for installment debts
-        const installmentDebtIds = debts
-          .filter(d => d.debt_type === 'installment')
-          .map(d => d.id)
+        const installmentDebtIds = debts.filter((d) => d.debt_type === 'installment').map((d) => d.id)
 
         let installmentsMap: Record<string, unknown[]> = {}
         if (installmentDebtIds.length > 0) {
@@ -624,42 +462,38 @@ serve(async (req: Request) => {
             .order('installment_number')
 
           if (installments) {
-            installmentsMap = installments.reduce((acc, inst) => {
-              if (!acc[inst.debt_id]) acc[inst.debt_id] = []
-              acc[inst.debt_id].push(inst)
-              return acc
-            }, {} as Record<string, unknown[]>)
+            installmentsMap = installments.reduce(
+              (acc, inst) => {
+                if (!acc[inst.debt_id]) acc[inst.debt_id] = []
+                acc[inst.debt_id].push(inst)
+                return acc
+              },
+              {} as Record<string, unknown[]>
+            )
           }
         }
 
-        // Attach installments to debts
-        const debtsWithInstallments = debts.map(debt => ({
+        const debtsWithInstallments = debts.map((debt) => ({
           ...debt,
           installments: debt.debt_type === 'installment' ? installmentsMap[debt.id] || [] : null,
         }))
 
-        // Calculate summary
         const summary = {
           total_debt: customer.total_debt,
-          active_debts: debts.filter(d => d.status === 'active').length,
-          overdue_debts: debts.filter(d => d.status === 'overdue').length,
-          paid_debts: debts.filter(d => d.status === 'paid').length,
+          active_debts: debts.filter((d) => d.status === 'active').length,
+          overdue_debts: debts.filter((d) => d.status === 'overdue').length,
+          paid_debts: debts.filter((d) => d.status === 'paid').length,
         }
 
-        return successResponse({
-          customer,
-          debts: debtsWithInstallments,
-          summary,
-        })
+        return successResponse({ customer, debts: debtsWithInstallments, summary })
       }
 
       // ========================================================================
-      // CANCEL DEBT
+      // CANCEL DEBT - Simple update via client
       // ========================================================================
       case 'cancel': {
         const { id, reason } = body
 
-        // Manager only
         if (!isOwnerOrManager(role)) {
           return errorResponse('Chi quan ly moi co quyen huy cong no', 403)
         }
@@ -668,7 +502,6 @@ serve(async (req: Request) => {
           return errorResponse('Vui long nhap ly do huy (it nhat 5 ky tu)', 400)
         }
 
-        // Get debt
         const { data: debt, error: debtError } = await supabase
           .from('customer_debts')
           .select('*, customers(id)')
@@ -688,14 +521,11 @@ serve(async (req: Request) => {
           return errorResponse('Cong no da bi huy truoc do', 400)
         }
 
-        // Update debt status
         const { data: updatedDebt, error: updateError } = await supabase
           .from('customer_debts')
           .update({
             status: 'cancelled',
-            notes: debt.notes
-              ? `${debt.notes}\n\n[HUY: ${reason}]`
-              : `[HUY: ${reason}]`,
+            notes: debt.notes ? `${debt.notes}\n\n[HUY: ${reason}]` : `[HUY: ${reason}]`,
           })
           .eq('id', id)
           .select()
@@ -703,32 +533,21 @@ serve(async (req: Request) => {
 
         if (updateError) throw updateError
 
-        // Note: The trigger 'update_customer_debt_on_debt_change' will
-        // automatically update the customer's total_debt
-
-        // If linked to a sale, update sale payment status
         if (debt.sale_id) {
           await supabase
             .from('sales')
-            .update({
-              payment_status: 'paid', // Cancelled debt = no longer due
-              amount_due: 0,
-            })
+            .update({ payment_status: 'paid', amount_due: 0 })
             .eq('id', debt.sale_id)
             .eq('store_id', store_id)
         }
 
-        return successResponse({
-          debt: updatedDebt,
-          message: 'Cong no da duoc huy',
-        })
+        return successResponse({ debt: updatedDebt, message: 'Cong no da duoc huy' })
       }
 
       // ========================================================================
-      // DEBT SUMMARY
+      // DEBT SUMMARY - Simple queries via client
       // ========================================================================
       case 'summary': {
-        // Get total outstanding debt
         const { data: activeDebts } = await supabase
           .from('customer_debts')
           .select('remaining_amount, status, customer_id')
@@ -736,16 +555,14 @@ serve(async (req: Request) => {
           .in('status', ['active', 'overdue'])
 
         const totalOutstanding = activeDebts?.reduce((sum, d) => sum + d.remaining_amount, 0) || 0
-        const activeCount = activeDebts?.filter(d => d.status === 'active').length || 0
-        const overdueDebts = activeDebts?.filter(d => d.status === 'overdue') || []
+        const activeCount = activeDebts?.filter((d) => d.status === 'active').length || 0
+        const overdueDebts = activeDebts?.filter((d) => d.status === 'overdue') || []
         const overdueCount = overdueDebts.length
         const overdueAmount = overdueDebts.reduce((sum, d) => sum + d.remaining_amount, 0)
 
-        // Count unique customers with debt
-        const uniqueCustomers = new Set(activeDebts?.map(d => d.customer_id) || [])
+        const uniqueCustomers = new Set(activeDebts?.map((d) => d.customer_id) || [])
         const totalCustomersWithDebt = uniqueCustomers.size
 
-        // Get collected this month
         const firstDayOfMonth = new Date()
         firstDayOfMonth.setDate(1)
         firstDayOfMonth.setHours(0, 0, 0, 0)
@@ -770,9 +587,6 @@ serve(async (req: Request) => {
         })
       }
 
-      // ========================================================================
-      // DEFAULT
-      // ========================================================================
       default:
         return errorResponse('Invalid action', 400)
     }
