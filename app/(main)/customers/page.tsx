@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Typography, Tabs, Button } from 'antd'
-import { UserOutlined, DollarOutlined, PlusOutlined } from '@ant-design/icons'
+import { Typography, Tabs, Button, Space } from 'antd'
+import { UserOutlined, DollarOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import {
   CustomerList,
   CustomerForm,
@@ -14,6 +14,8 @@ import {
   DebtSummaryCard,
   CreateDebtModal,
 } from '@/components/debts'
+import { CSVImportModal } from '@/components/import'
+import { useCSVImportStore } from '@/lib/stores/csv-import'
 import type { Customer } from '@/lib/supabase/functions'
 import type { DebtDisplayData } from '@/components/debts/DebtCard'
 
@@ -23,6 +25,7 @@ type CustomerTab = 'customers' | 'debts'
 
 export default function CustomersPage() {
   const [activeTab, setActiveTab] = useState<CustomerTab>('customers')
+  const openImport = useCSVImportStore((state) => state.openImport)
 
   // Customer state
   const [showAddCustomer, setShowAddCustomer] = useState(false)
@@ -96,7 +99,17 @@ export default function CustomersPage() {
 
   return (
     <div className="p-4 pb-20">
-      <Title level={4}>Khach hang & Cong no</Title>
+      <div className="flex justify-between items-center mb-4">
+        <Title level={4} className="!mb-0">Khach hang & Cong no</Title>
+        {activeTab === 'customers' && (
+          <Button
+            icon={<UploadOutlined />}
+            onClick={() => openImport('customer')}
+          >
+            Import CSV
+          </Button>
+        )}
+      </div>
 
       <Tabs
         activeKey={activeTab}
@@ -140,6 +153,9 @@ export default function CustomersPage() {
         open={createDebtModalOpen}
         onClose={() => setCreateDebtModalOpen(false)}
       />
+
+      {/* CSV Import Modal */}
+      <CSVImportModal />
     </div>
   )
 }

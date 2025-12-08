@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Button, FloatButton, message } from 'antd'
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Button, FloatButton, Dropdown, message } from 'antd'
+import { PlusOutlined, ReloadOutlined, UploadOutlined, MoreOutlined } from '@ant-design/icons'
+import type { MenuProps } from 'antd'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/supabase/functions'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { ProductSearch } from '@/components/products/ProductSearch'
 import { CategoryFilter } from '@/components/products/CategoryFilter'
 import { ProductForm } from '@/components/products/ProductForm'
+import { CSVImportModal } from '@/components/import'
+import { useCSVImportStore } from '@/lib/stores/csv-import'
 
 interface Product {
   id: string
@@ -35,6 +38,7 @@ export default function ProductsPage() {
   const [categoryId, setCategoryId] = useState<string>()
   const [formOpen, setFormOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product>()
+  const openImport = useCSVImportStore((state) => state.openImport)
 
   const queryClient = useQueryClient()
 
@@ -108,10 +112,30 @@ export default function ProductsPage() {
     queryClient.invalidateQueries({ queryKey: ['categories'] })
   }, [queryClient])
 
+  const importMenuItems: MenuProps['items'] = [
+    {
+      key: 'product',
+      label: 'Import sản phẩm',
+      icon: <UploadOutlined />,
+      onClick: () => openImport('product'),
+    },
+    {
+      key: 'category',
+      label: 'Import danh mục',
+      icon: <UploadOutlined />,
+      onClick: () => openImport('category'),
+    },
+  ]
+
   return (
     <div className="p-4 pb-20">
       <div className="mb-4">
-        <h1 className="text-xl font-bold mb-4">Sản phẩm</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold">Sản phẩm</h1>
+          <Dropdown menu={{ items: importMenuItems }} placement="bottomRight">
+            <Button icon={<UploadOutlined />}>Import CSV</Button>
+          </Dropdown>
+        </div>
         <ProductSearch onSearch={handleSearch} />
       </div>
 
@@ -148,6 +172,9 @@ export default function ProductsPage() {
         initialValues={editProduct}
         title={editProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}
       />
+
+      {/* CSV Import Modal */}
+      <CSVImportModal />
     </div>
   )
 }

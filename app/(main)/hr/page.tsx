@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Typography, Tabs } from 'antd'
-import { TeamOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons'
+import { Typography, Tabs, Button } from 'antd'
+import { TeamOutlined, ClockCircleOutlined, DollarOutlined, UploadOutlined } from '@ant-design/icons'
 import {
   EmployeeList,
   EmployeeForm,
@@ -11,6 +11,8 @@ import {
   PayslipList,
   PayslipDetail,
 } from '@/components/hr'
+import { CSVImportModal } from '@/components/import'
+import { useCSVImportStore } from '@/lib/stores/csv-import'
 import type { Employee, PayrollWithEmployee } from '@/lib/supabase/functions'
 
 const { Title } = Typography
@@ -19,6 +21,7 @@ type HRTab = 'employees' | 'payroll'
 
 export default function HRPage() {
   const [activeTab, setActiveTab] = useState<HRTab>('employees')
+  const openImport = useCSVImportStore((state) => state.openImport)
 
   // Employee state
   const [showAddEmployee, setShowAddEmployee] = useState(false)
@@ -83,7 +86,17 @@ export default function HRPage() {
 
   return (
     <div className="p-4 pb-20">
-      <Title level={4}>Nhan su</Title>
+      <div className="flex justify-between items-center mb-4">
+        <Title level={4} className="!mb-0">Nhan su</Title>
+        {activeTab === 'employees' && (
+          <Button
+            icon={<UploadOutlined />}
+            onClick={() => openImport('employee')}
+          >
+            Import CSV
+          </Button>
+        )}
+      </div>
 
       <Tabs
         activeKey={activeTab}
@@ -118,6 +131,9 @@ export default function HRPage() {
         onClose={() => setShowPayslipDetail(false)}
         payroll={selectedPayroll}
       />
+
+      {/* CSV Import Modal */}
+      <CSVImportModal />
     </div>
   )
 }
