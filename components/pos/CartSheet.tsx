@@ -1,6 +1,6 @@
 'use client'
 
-import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm } from 'antd'
+import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm, Space } from 'antd'
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useCartStore } from '@/lib/stores/cart'
 
@@ -24,7 +24,7 @@ export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
       title={`Giỏ hàng (${items.length})`}
       open={open}
       onClose={onClose}
-      width={400}
+      styles={{ wrapper: { width: 400 } }}
       footer={
         <div className="space-y-3">
           <div className="flex justify-between">
@@ -37,17 +37,18 @@ export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
           </div>
           <div className="flex justify-between items-center">
             <Text>Giảm giá:</Text>
-            <InputNumber
-              size="small"
-              min={0}
-              max={subtotal + vatAmount}
-              value={discount}
-              onChange={(v) => setDiscount(v || 0)}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
-              addonAfter="đ"
-              className="w-32"
-            />
+            <Space.Compact className="w-32">
+              <InputNumber
+                size="small"
+                min={0}
+                max={subtotal + vatAmount}
+                value={discount}
+                onChange={(v) => setDiscount(v || 0)}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
+              />
+              <Space.Addon>đ</Space.Addon>
+            </Space.Compact>
           </div>
           <Divider className="my-2" />
           <div className="flex justify-between">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Form, Input, InputNumber, Select, DatePicker, Button, message, Typography, Divider, Alert } from 'antd'
+import { Modal, Form, Input, InputNumber, Select, DatePicker, Button, message, Typography, Divider, Alert, Space } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type Customer } from '@/lib/supabase/functions'
@@ -208,15 +208,17 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
             { type: 'number', min: 1000, message: 'So tien toi thieu 1,000d' },
           ]}
         >
-          <InputNumber<number>
-            className="w-full"
-            min={1000}
-            step={10000}
-            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-            placeholder="0"
-            addonAfter="VND"
-          />
+          <Space.Compact className="w-full">
+            <InputNumber<number>
+              className="w-full"
+              min={1000}
+              step={10000}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
+              placeholder="0"
+            />
+            <Space.Addon>VND</Space.Addon>
+          </Space.Compact>
         </Form.Item>
 
         {/* Credit-specific fields */}

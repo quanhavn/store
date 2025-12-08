@@ -96,10 +96,14 @@ export const api = {
   },
 
   categories: {
-    list: () =>
-      callFunction<{ categories: Database['public']['Tables']['categories']['Row'][] }>('categories', { action: 'list' }),
-    create: (data: { name: string; parent_id?: string }) =>
-      callFunction<{ category: Database['public']['Tables']['categories']['Row'] }>('categories', { action: 'create', ...data }),
+    list: (params?: { flat?: boolean }) =>
+      callFunction<{ categories: Category[]; flat_categories?: Category[] }>('categories', { action: 'list', ...params }),
+    create: (data: { name: string; parent_id?: string; sort_order?: number }) =>
+      callFunction<{ category: Category }>('categories', { action: 'create', ...data }),
+    update: (id: string, data: { name?: string; parent_id?: string | null; sort_order?: number }) =>
+      callFunction<{ category: Category }>('categories', { action: 'update', id, ...data }),
+    delete: (id: string) =>
+      callFunction<{ deleted: boolean }>('categories', { action: 'delete', id }),
   },
 
   inventory: {
@@ -1162,5 +1166,16 @@ export interface RecordPaymentData {
   bank_account_id?: string
   bank_ref?: string
   notes?: string
+}
+
+// Category types
+export interface Category {
+  id: string
+  store_id: string
+  name: string
+  parent_id: string | null
+  sort_order: number
+  created_at: string
+  children?: Category[]
 }
 

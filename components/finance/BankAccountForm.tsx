@@ -108,7 +108,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
       height="85%"
       open={open}
       onClose={onClose}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="max-w-md mx-auto">
         <Form form={form} layout="vertical">

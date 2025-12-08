@@ -145,7 +145,7 @@ export function ProductUnitsSection({
           onChange={(v) => handleChange(record.id!, 'sell_price', v)}
           min={0}
           formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={(v) => (v ? Number(v.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+          parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
           placeholder={record.is_base_unit ? undefined : formatCurrency(baseSellPrice * record.conversion_rate)}
           disabled={disabled}
           size="small"

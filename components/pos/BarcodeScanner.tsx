@@ -47,6 +47,14 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     }
   }, [])
 
+  const handleClose = useCallback(async () => {
+    await stopScanner()
+    setLastScanned(null)
+    setError(null)
+    setLoading(true)
+    onClose()
+  }, [onClose, stopScanner])
+
   const startScanner = useCallback(async () => {
     if (isStartingRef.current || !containerRef.current) return
 
@@ -131,15 +139,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     } finally {
       isStartingRef.current = false
     }
-  }, [onScan, stopScanner])
-
-  const handleClose = useCallback(async () => {
-    await stopScanner()
-    setLastScanned(null)
-    setError(null)
-    setLoading(true)
-    onClose()
-  }, [onClose, stopScanner])
+  }, [onScan, stopScanner, handleClose])
 
   const handleRetry = useCallback(() => {
     setError(null)
@@ -178,7 +178,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
       footer={null}
       width={400}
       centered
-      destroyOnClose
+      destroyOnHidden
       closeIcon={<CloseOutlined />}
     >
       <div className="relative">

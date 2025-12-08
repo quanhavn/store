@@ -463,7 +463,7 @@ export default function InventoryPage() {
         width="100%"
         style={{ top: 0, maxWidth: '100vw', margin: 0, padding: 0 }}
         styles={{ body: { height: 'calc(100vh - 55px)', overflow: 'hidden', padding: '16px' } }}
-        destroyOnClose
+        destroyOnHidden
       >
         {isLoadingActive ? (
           <div className="flex items-center justify-center h-full">

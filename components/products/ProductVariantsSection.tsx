@@ -314,10 +314,10 @@ export function ProductVariantsSection({
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="cost_price" label="Giá nhập">
               <InputNumber<number>
-                className="w-full"
+                className="!w-full"
                 min={0}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(v) => (v ? Number(v.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+                parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
                 addonAfter="đ"
               />
             </Form.Item>
@@ -327,10 +327,10 @@ export function ProductVariantsSection({
               rules={[{ required: true, message: 'Nhập giá bán' }]}
             >
               <InputNumber<number>
-                className="w-full"
+                className="!w-full"
                 min={0}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(v) => (v ? Number(v.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+                parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
                 addonAfter="đ"
               />
             </Form.Item>
@@ -342,10 +342,20 @@ export function ProductVariantsSection({
               label="Tồn kho"
               rules={[{ required: true, message: 'Nhập số lượng' }]}
             >
-              <InputNumber className="w-full" min={0} />
+              <InputNumber<number>
+                className="!w-full"
+                min={0}
+                formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+              />
             </Form.Item>
             <Form.Item name="min_stock" label="Tồn tối thiểu">
-              <InputNumber className="w-full" min={0} />
+              <InputNumber<number>
+                className="!w-full"
+                min={0}
+                formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+              />
             </Form.Item>
           </div>
         </Form>

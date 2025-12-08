@@ -113,7 +113,7 @@ export function InvoiceDetail({ invoiceId, open, onClose, onStatusChange }: Invo
       height="90%"
       open={open}
       onClose={onClose}
-      destroyOnClose
+      destroyOnHidden
     >
       {isLoading ? (
         <div className="flex justify-center py-12">

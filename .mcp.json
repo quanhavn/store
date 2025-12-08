@@ -3,6 +3,11 @@
     "supabase": {
       "type": "http",
       "url": "http://localhost:54321/mcp"
+    },
+    "auggie-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "auggie-context-mcp@latest"]
     }
   }
 }

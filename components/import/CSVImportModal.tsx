@@ -203,7 +203,7 @@ export function CSVImportModal() {
       title={`Import ${getEntityLabel(entityType)}`}
       width={800}
       footer={renderFooter()}
-      destroyOnClose
+      destroyOnHidden
       maskClosable={progress.status !== 'importing'}
       closable={progress.status !== 'importing'}
     >

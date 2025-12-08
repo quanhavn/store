@@ -89,7 +89,7 @@ export function CashOutForm({ open, onClose }: CashOutFormProps) {
       height="90%"
       open={open}
       onClose={handleClose}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="max-w-md mx-auto">
         {currentBalance <= 0 && (

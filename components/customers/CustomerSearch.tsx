@@ -66,7 +66,7 @@ export function CustomerSearch({
         label: (
           <div className="flex items-center gap-2 py-1 text-blue-600">
             <UserAddOutlined />
-            <span>Them khach hang moi: "{debouncedSearch}"</span>
+            <span>Them khach hang moi: &quot;{debouncedSearch}&quot;</span>
           </div>
         ),
         customer: null as unknown as Customer,

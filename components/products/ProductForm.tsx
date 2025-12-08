@@ -199,7 +199,7 @@ export function ProductForm({
         title={title}
         open={open}
         onClose={onClose}
-        width={520}
+        styles={{ wrapper: { width: 520 } }}
         footer={
           <div className="flex gap-2">
             <Button onClick={onClose} className="flex-1">
@@ -255,7 +255,7 @@ export function ProductForm({
                 (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
               }
               options={categories.map((c) => ({ label: c.name, value: c.id }))}
-              dropdownRender={(menu) => (
+              popupRender={(menu) => (
                 <>
                   {menu}
                   <Divider style={{ margin: '8px 0' }} />
@@ -289,10 +289,10 @@ export function ProductForm({
               rules={[{ required: true, message: 'Nhập giá nhập' }]}
             >
               <InputNumber<number>
-                className="w-full"
+                className="!w-full"
                 min={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                 addonAfter="đ"
               />
             </Form.Item>
@@ -302,10 +302,10 @@ export function ProductForm({
               rules={[{ required: true, message: 'Nhập giá bán' }]}
             >
               <InputNumber<number>
-                className="w-full"
+                className="!w-full"
                 min={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                 addonAfter="đ"
               />
             </Form.Item>
@@ -325,10 +325,21 @@ export function ProductForm({
 
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="quantity" label="Tồn kho" hidden={hasVariants}>
-              <InputNumber className="w-full" min={0} disabled={hasVariants} />
+              <InputNumber<number>
+                className="!w-full"
+                min={0}
+                disabled={hasVariants}
+                formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+              />
             </Form.Item>
             <Form.Item name="min_stock" label="Tồn tối thiểu">
-              <InputNumber className="w-full" min={0} />
+              <InputNumber<number>
+                className="!w-full"
+                min={0}
+                formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+              />
             </Form.Item>
           </div>
 

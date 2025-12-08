@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Drawer, Form, InputNumber, Select, Input, Button, message, Typography } from 'antd'
+import { Drawer, Form, InputNumber, Select, Input, Button, message, Typography, Space } from 'antd'
 import { DollarOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { api, type DebtInstallment } from '@/lib/supabase/functions'
@@ -156,16 +156,18 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
               },
             ]}
           >
-            <InputNumber<number>
-              className="w-full"
-              min={1000}
-              max={maxAmount}
-              step={10000}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-              placeholder="0"
-              addonAfter="VND"
-            />
+            <Space.Compact className="w-full">
+              <InputNumber<number>
+                className="w-full"
+                min={1000}
+                max={maxAmount}
+                step={10000}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
+                placeholder="0"
+              />
+              <Space.Addon>VND</Space.Addon>
+            </Space.Compact>
           </Form.Item>
 
           {/* Quick amount buttons */}

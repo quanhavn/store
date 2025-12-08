@@ -97,7 +97,7 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
       height="95%"
       open={open}
       onClose={handleClose}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="max-w-md mx-auto">
         {saleLoading ? (

@@ -8,7 +8,8 @@ import {
   TeamOutlined,
   ShoppingOutlined,
   SettingOutlined,
-  UserOutlined
+  UserOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons'
 import Link from 'next/link'
 
@@ -62,6 +63,14 @@ const menuItems = [
     href: '/products',
     bgColor: 'bg-pink-100',
     iconColor: 'text-pink-600'
+  },
+  {
+    title: 'Danh mục',
+    description: 'Quản lý danh mục',
+    icon: AppstoreOutlined,
+    href: '/categories',
+    bgColor: 'bg-indigo-100',
+    iconColor: 'text-indigo-600'
   },
   {
     title: 'Cài đặt',

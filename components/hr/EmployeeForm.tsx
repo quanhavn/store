@@ -167,7 +167,7 @@ export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
             options={positions.map(p => ({ value: p, label: p }))}
             showSearch
             allowClear
-            dropdownRender={(menu) => (
+            popupRender={(menu) => (
               <>
                 {menu}
                 <div className="text-xs text-gray-400 p-2 border-t">

@@ -261,17 +261,19 @@ export function PaymentMethods({
       {isPartialPayment && (
         <div className="mb-4">
           <Text className="block mb-2">So tien thanh toan:</Text>
-          <InputNumber
-            size="large"
-            className="w-full"
-            min={1}
-            max={total - 1}
-            value={partialAmount}
-            onChange={(v) => setPartialAmount(v || 0)}
-            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
-            addonAfter="d"
-          />
+          <Space.Compact className="w-full">
+            <InputNumber
+              size="large"
+              className="w-full"
+              min={1}
+              max={total - 1}
+              value={partialAmount}
+              onChange={(v) => setPartialAmount(v || 0)}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
+            />
+            <Space.Addon>đ</Space.Addon>
+          </Space.Compact>
           <div className="grid grid-cols-4 gap-2 mt-2">
             {[0.25, 0.5, 0.75, 0.9].map((ratio) => (
               <Button
@@ -317,16 +319,18 @@ export function PaymentMethods({
         <div className="space-y-4">
           <div>
             <Text className="block mb-2">Tien khach dua:</Text>
-            <InputNumber
-              size="large"
-              className="w-full"
-              min={0}
-              value={cashReceived}
-              onChange={(v) => setCashReceived(v || 0)}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
-              addonAfter="d"
-            />
+            <Space.Compact className="w-full">
+              <InputNumber
+                size="large"
+                className="w-full"
+                min={0}
+                value={cashReceived}
+                onChange={(v) => setCashReceived(v || 0)}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
+              />
+              <Space.Addon>đ</Space.Addon>
+            </Space.Compact>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {[50000, 100000, 200000, 500000].map((amount) => (
@@ -362,17 +366,19 @@ export function PaymentMethods({
               {applyExtraToDebt && (
                 <div className="mt-3">
                   <Text className="block mb-2 text-sm">So tien tru no:</Text>
-                  <InputNumber
-                    size="middle"
-                    className="w-full"
-                    min={1}
-                    max={Math.min(extraAmount, customer.total_debt)}
-                    value={debtPaymentAmount}
-                    onChange={(v) => setDebtPaymentAmount(v || 0)}
-                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
-                    addonAfter="d"
-                  />
+                  <Space.Compact className="w-full">
+                    <InputNumber
+                      size="middle"
+                      className="w-full"
+                      min={1}
+                      max={Math.min(extraAmount, customer.total_debt)}
+                      value={debtPaymentAmount}
+                      onChange={(v) => setDebtPaymentAmount(v || 0)}
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
+                    />
+                    <Space.Addon>đ</Space.Addon>
+                  </Space.Compact>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <Button
                       size="small"

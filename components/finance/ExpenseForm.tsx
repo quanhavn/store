@@ -101,7 +101,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
       height="95%"
       open={open}
       onClose={handleClose}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="max-w-md mx-auto">
         {showKeypad ? (

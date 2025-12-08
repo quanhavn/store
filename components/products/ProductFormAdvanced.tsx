@@ -397,7 +397,7 @@ export function ProductFormAdvanced({
                 (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
               }
               options={categories.map((c) => ({ label: c.name, value: c.id }))}
-              dropdownRender={(menu) => (
+              popupRender={(menu) => (
                 <>
                   {menu}
                   <Divider style={{ margin: '8px 0' }} />
@@ -431,10 +431,10 @@ export function ProductFormAdvanced({
               rules={[{ required: true, message: 'Nhập giá nhập' }]}
             >
               <InputNumber<number>
-                className="w-full"
+                className="!w-full"
                 min={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                 addonAfter="đ"
               />
             </Form.Item>
@@ -444,10 +444,10 @@ export function ProductFormAdvanced({
               rules={[{ required: true, message: 'Nhập giá bán' }]}
             >
               <InputNumber<number>
-                className="w-full"
+                className="!w-full"
                 min={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
+                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                 addonAfter="đ"
               />
             </Form.Item>
@@ -528,7 +528,7 @@ export function ProductFormAdvanced({
             title={editingUnit ? 'Sửa đơn vị' : 'Thêm đơn vị'}
             open={unitModalOpen}
             onClose={() => setUnitModalOpen(false)}
-            width={360}
+            styles={{ wrapper: { width: 360 } }}
             footer={
               <div className="flex gap-2">
                 <Button onClick={() => setUnitModalOpen(false)} className="flex-1">Hủy</Button>
@@ -568,9 +568,9 @@ export function ProductFormAdvanced({
                   className="w-full"
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
-                  addonAfter="đ"
+                  parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                   placeholder="Để trống sẽ tính tự động"
+                  addonAfter="đ"
                 />
               </Form.Item>
 
@@ -634,7 +634,7 @@ export function ProductFormAdvanced({
             title={editingVariant ? 'Sửa biến thể' : 'Thêm biến thể'}
             open={variantModalOpen}
             onClose={() => setVariantModalOpen(false)}
-            width={400}
+            styles={{ wrapper: { width: 400 } }}
             footer={
               <div className="flex gap-2">
                 <Button onClick={() => setVariantModalOpen(false)} className="flex-1">Hủy</Button>
@@ -680,9 +680,9 @@ export function ProductFormAdvanced({
                     className="w-full"
                     min={0}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
-                    addonAfter="đ"
+                    parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                     placeholder="Giá sản phẩm gốc"
+                    addonAfter="đ"
                   />
                 </Form.Item>
                 <Form.Item name="sell_price" label="Giá bán">
@@ -690,9 +690,9 @@ export function ProductFormAdvanced({
                     className="w-full"
                     min={0}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => (value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0) as number}
-                    addonAfter="đ"
+                    parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
                     placeholder="Giá sản phẩm gốc"
+                    addonAfter="đ"
                   />
                 </Form.Item>
               </div>
@@ -703,10 +703,20 @@ export function ProductFormAdvanced({
                   label="Tồn kho"
                   rules={[{ required: true, message: 'Nhập số lượng' }]}
                 >
-                  <InputNumber className="w-full" min={0} />
+                  <InputNumber<number>
+                    className="w-full"
+                    min={0}
+                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+                  />
                 </Form.Item>
                 <Form.Item name="min_stock" label="Tồn tối thiểu">
-                  <InputNumber className="w-full" min={0} />
+                  <InputNumber<number>
+                    className="w-full"
+                    min={0}
+                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+                  />
                 </Form.Item>
               </div>
             </Form>
@@ -721,7 +731,7 @@ export function ProductFormAdvanced({
       title={title}
       open={open}
       onClose={onClose}
-      width={500}
+      styles={{ wrapper: { width: 500 } }}
       footer={
         <div className="flex gap-2">
           <Button onClick={onClose} className="flex-1">Hủy</Button>
