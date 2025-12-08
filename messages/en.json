@@ -100,8 +100,28 @@
     "justNow": "Just now",
     "minutesAgo": "{count} min ago",
     "hoursAgo": "{count} hours ago",
-    "daysAgo": "{count} days ago"
-  },
+    "daysAgo": "{count} days ago",
+    "errorOccurred": "Something went wrong",
+    "errorDescription": "An unexpected error has occurred. Please try again.",
+    "tryAgain": "Try again",
+    "reloadPage": "Reload page",
+    "reportError": "Report error",
+    "errorCode": "Error code",
+    "enterAmount": "Enter amount",
+    "minAmount": "Minimum amount",
+    "notes": "Notes",
+    "notesPlaceholder": "Enter notes...",
+    "items": "items",
+    "people": "people",
+    "customersWithDebt": "Customers with debt",
+    "activeDebts": "Active debts",
+    "overdue": "Overdue",
+    "paid": "Paid",
+    "collectedThisMonth": "Collected this month",
+    "searchPlaceholder": "Search...",
+    "noResults": "No results found",
+    "active": "Active"
+    },
   "nav": {
     "home": "Home",
     "pos": "POS",
@@ -341,6 +361,12 @@
     "enableMultiUnit": "Enable multiple units",
     "enableVariants": "Enable product variants",
     "newCategoryPlaceholder": "Enter new category name",
+    "importProducts": "Import Products",
+    "importCategories": "Import Categories",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "lowStock": "Low Stock",
+    "categoryCreated": "Category \"{name}\" created successfully",
     "validation": {
       "attributeNameRequired": "Please enter attribute name",
       "attributeExists": "Attribute already exists",
@@ -368,6 +394,7 @@
       "conversionRate": "Conversion rate",
       "conversionRateLabel": "Conversion rate",
       "conversionRateHelp": "How many base units in this unit",
+      "conversionHelp": "How many base units in this unit",
       "separateBarcode": "Separate barcode",
       "barcodePlaceholder": "Barcode for this unit",
       "separateSellPrice": "Separate sell price",
@@ -404,8 +431,19 @@
     "scanBarcode": "Scan barcode",
     "createSuccess": "Product created successfully",
     "updateSuccess": "Product updated successfully",
-    "deleteSuccess": "Product deleted successfully"
-  },
+    "deleteSuccess": "Product deleted successfully",
+    "productFormTitle": "Add Product",
+    "editProductFormTitle": "Edit Product",
+    "advancedOptions": "Advanced Options",
+    "multipleUnits": "Multiple Units",
+    "multipleUnitsDescription": "E.g., sell by box (12 units) or by unit",
+    "productVariants": "Product Variants",
+    "productVariantsDescription": "E.g., Size S/M/L, Red/Blue/Yellow colors",
+    "uploadImageLabel": "Upload Image",
+    "baseUnit": "Base Unit",
+    "stockQuantity": "Stock Quantity",
+    "minStockLabel": "Min Stock"
+    },
   "categories": {
     "title": "Categories",
     "description": "Manage categories",
@@ -419,6 +457,8 @@
   },
   "customers": {
     "title": "Customers",
+    "customer": "Customer",
+    "selectCustomer": "Select customer",
     "addCustomer": "Add customer",
     "editCustomer": "Edit customer",
     "customerName": "Customer name",
@@ -439,12 +479,16 @@
     "deleteSuccess": "Customer deleted successfully",
     "createError": "Unable to create customer",
     "updateError": "Unable to update customer",
+    "customerDetail": "Customer details",
+    "notFound": "Customer not found",
+    "addNewWithName": "Add new customer: \"{name}\"",
     "validation": {
       "nameRequired": "Please enter customer name",
       "phoneRequired": "Please enter phone number",
       "phoneInvalid": "Phone number must be 10 digits and start with 0",
       "taxCodeInvalid": "Tax code must be 10 or 13 digits"
-    }
+    },
+    "searchPlaceholder": "Search customers..."
   },
   "debts": {
     "title": "Debts",
@@ -469,7 +513,14 @@
     "applyExtraToDebt": "Apply extra to debt",
     "maxDebtPayment": "Max",
     "halfDebt": "50% debt",
-    "deducted": "(Deducted {amount} from debt)"
+    "deducted": "(Deducted {amount} from debt)",
+    "debt": "Debt",
+    "noDebt": "No debt",
+    "debtInfo": "Debt information",
+    "debtInvoices": "Active debts",
+    "overdue": "Overdue",
+    "debtItems": "Debt details",
+    "hasDebt": "Has debt"
   },
   "finance": {
     "title": "Finance Management",
@@ -490,7 +541,10 @@
       "salary": "Salary",
       "adjustment": "Adjustment",
       "sale": "Sale",
-      "other": "Other"
+      "other": "Other",
+      "deposit": "Deposit",
+      "transfer": "Transfer In",
+      "transferOut": "Transfer Out"
     },
     "tabs": {
       "cash": "Cash",
@@ -536,7 +590,10 @@
       "selectAccount": "Select account",
       "invoiceNumber": "Invoice number",
       "taxCode": "Supplier tax code",
-      "supplierName": "Supplier name"
+      "supplierName": "Supplier name",
+      "bankInDescription": "e.g. Customer payment, transfer in...",
+      "bankOutDescription": "e.g. Supplier payment, transfer out...",
+      "bankReference": "Bank transaction reference"
     },
     "accountAddedSuccess": "Bank account added successfully",
     "accountUpdatedSuccess": "Bank account updated successfully",
@@ -580,7 +637,14 @@
     "default": "Default",
     "totalExpenses": "Total expenses",
     "addExpense": "Add expense",
-    "noExpenses": "No expenses yet"
+    "noExpenses": "No expenses yet",
+    "bankInSuccess": "Bank deposit successful",
+    "bankOutSuccess": "Bank withdrawal successful",
+    "confirmBankIn": "Confirm Deposit",
+    "confirmBankOut": "Confirm Withdrawal",
+    "bankReference": "Bank reference",
+    "accountCount": "{count} accounts",
+    "addFirstExpense": "Add first expense"
   },
   "reports": {
     "title": "Reports",
@@ -605,6 +669,8 @@
     "taxReportDesc": "VAT, Personal Income Tax",
     "salaryReport": "Salary Report",
     "salaryReportDesc": "Employee salaries",
+    "revenue": "Revenue",
+    "profit": "Profit",
     "tabs": {
       "dashboard": "Dashboard",
       "financial": "Financial",
@@ -705,7 +771,30 @@
     "debtAmount": "Debt amount",
     "weekly": "Weekly",
     "biweekly": "Bi-weekly",
-    "monthly": "Monthly"
+    "monthly": "Monthly",
+    "store": "Store",
+    "receiptPhone": "Phone",
+    "receiptTaxCode": "Tax code",
+    "salesInvoice": "SALES INVOICE",
+    "invoiceNo": "Invoice No",
+    "receiptDate": "Date",
+    "cashier": "Cashier",
+    "customerPhone": "Phone",
+    "customerTaxCode": "Customer tax code",
+    "products": "Products",
+    "note": "Note",
+    "thankYou": "Thank you!",
+    "seeYouAgain": "See you again",
+    "lookupEInvoice": "Lookup e-invoice",
+    "close": "Close",
+    "previewInvoice": "Preview invoice",
+    "cannotOpenPrintWindow": "Cannot open print window",
+    "invoice": "Invoice",
+    "printCommandSent": "Print command sent",
+    "cannotCreatePrintFrame": "Cannot create print frame",
+    "quickPrint": "Quick print",
+    "paymentCash": "Cash",
+    "paymentBankTransfer": "Bank transfer"
   },
   "invoices": {
     "title": "E-Invoices",
@@ -982,8 +1071,13 @@
     "filterAll": "All",
     "noEmployeesFound": "No employees found",
     "noEmployees": "No employees yet",
-    "payslipTitle": "Payslip {month}/{year}"
-  },
+    "payslipTitle": "Payslip {month}/{year}",
+    "monthLabel": "Month {month}",
+    "yearLabel": "Year {year}",
+    "salaryCalculatedSuccess": "Calculated salary for {count} employees",
+    "payslipsApprovedSuccess": "Approved {count} payslips",
+    "selectedPayslips": "{count} payslips selected"
+    },
   "errors": {
     "generic": "Something went wrong",
     "network": "Network error. Please check your connection.",

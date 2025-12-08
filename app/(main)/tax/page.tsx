@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Typography, Tabs, Spin, Alert } from 'antd'
+import { useTranslations } from 'next-intl'
 import {
   SettingOutlined,
   CalculatorOutlined,
@@ -19,6 +20,7 @@ type TaxTab = 'settings' | 'obligations' | 'reminders'
 
 export default function TaxPage() {
   const [activeTab, setActiveTab] = useState<TaxTab>('settings')
+  const t = useTranslations('tax')
 
   const tabItems = [
     {
@@ -26,7 +28,7 @@ export default function TaxPage() {
       label: (
         <span className="flex items-center gap-1">
           <SettingOutlined />
-          Cai dat thue
+          {t('tabs.settings')}
         </span>
       ),
       children: <TaxSettingsForm />,
@@ -36,7 +38,7 @@ export default function TaxPage() {
       label: (
         <span className="flex items-center gap-1">
           <CalculatorOutlined />
-          Nghia vu thue
+          {t('tabs.obligations')}
         </span>
       ),
       children: <QuarterlyTaxSummary />,
@@ -46,7 +48,7 @@ export default function TaxPage() {
       label: (
         <span className="flex items-center gap-1">
           <BellOutlined />
-          Nhac nho
+          {t('tabs.reminders')}
         </span>
       ),
       children: (
@@ -54,8 +56,8 @@ export default function TaxPage() {
           <TaxDeadlineWidget />
           <Alert
             type="info"
-            message="Nhac nho tu dong"
-            description="He thong se gui thong bao truoc han nop thue 7 ngay va 1 ngay."
+            message={t('autoReminder')}
+            description={t('autoReminderMessage')}
             showIcon
           />
         </div>
@@ -65,7 +67,7 @@ export default function TaxPage() {
 
   return (
     <div className="p-4 pb-20">
-      <Title level={4} className="!mb-4">Quan ly thue</Title>
+      <Title level={4} className="!mb-4">{t('title')}</Title>
 
       <Tabs
         activeKey={activeTab}

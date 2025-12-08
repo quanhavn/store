@@ -72,6 +72,10 @@ interface DebtSummaryRequest {
   action: 'summary'
 }
 
+interface ListCustomersWithDebtRequest {
+  action: 'list_customers_with_debt'
+}
+
 type DebtRequest =
   | CreateCreditDebtRequest
   | CreateInstallmentDebtRequest
@@ -81,6 +85,7 @@ type DebtRequest =
   | GetCustomerDebtsRequest
   | CancelDebtRequest
   | DebtSummaryRequest
+  | ListCustomersWithDebtRequest
 
 // ============================================================================
 // Helper Functions
@@ -584,6 +589,40 @@ serve(async (req: Request) => {
             overdue_amount: overdueAmount,
             collected_this_month: collectedThisMonth,
           },
+        })
+      }
+
+      // ========================================================================
+      // LIST CUSTOMERS WITH DEBT - Get all unique customers with active debts
+      // ========================================================================
+      case 'list_customers_with_debt': {
+        const { data: debts, error: debtsError } = await supabase
+          .from('customer_debts')
+          .select('customer_id')
+          .eq('store_id', store_id)
+          .in('status', ['active', 'overdue'])
+
+        if (debtsError) throw debtsError
+
+        // Get unique customer IDs
+        const uniqueCustomerIds = [...new Set((debts || []).map((d) => d.customer_id))]
+
+        if (uniqueCustomerIds.length === 0) {
+          return successResponse({ customers: [] })
+        }
+
+        // Fetch customer details
+        const { data: customers, error: customersError } = await supabase
+          .from('customers')
+          .select('id, name, phone')
+          .eq('store_id', store_id)
+          .in('id', uniqueCustomerIds)
+          .order('name')
+
+        if (customersError) throw customersError
+
+        return successResponse({
+          customers: customers || [],
         })
       }
 

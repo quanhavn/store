@@ -130,12 +130,12 @@ export function ProductForm({
     e.preventDefault()
     const trimmedName = newCategoryName.trim()
     if (!trimmedName) {
-      message.warning('Vui lòng nhập tên danh mục')
+      message.warning(t('validation.categoryNameRequired'))
       return
     }
 
     if (categories.some(c => c.name.toLowerCase() === trimmedName.toLowerCase())) {
-      message.warning('Danh mục này đã tồn tại')
+      message.warning(t('validation.categoryExists'))
       return
     }
 
@@ -146,9 +146,9 @@ export function ProductForm({
       onCategoryCreated?.(newCategory)
       form.setFieldValue('category_id', newCategory.id)
       setNewCategoryName('')
-      message.success(`Đã tạo danh mục "${trimmedName}"`)
+      message.success(t('categoryCreated', { name: trimmedName }))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Không thể tạo danh mục')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     } finally {
       setCreatingCategory(false)
     }
@@ -166,7 +166,7 @@ export function ProductForm({
       if (hasUnits && units.length > 0) {
         const hasBaseUnit = units.some(u => u.is_base_unit)
         if (!hasBaseUnit) {
-          message.error('Cần có ít nhất một đơn vị cơ bản')
+          message.error(t('validation.unitNameRequired'))
           setLoading(false)
           return
         }
@@ -186,9 +186,9 @@ export function ProductForm({
       setHasUnits(false)
       setHasVariants(false)
       onClose()
-      message.success(initialValues ? 'Cập nhật thành công' : 'Thêm sản phẩm thành công')
+      message.success(initialValues ? t('updateSuccess') : t('createSuccess'))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Có lỗi xảy ra')
+      message.error(error instanceof Error ? error.message : tCommon('errorOccurred'))
     } finally {
       setLoading(false)
     }
@@ -206,7 +206,7 @@ export function ProductForm({
         footer={
           <div className="flex gap-2">
             <Button onClick={onClose} className="flex-1">
-              Hủy
+              {tCommon('cancel')}
             </Button>
             <Button
               type="primary"
@@ -214,7 +214,7 @@ export function ProductForm({
               loading={loading}
               className="flex-1"
             >
-              {initialValues ? 'Cập nhật' : 'Thêm'}
+              {initialValues ? tCommon('update') : tCommon('create')}
             </Button>
           </div>
         }
@@ -234,24 +234,24 @@ export function ProductForm({
         >
           <Form.Item
             name="name"
-            label="Tên sản phẩm"
-            rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
+            label={t('productName')}
+            rules={[{ required: true, message: t('validation.productNameRequired') }]}
           >
-            <Input placeholder="VD: Mì Hảo Hảo" />
+            <Input placeholder={t('productNamePlaceholder')} />
           </Form.Item>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="sku" label="Mã SKU">
-              <Input placeholder="SKU001" />
+            <Form.Item name="sku" label={t('sku')}>
+              <Input placeholder={t('sku')} />
             </Form.Item>
-            <Form.Item name="barcode" label="Mã vạch">
-              <Input placeholder="8934563..." />
+            <Form.Item name="barcode" label={t('barcode')}>
+              <Input placeholder={t('barcode')} />
             </Form.Item>
           </div>
 
-          <Form.Item name="category_id" label="Danh mục">
+          <Form.Item name="category_id" label={t('category')}>
             <Select
-              placeholder="Chọn danh mục"
+              placeholder={t('category')}
               allowClear
               showSearch
               filterOption={(input, option) =>
@@ -264,7 +264,7 @@ export function ProductForm({
                   <Divider style={{ margin: '8px 0' }} />
                   <Space style={{ padding: '0 8px 4px' }}>
                     <Input
-                      placeholder="Tên danh mục mới"
+                      placeholder={t('newCategoryPlaceholder')}
                       ref={inputRef}
                       value={newCategoryName}
                       onChange={(e) => setNewCategoryName(e.target.value)}
@@ -277,7 +277,7 @@ export function ProductForm({
                       onClick={handleCreateCategory}
                       loading={creatingCategory}
                     >
-                      Thêm
+                      {tCommon('add')}
                     </Button>
                   </Space>
                 </>
@@ -288,8 +288,8 @@ export function ProductForm({
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="cost_price"
-              label="Giá nhập"
-              rules={[{ required: true, message: 'Nhập giá nhập' }]}
+              label={t('costPrice')}
+              rules={[{ required: true, message: t('validation.costPriceRequired') }]}
             >
               <InputNumber<number>
                 className="!w-full"
@@ -301,8 +301,8 @@ export function ProductForm({
             </Form.Item>
             <Form.Item
               name="sell_price"
-              label="Giá bán"
-              rules={[{ required: true, message: 'Nhập giá bán' }]}
+              label={t('sellPrice')}
+              rules={[{ required: true, message: t('validation.sellPriceRequired') }]}
             >
               <InputNumber<number>
                 className="!w-full"
@@ -315,10 +315,10 @@ export function ProductForm({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="vat_rate" label="VAT">
+            <Form.Item name="vat_rate" label={t('vatRate')}>
               <Select options={VAT_OPTIONS} />
             </Form.Item>
-            <Form.Item name="unit" label="Đơn vị cơ bản">
+            <Form.Item name="unit" label={t('units.baseUnit')}>
               <Select
                 showSearch
                 options={UNIT_OPTIONS.map((u) => ({ label: u, value: u }))}
@@ -327,7 +327,7 @@ export function ProductForm({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="quantity" label="Tồn kho" hidden={hasVariants}>
+            <Form.Item name="quantity" label={t('quantity')} hidden={hasVariants}>
               <InputNumber<number>
                 className="!w-full"
                 min={0}
@@ -336,7 +336,7 @@ export function ProductForm({
                 parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
               />
             </Form.Item>
-            <Form.Item name="min_stock" label="Tồn tối thiểu">
+            <Form.Item name="min_stock" label={t('minStock')}>
               <InputNumber<number>
                 className="!w-full"
                 min={0}
@@ -346,7 +346,7 @@ export function ProductForm({
             </Form.Item>
           </div>
 
-          <Form.Item name="image_url" label="Hình ảnh">
+          <Form.Item name="image_url" label={t('image')}>
             <Upload
               listType="picture-card"
               fileList={fileList}
@@ -357,7 +357,7 @@ export function ProductForm({
               {fileList.length === 0 && (
                 <div>
                   <PlusOutlined />
-                  <div className="mt-2">Tải ảnh</div>
+                  <div className="mt-2">{t('uploadImageLabel')}</div>
                 </div>
               )}
             </Upload>
@@ -373,16 +373,16 @@ export function ProductForm({
                 label: (
                   <span className="font-medium text-gray-700">
                     <SettingOutlined className="mr-2" />
-                    Tùy chọn nâng cao
+                    {t('advancedOptions')}
                   </span>
                 ),
                 children: (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
-                        <div className="font-medium">Nhiều đơn vị tính</div>
+                        <div className="font-medium">{t('multipleUnits')}</div>
                         <div className="text-xs text-gray-500">
-                          VD: Bán theo hộp (12 cái) hoặc theo cái
+                          {t('multipleUnitsDescription')}
                         </div>
                       </div>
                       <Switch
@@ -403,9 +403,9 @@ export function ProductForm({
 
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
-                        <div className="font-medium">Biến thể sản phẩm</div>
+                        <div className="font-medium">{t('productVariants')}</div>
                         <div className="text-xs text-gray-500">
-                          VD: Size S/M/L, Màu đỏ/xanh/vàng
+                          {t('productVariantsDescription')}
                         </div>
                       </div>
                       <Switch

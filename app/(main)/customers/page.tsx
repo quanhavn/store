@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Typography, Tabs, Button, Space } from 'antd'
 import { UserOutlined, DollarOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import {
   CustomerList,
   CustomerForm,
@@ -26,6 +27,9 @@ type CustomerTab = 'customers' | 'debts'
 export default function CustomersPage() {
   const [activeTab, setActiveTab] = useState<CustomerTab>('customers')
   const openImport = useCSVImportStore((state) => state.openImport)
+  const t = useTranslations('customers')
+  const tCommon = useTranslations('common')
+  const tDebts = useTranslations('debts')
 
   // Customer state
   const [showAddCustomer, setShowAddCustomer] = useState(false)
@@ -61,7 +65,7 @@ export default function CustomersPage() {
       label: (
         <span className="flex items-center gap-1">
           <UserOutlined />
-          Khach hang
+          {t('tabs.customers')}
         </span>
       ),
       children: (
@@ -76,7 +80,7 @@ export default function CustomersPage() {
       label: (
         <span className="flex items-center gap-1">
           <DollarOutlined />
-          Cong no
+          {t('tabs.debts')}
         </span>
       ),
       children: (
@@ -88,7 +92,7 @@ export default function CustomersPage() {
               icon={<PlusOutlined />}
               onClick={() => setCreateDebtModalOpen(true)}
             >
-              Tao cong no
+              {tDebts('createDebt')}
             </Button>
           </div>
           <DebtList onSelect={handleSelectDebt} />
@@ -100,13 +104,13 @@ export default function CustomersPage() {
   return (
     <div className="p-4 pb-20">
       <div className="flex justify-between items-center mb-4">
-        <Title level={4} className="!mb-0">Khach hang & Cong no</Title>
+        <Title level={4} className="!mb-0">{t('customersAndDebts')}</Title>
         {activeTab === 'customers' && (
           <Button
             icon={<UploadOutlined />}
             onClick={() => openImport('customer')}
           >
-            Import CSV
+            {tCommon('importCSV')}
           </Button>
         )}
       </div>

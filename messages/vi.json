@@ -81,9 +81,30 @@
     "selectDate": "Chọn ngày",
     "minutesAgo": "{count} phút trước",
     "productsSyncedAt": "Đã đồng bộ sản phẩm vào {time}",
-    "justNow": "Vừa xong"
-
-  },
+    "justNow": "Vừa xong",
+    "hoursAgo": "{count} giờ trước",
+    "daysAgo": "{count} ngày trước",
+    "errorOccurred": "Đã có lỗi xảy ra",
+    "errorDescription": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+    "tryAgain": "Thử lại",
+    "reloadPage": "Tải lại trang",
+    "reportError": "Báo lỗi",
+    "errorCode": "Mã lỗi",
+    "enterAmount": "Nhập số tiền",
+    "minAmount": "Số tiền tối thiểu",
+    "notes": "Ghi chú",
+    "notesPlaceholder": "Nhập ghi chú...",
+    "items": "mục",
+    "people": "người",
+    "customersWithDebt": "Khách hàng có nợ",
+    "activeDebts": "Công nợ đang hoạt động",
+    "overdue": "Quá hạn",
+    "paid": "Đã thanh toán",
+    "collectedThisMonth": "Thu được trong tháng này",
+    "searchPlaceholder": "Tìm kiếm...",
+    "noResults": "Không tìm thấy kết quả",
+    "active": "Hoạt động"
+    },
   "nav": {
     "home": "Trang chủ",
     "pos": "Bán hàng",
@@ -344,6 +365,8 @@
     "importCategories": "Nhập danh mục",
     "outOfStock": "Hết hàng",
     "lowStock": "Tồn kho thấp",
+    "inStock": "Còn hàng",
+    "categoryCreated": "Danh mục \"{name}\" được tạo thành công",
     "tabs": {
       "products": "Sản phẩm",
       "categories": "Danh mục",
@@ -359,6 +382,7 @@
       "conversionRate": "Tỷ lệ quy đổi",
       "conversionRateLabel": "Tỷ lệ quy đổi",
       "conversionRateHelp": "Bao nhiêu đơn vị cơ bản trong đơn vị này",
+      "conversionHelp": "Bao nhiêu đơn vị cơ bản trong đơn vị này",
       "separateBarcode": "Mã vạch riêng",
       "barcodePlaceholder": "Mã vạch cho đơn vị này",
       "separateSellPrice": "Giá bán riêng",
@@ -395,8 +419,19 @@
     "scanBarcode": "Quét mã vạch",
     "createSuccess": "Sản phẩm được tạo thành công",
     "updateSuccess": "Sản phẩm được cập nhật thành công",
-    "deleteSuccess": "Sản phẩm được xóa thành công"
-  },
+    "deleteSuccess": "Sản phẩm được xóa thành công",
+    "productFormTitle": "Thêm sản phẩm",
+    "editProductFormTitle": "Sửa sản phẩm",
+    "advancedOptions": "Tùy chọn nâng cao",
+    "multipleUnits": "Nhiều đơn vị tính",
+    "multipleUnitsDescription": "VD: Bán theo hộp (12 cái) hoặc theo cái",
+    "productVariants": "Biến thể sản phẩm",
+    "productVariantsDescription": "VD: Size S/M/L, Màu đỏ/xanh/vàng",
+    "uploadImageLabel": "Tải ảnh",
+    "baseUnit": "Đơn vị cơ bản",
+    "stockQuantity": "Tồn kho",
+    "minStockLabel": "Tồn tối thiểu"
+    },
   "categories": {
     "title": "Danh mục sản phẩm",
     "addCategory": "Thêm danh mục",
@@ -416,6 +451,8 @@
   },
   "customers": {
     "title": "Khách hàng",
+    "customer": "Khách hàng",
+    "selectCustomer": "Chọn khách hàng",
     "addCustomer": "Thêm khách hàng",
     "editCustomer": "Sửa khách hàng",
     "customerName": "Tên khách hàng",
@@ -436,12 +473,16 @@
     "deleteSuccess": "Khách hàng được xóa thành công",
     "createError": "Không thể tạo khách hàng",
     "updateError": "Không thể cập nhật khách hàng",
+    "customerDetail": "Chi tiết khách hàng",
+    "notFound": "Không tìm thấy khách hàng",
+    "addNewWithName": "Thêm khách hàng mới: \"{name}\"",
     "validation": {
       "nameRequired": "Vui lòng nhập tên khách hàng",
       "phoneRequired": "Vui lòng nhập số điện thoại",
       "phoneInvalid": "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0",
       "taxCodeInvalid": "Mã số thuế phải có 10 hoặc 13 chữ số"
-    }
+    },
+    "searchPlaceholder": "Tìm kiếm khách hàng..."
   },
   "debts": {
     "title": "Công nợ",
@@ -466,7 +507,14 @@
     "applyExtraToDebt": "Áp dụng tiền thừa vào công nợ",
     "maxDebtPayment": "Tối đa",
     "halfDebt": "50% công nợ",
-    "deducted": "(Đã trừ {amount} từ công nợ)"
+    "deducted": "(Đã trừ {amount} từ công nợ)",
+    "debt": "Công nợ",
+    "noDebt": "Không có công nợ",
+    "debtInfo": "Thông tin công nợ",
+    "debtInvoices": "Công nợ đang hoạt động",
+    "overdue": "Quá hạn",
+    "debtItems": "Chi tiết công nợ",
+    "hasDebt": "Có công nợ"
   },
   "finance": {
     "title": "Quản lý tài chính",
@@ -487,7 +535,10 @@
       "salary": "Trả lương",
       "adjustment": "Điều chỉnh",
       "sale": "Bán hàng",
-      "other": "Khác"
+      "other": "Khác",
+      "deposit": "Nạp tiền",
+      "transfer": "Chuyển đến",
+      "transferOut": "Chuyển đi"
     },
     "tabs": {
       "cash": "Tiền mặt",
@@ -533,7 +584,10 @@
       "selectAccount": "Chọn tài khoản",
       "invoiceNumber": "Số hóa đơn",
       "taxCode": "MST nhà cung cấp",
-      "supplierName": "Tên nhà cung cấp"
+      "supplierName": "Tên nhà cung cấp",
+      "bankInDescription": "VD: Khách hàng thanh toán, chuyển đến...",
+      "bankOutDescription": "VD: Thanh toán nhà cung cấp, chuyển đi...",
+      "bankReference": "Mã giao dịch ngân hàng"
     },
     "accountAddedSuccess": "Thêm tài khoản ngân hàng thành công",
     "accountUpdatedSuccess": "Cập nhật tài khoản ngân hàng thành công",
@@ -577,7 +631,14 @@
     "default": "Mặc định",
     "totalExpenses": "Tổng chi phí",
     "addExpense": "Thêm chi phí",
-    "noExpenses": "Chưa có chi phí"
+    "noExpenses": "Chưa có chi phí",
+    "bankInSuccess": "Nạp tiền ngân hàng thành công",
+    "bankOutSuccess": "Rút tiền ngân hàng thành công",
+    "confirmBankIn": "Xác nhận nạp tiền",
+    "confirmBankOut": "Xác nhận rút tiền",
+    "bankReference": "Mã giao dịch ngân hàng",
+    "accountCount": "{count} tài khoản",
+    "addFirstExpense": "Thêm chi phí đầu tiên"
   },
   "reports": {
     "title": "Báo cáo",
@@ -707,7 +768,30 @@
     "debtAmount": "Số tiền nợ",
     "weekly": "Hàng tuần",
     "biweekly": "Hai tuần một lần",
-    "monthly": "Hàng tháng"
+    "monthly": "Hàng tháng",
+    "store": "Cửa hàng",
+    "receiptPhone": "ĐT",
+    "receiptTaxCode": "MST",
+    "salesInvoice": "HÓA ĐƠN BÁN HÀNG",
+    "invoiceNo": "Số HD",
+    "receiptDate": "Ngày",
+    "cashier": "Thu ngân",
+    "customerPhone": "SĐT",
+    "customerTaxCode": "MST khách hàng",
+    "products": "Sản phẩm",
+    "note": "Ghi chú",
+    "thankYou": "Cảm ơn quý khách!",
+    "seeYouAgain": "Hẹn gặp lại",
+    "lookupEInvoice": "Tra cứu hóa đơn điện tử",
+    "close": "Đóng",
+    "previewInvoice": "Xem trước hóa đơn",
+    "cannotOpenPrintWindow": "Không thể mở cửa sổ in",
+    "invoice": "Hóa đơn",
+    "printCommandSent": "Đã gửi lệnh in",
+    "cannotCreatePrintFrame": "Không thể tạo khung in",
+    "quickPrint": "In nhanh",
+    "paymentCash": "Tiền mặt",
+    "paymentBankTransfer": "Chuyển khoản"
   },
   "invoices": {
     "title": "Hóa đơn điện tử",
@@ -984,8 +1068,13 @@
     "filterAll": "Tất cả",
     "noEmployeesFound": "Không tìm thấy nhân viên",
     "noEmployees": "Chưa có nhân viên",
-    "payslipTitle": "Phiếu lương {month}/{year}"
-  },
+    "payslipTitle": "Phiếu lương {month}/{year}",
+    "monthLabel": "Tháng {month}",
+    "yearLabel": "Năm {year}",
+    "salaryCalculatedSuccess": "Đã tính lương cho {count} nhân viên",
+    "payslipsApprovedSuccess": "Đã duyệt {count} phiếu lương",
+    "selectedPayslips": "Đã chọn {count} phiếu lương"
+    },
   "errors": {
     "generic": "Có lỗi xảy ra",
     "network": "Lỗi mạng. Vui lòng kiểm tra kết nối.",
