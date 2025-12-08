@@ -103,8 +103,23 @@ export const api = {
   },
 
   inventory: {
-    import: (data: { product_id: string; quantity: number; unit_cost?: number; note?: string }) =>
-      callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'import', ...data }),
+    import: (data: { 
+      product_id: string
+      quantity: number
+      unit_cost?: number
+      note?: string
+      record_expense?: boolean
+      payment_method?: 'cash' | 'bank_transfer'
+      bank_account_id?: string
+      supplier_name?: string
+    }) =>
+      callFunction<{ 
+        log: InventoryLog
+        new_quantity: number
+        expense_recorded?: boolean
+        total_value?: number
+        new_balance?: number
+      }>('inventory', { action: 'import', ...data }),
     export: (data: { product_id: string; quantity: number; note?: string }) =>
       callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'export', ...data }),
     adjust: (data: { product_id: string; new_quantity: number; note?: string }) =>

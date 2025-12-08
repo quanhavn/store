@@ -11,14 +11,16 @@ import {
   Modal,
   message,
   Spin,
-  Typography
+  Typography,
+  Switch
 } from 'antd'
 import {
   PlusOutlined,
   MinusOutlined,
   DeleteOutlined,
   SearchOutlined,
-  CheckOutlined
+  CheckOutlined,
+  DollarOutlined
 } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/supabase/functions'
@@ -46,12 +48,16 @@ export function StockAdjustment() {
     adjustmentType,
     adjustmentItems,
     adjustmentNote,
+    recordExpense,
+    supplierName,
     setAdjustmentType,
     addAdjustmentItem,
     removeAdjustmentItem,
     updateAdjustmentQuantity,
     updateAdjustmentCost,
     setAdjustmentNote,
+    setRecordExpense,
+    setSupplierName,
     clearAdjustment,
     getItemCount,
     getTotalValue,
@@ -76,6 +82,9 @@ export function StockAdjustment() {
             quantity: item.adjustment_quantity,
             unit_cost: item.unit_cost ?? undefined,
             note: item.note || adjustmentNote,
+            record_expense: recordExpense,
+            payment_method: 'cash',
+            supplier_name: supplierName || undefined,
           })
         } else if (adjustmentType === 'export') {
           await api.inventory.export({
@@ -94,9 +103,12 @@ export function StockAdjustment() {
       return true
     },
     onSuccess: () => {
+      const expenseMsg = adjustmentType === 'import' && recordExpense 
+        ? ' (đã ghi chi phí)' 
+        : ''
       message.success(
         adjustmentType === 'import'
-          ? 'Nhập kho thành công!'
+          ? `Nhập kho thành công!${expenseMsg}`
           : adjustmentType === 'export'
           ? 'Xuất kho thành công!'
           : 'Điều chỉnh tồn kho thành công!'
@@ -244,6 +256,32 @@ export function StockAdjustment() {
             rows={2}
             className="mt-4"
           />
+
+          {adjustmentType === 'import' && (
+            <>
+              <Input
+                placeholder="Tên nhà cung cấp (không bắt buộc)"
+                value={supplierName}
+                onChange={(e) => setSupplierName(e.target.value)}
+                className="mt-4"
+              />
+              <div className="flex items-center justify-between mt-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <DollarOutlined className="text-blue-500" />
+                  <Text>Ghi vào sổ tiền mặt</Text>
+                </div>
+                <Switch
+                  checked={recordExpense}
+                  onChange={setRecordExpense}
+                />
+              </div>
+              {recordExpense && (
+                <div className="text-xs text-gray-500 mt-1 px-3">
+                  Tự động trừ {formatCurrency(getTotalValue())} vào sổ tiền mặt
+                </div>
+              )}
+            </>
+          )}
 
           <div className="bg-gray-50 p-3 rounded-lg mt-4">
             <div className="flex justify-between mb-1">

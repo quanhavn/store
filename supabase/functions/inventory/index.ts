@@ -14,6 +14,10 @@ interface ImportStockRequest {
   quantity: number
   unit_cost?: number
   note?: string
+  record_expense?: boolean
+  payment_method?: 'cash' | 'bank_transfer'
+  bank_account_id?: string
+  supplier_name?: string
 }
 
 interface ExportStockRequest {
@@ -117,50 +121,43 @@ serve(async (req: Request) => {
 
     switch (body.action) {
       case 'import': {
-        const { product_id, quantity, unit_cost, note } = body
+        const { 
+          product_id, 
+          quantity, 
+          unit_cost, 
+          note, 
+          record_expense = false,
+          payment_method = 'cash',
+          bank_account_id,
+          supplier_name
+        } = body
 
-        // Get current product
-        const { data: product, error: productError } = await supabase
-          .from('products')
-          .select('id, name, quantity, cost_price')
-          .eq('id', product_id)
-          .eq('store_id', store_id)
-          .single()
+        // Use RPC for atomic transaction with finance integration
+        const { data: result, error: rpcError } = await supabase.rpc('import_stock_with_expense', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_product_id: product_id,
+          p_quantity: quantity,
+          p_unit_cost: unit_cost || null,
+          p_note: note || null,
+          p_record_expense: record_expense,
+          p_payment_method: payment_method,
+          p_bank_account_id: bank_account_id || null,
+          p_supplier_name: supplier_name || null,
+        })
 
-        if (productError || !product) {
-          return errorResponse('Sản phẩm không tồn tại', 404)
+        if (rpcError) {
+          console.error('RPC error:', rpcError)
+          return errorResponse(rpcError.message || 'Lỗi nhập kho', 400)
         }
 
-        const newQuantity = product.quantity + quantity
-        const costToRecord = unit_cost || product.cost_price
-
-        // Update product quantity
-        const { error: updateError } = await supabase
-          .from('products')
-          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
-          .eq('id', product_id)
-
-        if (updateError) throw updateError
-
-        // Create inventory log
-        const { data: log, error: logError } = await supabase
-          .from('inventory_logs')
-          .insert({
-            store_id,
-            product_id,
-            type: 'import',
-            quantity,
-            unit_cost: costToRecord,
-            total_value: quantity * costToRecord,
-            note,
-            created_by: user.id,
-          })
-          .select()
-          .single()
-
-        if (logError) throw logError
-
-        return successResponse({ log, new_quantity: newQuantity })
+        return successResponse({ 
+          log: { id: result.log_id },
+          new_quantity: result.new_quantity,
+          expense_recorded: result.expense_recorded,
+          total_value: result.total_value,
+          new_balance: result.new_balance
+        })
       }
 
       case 'export': {

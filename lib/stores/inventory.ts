@@ -16,6 +16,8 @@ export interface InventoryStore {
   adjustmentType: AdjustmentType
   adjustmentItems: StockAdjustmentItem[]
   adjustmentNote: string
+  recordExpense: boolean
+  supplierName: string
 
   // Actions
   setAdjustmentType: (type: AdjustmentType) => void
@@ -30,6 +32,8 @@ export interface InventoryStore {
   updateAdjustmentCost: (productId: string, cost: number | null) => void
   updateItemNote: (productId: string, note: string) => void
   setAdjustmentNote: (note: string) => void
+  setRecordExpense: (record: boolean) => void
+  setSupplierName: (name: string) => void
   clearAdjustment: () => void
 
   // Computed
@@ -43,6 +47,8 @@ export const useInventoryStore = create<InventoryStore>()(
       adjustmentType: 'import',
       adjustmentItems: [],
       adjustmentNote: '',
+      recordExpense: true,
+      supplierName: '',
 
       setAdjustmentType: (type) => {
         set({ adjustmentType: type })
@@ -123,11 +129,21 @@ export const useInventoryStore = create<InventoryStore>()(
         set({ adjustmentNote: note })
       },
 
+      setRecordExpense: (record) => {
+        set({ recordExpense: record })
+      },
+
+      setSupplierName: (name) => {
+        set({ supplierName: name })
+      },
+
       clearAdjustment: () => {
         set({
           adjustmentType: 'import',
           adjustmentItems: [],
           adjustmentNote: '',
+          recordExpense: true,
+          supplierName: '',
         })
       },
 
