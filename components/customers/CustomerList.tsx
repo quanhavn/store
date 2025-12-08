@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Input, Button, Empty, Spin, Segmented, Pagination } from 'antd'
 import { PlusOutlined, SearchOutlined, UserOutlined, DollarOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Customer } from '@/lib/supabase/functions'
 import { CustomerCard } from './CustomerCard'
 
@@ -17,6 +18,10 @@ export function CustomerList({ onAdd, onSelect }: CustomerListProps) {
   const [hasDebtOnly, setHasDebtOnly] = useState(false)
   const [page, setPage] = useState(1)
   const limit = 20
+
+  const t = useTranslations('customers')
+  const tCommon = useTranslations('common')
+  const tDebts = useTranslations('debts')
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', hasDebtOnly, page, limit],
@@ -38,7 +43,7 @@ export function CustomerList({ onAdd, onSelect }: CustomerListProps) {
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
-          placeholder="Tim khach hang..."
+          placeholder={t('searchPlaceholder')}
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -50,7 +55,7 @@ export function CustomerList({ onAdd, onSelect }: CustomerListProps) {
           icon={<PlusOutlined />}
           onClick={onAdd}
         >
-          Them
+          {tCommon('add')}
         </Button>
       </div>
 
@@ -62,8 +67,8 @@ export function CustomerList({ onAdd, onSelect }: CustomerListProps) {
           setPage(1)
         }}
         options={[
-          { value: 'all', icon: <UserOutlined />, label: 'Tat ca' },
-          { value: 'debt', icon: <DollarOutlined />, label: 'Co no' },
+          { value: 'all', icon: <UserOutlined />, label: tCommon('all') },
+          { value: 'debt', icon: <DollarOutlined />, label: tDebts('hasDebt') },
         ]}
       />
 
@@ -73,7 +78,7 @@ export function CustomerList({ onAdd, onSelect }: CustomerListProps) {
         </div>
       ) : filteredCustomers.length === 0 ? (
         <Empty
-          description={search ? 'Khong tim thay khach hang' : 'Chua co khach hang'}
+          description={search ? t('notFound') : t('noCustomers')}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (

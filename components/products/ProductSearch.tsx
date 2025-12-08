@@ -3,6 +3,7 @@
 import { Input, Button, Tooltip } from 'antd'
 import { SearchOutlined, ScanOutlined } from '@ant-design/icons'
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import dynamic from 'next/dynamic'
 
 // Dynamic import for BarcodeScanner (client-only, no SSR)
@@ -22,12 +23,16 @@ interface ProductSearchProps {
 export function ProductSearch({
   onSearch,
   onBarcodeScanned,
-  placeholder = 'Tim san pham, ma vach...',
+  placeholder,
   debounceMs = 300,
   showScanner = false,
 }: ProductSearchProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
   const [value, setValue] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
+
+  const defaultPlaceholder = `${tCommon('search')} ${t('productName').toLowerCase()}, ${t('barcode').toLowerCase()}...`
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,7 +65,7 @@ export function ProductSearch({
       <div className="flex gap-2">
         <Input
           size="large"
-          placeholder={placeholder}
+          placeholder={placeholder || defaultPlaceholder}
           prefix={<SearchOutlined className="text-gray-400" />}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -68,7 +73,7 @@ export function ProductSearch({
           className="rounded-lg flex-1"
         />
         {showScanner && (
-          <Tooltip title="Quet ma vach">
+          <Tooltip title={t('scanBarcode')}>
             <Button
               size="large"
               icon={<ScanOutlined />}

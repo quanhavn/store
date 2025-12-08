@@ -3,6 +3,7 @@
 import { Card, Typography, Skeleton, Statistic } from 'antd'
 import { ArrowUpOutlined, ArrowDownOutlined, WalletOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
@@ -19,6 +20,9 @@ interface CashBalanceCardProps {
 }
 
 export function CashBalanceCard({ onCashIn, onCashOut }: CashBalanceCardProps) {
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+
   // Fetch current cash balance
   const { data: balanceData, isLoading: balanceLoading } = useQuery({
     queryKey: ['cash-balance'],
@@ -57,7 +61,7 @@ export function CashBalanceCard({ onCashIn, onCashOut }: CashBalanceCardProps) {
           <WalletOutlined className="text-white text-xl" />
         </div>
         <div>
-          <Text type="secondary" className="text-sm">Quy tien mat</Text>
+          <Text type="secondary" className="text-sm">{t('cashBalance')}</Text>
           <div className="text-2xl font-bold text-green-700">
             {formatCurrency(balance)}
           </div>
@@ -67,7 +71,7 @@ export function CashBalanceCard({ onCashIn, onCashOut }: CashBalanceCardProps) {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-white rounded-lg p-3">
           <Statistic
-            title={<span className="text-xs">Thu hom nay</span>}
+            title={<span className="text-xs">{t('receivedToday')}</span>}
             value={todaySummary.cashIn}
             precision={0}
             valueStyle={{ color: '#16a34a', fontSize: '16px' }}
@@ -78,7 +82,7 @@ export function CashBalanceCard({ onCashIn, onCashOut }: CashBalanceCardProps) {
         </div>
         <div className="bg-white rounded-lg p-3">
           <Statistic
-            title={<span className="text-xs">Chi hom nay</span>}
+            title={<span className="text-xs">{t('spentToday')}</span>}
             value={todaySummary.cashOut}
             precision={0}
             valueStyle={{ color: '#dc2626', fontSize: '16px' }}
@@ -94,13 +98,13 @@ export function CashBalanceCard({ onCashIn, onCashOut }: CashBalanceCardProps) {
           onClick={onCashIn}
           className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
         >
-          <ArrowUpOutlined /> Thu tien
+          <ArrowUpOutlined /> {t('cashIn')}
         </button>
         <button
           onClick={onCashOut}
           className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
         >
-          <ArrowDownOutlined /> Chi tien
+          <ArrowDownOutlined /> {t('cashOut')}
         </button>
       </div>
     </Card>

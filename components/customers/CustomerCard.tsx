@@ -2,6 +2,7 @@
 
 import { Card, Avatar, Tag, Typography } from 'antd'
 import { UserOutlined, PhoneOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { formatCurrency, formatPhone } from '@/lib/utils'
 import type { Customer } from '@/lib/supabase/functions'
 
@@ -13,6 +14,9 @@ interface CustomerCardProps {
 }
 
 export function CustomerCard({ customer, onClick }: CustomerCardProps) {
+  const t = useTranslations('customers')
+  const tDebts = useTranslations('debts')
+
   return (
     <Card
       hoverable
@@ -34,10 +38,10 @@ export function CustomerCard({ customer, onClick }: CustomerCardProps) {
         <div className="text-right flex-shrink-0">
           {customer.total_debt > 0 ? (
             <Tag color="red">
-              No {formatCurrency(customer.total_debt)}
+              {tDebts('debt')} {formatCurrency(customer.total_debt)}
             </Tag>
           ) : (
-            <Tag color="green">Khong no</Tag>
+            <Tag color="green">{tDebts('noDebt')}</Tag>
           )}
         </div>
       </div>

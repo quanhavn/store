@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Form, Input, Button, Card, Typography, App, Divider } from 'antd'
 import { ShopOutlined, PhoneOutlined, LockOutlined } from '@ant-design/icons'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslations } from 'next-intl'
 
 const { Title, Text, Link } = Typography
 
@@ -31,6 +32,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isRegister, setIsRegister] = useState(false)
   const [form] = Form.useForm()
+  const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
 
   const handleLogin = async (values: LoginFormData) => {
     setIsLoading(true)
@@ -43,11 +46,11 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      message.success('Đăng nhập thành công')
+      message.success(t('loginSuccess'))
       router.push('/')
       router.refresh()
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Số điện thoại hoặc mật khẩu không đúng')
+      message.error(error instanceof Error ? error.message : t('loginError'))
     } finally {
       setIsLoading(false)
     }
@@ -84,11 +87,11 @@ export default function LoginPage() {
         if (registerError) throw registerError
       }
 
-      message.success('Đăng ký thành công')
+      message.success(t('registerSuccess'))
       router.push('/')
       router.refresh()
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Không thể đăng ký tài khoản')
+      message.error(error instanceof Error ? error.message : t('registerError'))
     } finally {
       setIsLoading(false)
     }
@@ -106,18 +109,18 @@ export default function LoginPage() {
           <div className="h-16 w-16 rounded-2xl bg-blue-500 flex items-center justify-center mb-4">
             <ShopOutlined className="text-3xl text-white" />
           </div>
-          <Title level={3} className="!mb-1 text-center">Quản Lý Cửa Hàng</Title>
+          <Title level={3} className="!mb-1 text-center">{tCommon('appName')}</Title>
           <Text type="secondary">
-            {isRegister ? 'Tạo tài khoản mới' : 'Đăng nhập để tiếp tục'}
+            {isRegister ? t('createAccount') : t('loginToContinue')}
           </Text>
         </div>
 
         <Card>
           <Title level={4} className="!mb-1">
-            {isRegister ? 'Đăng ký' : 'Đăng nhập'}
+            {isRegister ? t('register') : t('login')}
           </Title>
           <Text type="secondary" className="block mb-6">
-            {isRegister ? 'Nhập thông tin để tạo tài khoản' : 'Nhập số điện thoại và mật khẩu'}
+            {isRegister ? t('enterInfoToRegister') : t('enterPhoneAndPassword')}
           </Text>
 
           <Form
@@ -129,12 +132,12 @@ export default function LoginPage() {
             {isRegister && (
               <Form.Item
                 name="storeName"
-                label="Tên cửa hàng"
-                rules={[{ required: true, message: 'Vui lòng nhập tên cửa hàng' }]}
+                label={t('storeName')}
+                rules={[{ required: true, message: t('validation.storeNameRequired') }]}
               >
                 <Input
                   prefix={<ShopOutlined className="text-gray-400" />}
-                  placeholder="VD: Tạp hóa Minh Tâm"
+                  placeholder={t('storeNamePlaceholder')}
                   size="large"
                 />
               </Form.Item>
@@ -142,15 +145,15 @@ export default function LoginPage() {
 
             <Form.Item
               name="phone"
-              label="Số điện thoại"
+              label={t('phone')}
               rules={[
-                { required: true, message: 'Vui lòng nhập số điện thoại' },
-                { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại phải có 10-11 chữ số' },
+                { required: true, message: t('validation.phoneRequired') },
+                { pattern: /^[0-9]{10,11}$/, message: t('validation.phoneInvalid') },
               ]}
             >
               <Input
                 prefix={<PhoneOutlined className="text-gray-400" />}
-                placeholder="0912345678"
+                placeholder={t('phonePlaceholder')}
                 size="large"
                 maxLength={11}
               />
@@ -158,40 +161,40 @@ export default function LoginPage() {
 
             <Form.Item
               name="password"
-              label="Mật khẩu"
+              label={t('password')}
               rules={[
-                { required: true, message: 'Vui lòng nhập mật khẩu' },
-                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+                { required: true, message: t('validation.passwordRequired') },
+                { min: 6, message: t('validation.passwordMinLength') },
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined className="text-gray-400" />}
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
                 size="large"
               />
             </Form.Item>
 
             <Form.Item className="!mb-4">
               <Button type="primary" htmlType="submit" loading={isLoading} block size="large">
-                {isRegister ? 'Đăng ký' : 'Đăng nhập'}
+                {isRegister ? t('register') : t('login')}
               </Button>
             </Form.Item>
           </Form>
 
           <Divider plain>
-            <Text type="secondary" className="text-xs">hoặc</Text>
+            <Text type="secondary" className="text-xs">{tCommon('or')}</Text>
           </Divider>
 
           <div className="text-center">
             <Link onClick={switchMode}>
-              {isRegister ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký'}
+              {isRegister ? t('haveAccount') : t('noAccount')}
             </Link>
           </div>
         </Card>
 
         <Text type="secondary" className="block text-center text-xs mt-6">
-          Bằng việc đăng ký, bạn đồng ý với{' '}
-          <Link href="/terms">Điều khoản dịch vụ</Link>
+          {t('termsAgreement')}{' '}
+          <Link href="/terms">{t('termsOfService')}</Link>
         </Text>
       </div>
     </div>

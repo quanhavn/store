@@ -4,6 +4,7 @@ import { Card, Avatar, Tag, Typography } from 'antd'
 import { UserOutlined, PhoneOutlined } from '@ant-design/icons'
 import type { Employee } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
 
@@ -13,14 +14,16 @@ interface EmployeeCardProps {
 }
 
 export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
+  const t = useTranslations('hr')
+
   const getContractTypeTag = (type: string) => {
     switch (type) {
       case 'full_time':
-        return <Tag color="green">Toan thoi gian</Tag>
+        return <Tag color="green">{t('contractType.fullTime')}</Tag>
       case 'part_time':
-        return <Tag color="blue">Ban thoi gian</Tag>
+        return <Tag color="blue">{t('contractType.partTime')}</Tag>
       case 'contract':
-        return <Tag color="orange">Hop dong</Tag>
+        return <Tag color="orange">{t('contractType.contract')}</Tag>
       default:
         return null
     }
@@ -38,7 +41,7 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <Text strong className="truncate">{employee.name}</Text>
-            {!employee.active && <Tag color="red">Nghi viec</Tag>}
+            {!employee.active && <Tag color="red">{t('status.inactive')}</Tag>}
           </div>
           <div className="text-sm text-gray-500 mb-1">{employee.position}</div>
           <div className="flex items-center gap-2 text-xs text-gray-400">

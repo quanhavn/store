@@ -8,6 +8,7 @@ import {
   ExclamationCircleOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/utils'
 import type { StockCheckItem } from './StockCheckForm'
 
@@ -26,6 +27,9 @@ export function StockCheckSummary({
   onBack,
   isSubmitting,
 }: StockCheckSummaryProps) {
+  const t = useTranslations('inventory')
+  const tCommon = useTranslations('common')
+
   // Calculate summary statistics
   const summary = useMemo(() => {
     const totalItems = items.length
@@ -74,10 +78,10 @@ export function StockCheckSummary({
           onClick={onBack}
           className="mb-2"
         >
-          Quay lại
+          {tCommon('back')}
         </Button>
         <Title level={5} className="!mb-0">
-          Tổng hợp kiểm kê
+          {t('stockCheckSummary')}
         </Title>
       </div>
 
@@ -85,27 +89,27 @@ export function StockCheckSummary({
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-blue-50 p-3 rounded-lg">
           <Text type="secondary" className="text-xs">
-            Tổng sản phẩm
+            {t('totalProducts')}
           </Text>
           <div className="text-xl font-bold text-blue-600">{summary.totalItems}</div>
         </div>
         <div className="bg-green-50 p-3 rounded-lg">
           <Text type="secondary" className="text-xs">
-            Đã kiểm tra
+            {t('checked')}
           </Text>
           <div className="text-xl font-bold text-green-600">{summary.countedItems}</div>
         </div>
         <div className="bg-gray-50 p-3 rounded-lg">
           <Text type="secondary" className="text-xs">
             <CheckCircleOutlined className="mr-1" />
-            Khớp số lượng
+            {t('quantityMatched')}
           </Text>
           <div className="text-xl font-bold text-gray-600">{summary.matchingItems}</div>
         </div>
         <div className="bg-red-50 p-3 rounded-lg">
           <Text type="secondary" className="text-xs">
             <CloseCircleOutlined className="mr-1" />
-            Có chênh lệch
+            {t('hasDifference')}
           </Text>
           <div className="text-xl font-bold text-red-600">
             {summary.itemsWithDifference.length}
@@ -118,8 +122,8 @@ export function StockCheckSummary({
         <Alert
           type="warning"
           icon={<ExclamationCircleOutlined />}
-          message={`${summary.uncountedItems} sản phẩm chưa được kiểm tra`}
-          description="Các sản phẩm chưa kiểm sẽ giữ nguyên số lượng trong hệ thống."
+          message={t('uncheckedWarning', { count: summary.uncountedItems })}
+          description={t('uncheckedWarningDescription')}
           className="mb-4"
           showIcon
         />
@@ -129,24 +133,24 @@ export function StockCheckSummary({
       {summary.itemsWithDifference.length > 0 && (
         <div className="bg-gray-100 p-4 rounded-lg mb-4">
           <Text strong className="block mb-2">
-            Giá trị điều chỉnh
+            {t('adjustmentValue')}
           </Text>
           <div className="space-y-1">
             {summary.positiveAdjustments.length > 0 && (
               <div className="flex justify-between text-sm">
-                <Text type="secondary">Tăng ({summary.positiveAdjustments.length} SP):</Text>
+                <Text type="secondary">{t('increase')} ({summary.positiveAdjustments.length} SP):</Text>
                 <Text className="text-orange-500">+{formatCurrency(summary.totalPositiveValue)}</Text>
               </div>
             )}
             {summary.negativeAdjustments.length > 0 && (
               <div className="flex justify-between text-sm">
-                <Text type="secondary">Giảm ({summary.negativeAdjustments.length} SP):</Text>
+                <Text type="secondary">{t('decrease')} ({summary.negativeAdjustments.length} SP):</Text>
                 <Text className="text-red-500">-{formatCurrency(summary.totalNegativeValue)}</Text>
               </div>
             )}
             <Divider className="!my-2" />
             <div className="flex justify-between">
-              <Text strong>Chênh lệch ròng:</Text>
+              <Text strong>{t('netDifference')}:</Text>
               <Text
                 strong
                 className={summary.netAdjustmentValue >= 0 ? 'text-orange-500' : 'text-red-500'}
@@ -163,7 +167,7 @@ export function StockCheckSummary({
       {summary.itemsWithDifference.length > 0 && (
         <div className="flex-1 overflow-auto mb-4">
           <Text strong className="block mb-2">
-            Chi tiết chênh lệch
+            {t('differenceDetail')}
           </Text>
           <List
             size="small"
@@ -189,7 +193,7 @@ export function StockCheckSummary({
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
                     <span>
-                      Hệ thống: {item.system_quantity} | Thực tế: {item.actual_quantity}
+                      {t('system')}: {item.system_quantity} | {t('actual')}: {item.actual_quantity}
                     </span>
                     <span>
                       {formatCurrency(Math.abs(item.difference!) * item.products.cost_price)}
@@ -197,7 +201,7 @@ export function StockCheckSummary({
                   </div>
                   {item.note && (
                     <Text type="secondary" className="text-xs block mt-1 italic">
-                      Ghi chú: {item.note}
+                      {t('noteLabel')}: {item.note}
                     </Text>
                   )}
                 </div>
@@ -212,9 +216,9 @@ export function StockCheckSummary({
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <CheckCircleOutlined className="text-5xl text-green-500 mb-4" />
-            <Title level={5}>Tất cả khớp!</Title>
+            <Title level={5}>{t('allMatched')}</Title>
             <Text type="secondary">
-              Không có sản phẩm nào cần điều chỉnh tồn kho.
+              {t('noAdjustmentNeeded')}
             </Text>
           </div>
         </div>
@@ -231,11 +235,11 @@ export function StockCheckSummary({
           danger={summary.itemsWithDifference.length > 0}
         >
           {summary.itemsWithDifference.length > 0
-            ? `Xác nhận điều chỉnh ${summary.itemsWithDifference.length} sản phẩm`
-            : 'Hoàn tất kiểm kê'}
+            ? t('confirmAdjustProducts', { count: summary.itemsWithDifference.length })
+            : t('completeStockCheck')}
         </Button>
         <Button block onClick={onBack} disabled={isSubmitting}>
-          Quay lại chỉnh sửa
+          {t('backToEdit')}
         </Button>
       </div>
     </div>

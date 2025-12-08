@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Drawer, Button, Descriptions, Tag, Progress, Alert, Spin, Popconfirm, message, Typography, Divider, List } from 'antd'
 import { DollarOutlined, CloseCircleOutlined, HistoryOutlined, UserOutlined, PhoneOutlined, CalendarOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type DebtDetail as DebtDetailType, type DebtInstallment, type DebtPayment } from '@/lib/supabase/functions'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { InstallmentList } from './InstallmentList'
@@ -24,7 +25,7 @@ function transformToDisplayData(debt: DebtDetailType): DebtDisplayData {
     id: debt.id,
     store_id: debt.store_id,
     customer_id: debt.customer_id,
-    customer_name: debt.customer?.name || 'Khach hang',
+    customer_name: debt.customer?.name || '',
     customer_phone: debt.customer?.phone || null,
     debt_type: debt.debt_type,
     original_amount: debt.original_amount,
@@ -40,6 +41,9 @@ function transformToDisplayData(debt: DebtDetailType): DebtDisplayData {
 }
 
 export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+  const tCustomers = useTranslations('customers')
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [selectedInstallment, setSelectedInstallment] = useState<DebtInstallment | null>(null)
   const queryClient = useQueryClient()
@@ -53,13 +57,13 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
   const cancelMutation = useMutation({
     mutationFn: () => api.debts.cancel(debtId!),
     onSuccess: () => {
-      message.success('Da huy cong no')
+      message.success(tCommon('success'))
       queryClient.invalidateQueries({ queryKey: ['debts'] })
       queryClient.invalidateQueries({ queryKey: ['debt', debtId] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
@@ -92,19 +96,19 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
   const getStatusBadge = (status: DebtDetailType['status']) => {
     switch (status) {
       case 'active':
-        return <Tag color="blue">Dang no</Tag>
+        return <Tag color="blue">{tCommon('active')}</Tag>
       case 'overdue':
-        return <Tag color="red">Qua han</Tag>
+        return <Tag color="red">{tCommon('overdue')}</Tag>
       case 'paid':
-        return <Tag color="green">Da tra</Tag>
+        return <Tag color="green">{tCommon('paid')}</Tag>
       case 'cancelled':
-        return <Tag color="default">Da huy</Tag>
+        return <Tag color="default">{tCommon('cancelled')}</Tag>
       default:
         return null
     }
   }
 
-  const customerName = debt?.customer?.name || 'Khach hang'
+  const customerName = debt?.customer?.name || tCustomers('customer')
   const customerPhone = debt?.customer?.phone
 
   return (
@@ -112,7 +116,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
       <Drawer
         open={open}
         onClose={onClose}
-        title="Chi tiet cong no"
+        title={t('title')}
         placement="bottom"
         height="90%"
         extra={
@@ -122,7 +126,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
               icon={<DollarOutlined />}
               onClick={() => handlePayment()}
             >
-              Thanh toan
+              {t('payDebt')}
             </Button>
           )
         }
@@ -137,8 +141,8 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
             {isOverdue && (
               <Alert
                 type="error"
-                message="Cong no qua han"
-                description={`Han tra: ${formatDate(debt.due_date!)}. Vui long lien he khach hang de thu no.`}
+                message={tCommon('overdue')}
+                description={`${t('dueDate')}: ${formatDate(debt.due_date!)}`}
                 showIcon
               />
             )}
@@ -162,7 +166,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
               <div className="flex gap-2">
                 {getStatusBadge(debt.status)}
                 <Tag color={debt.debt_type === 'credit' ? 'purple' : 'orange'}>
-                  {debt.debt_type === 'credit' ? 'Ghi no' : 'Tra gop'}
+                  {debt.debt_type === 'credit' ? t('credit') : t('installment')}
                 </Tag>
               </div>
             </div>
@@ -171,15 +175,15 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
             <div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <Text type="secondary" className="text-xs block">Tong no</Text>
+                  <Text type="secondary" className="text-xs block">{t('totalDebt')}</Text>
                   <Text strong className="text-lg">{formatCurrency(debt.original_amount)}</Text>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <Text type="secondary" className="text-xs block">Da tra</Text>
+                  <Text type="secondary" className="text-xs block">{t('paidAmount')}</Text>
                   <Text strong className="text-lg text-green-600">{formatCurrency(paidAmount)}</Text>
                 </div>
                 <div className={`text-center p-3 rounded-lg ${isOverdue ? 'bg-red-50' : 'bg-blue-50'}`}>
-                  <Text type="secondary" className="text-xs block">Con no</Text>
+                  <Text type="secondary" className="text-xs block">{t('remainingAmount')}</Text>
                   <Text strong className={`text-lg ${isOverdue ? 'text-red-600' : 'text-blue-600'}`}>
                     {formatCurrency(debt.remaining_amount)}
                   </Text>
@@ -189,7 +193,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
               {/* Progress */}
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <Text type="secondary">Tien do thanh toan</Text>
+                  <Text type="secondary">{tCommon('progress')}</Text>
                   <Text type="secondary">{paidPercentage}%</Text>
                 </div>
                 <Progress
@@ -205,7 +209,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
               <div className={`flex items-center gap-2 p-3 rounded-lg ${isOverdue ? 'bg-red-50 text-red-600' : 'bg-gray-50'}`}>
                 <CalendarOutlined />
                 <span>
-                  {isOverdue ? 'Qua han tu: ' : 'Han tra: '}
+                  {isOverdue ? `${tCommon('overdue')}: ` : `${t('dueDate')}: `}
                   <strong>{formatDate(debt.due_date)}</strong>
                 </span>
               </div>
@@ -214,7 +218,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
             {/* Note */}
             {debt.notes && (
               <div>
-                <Text type="secondary" className="text-xs block mb-1">Ghi chu</Text>
+                <Text type="secondary" className="text-xs block mb-1">{tCommon('notes')}</Text>
                 <Text>{debt.notes}</Text>
               </div>
             )}
@@ -224,7 +228,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
             {/* Installments section */}
             {debt.debt_type === 'installment' && debt.installments && debt.installments.length > 0 && (
               <div>
-                <Title level={5}>Lich tra gop</Title>
+                <Title level={5}>{t('installments')}</Title>
                 <InstallmentList
                   installments={debt.installments}
                   onPayInstallment={handlePayment}
@@ -238,10 +242,10 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <HistoryOutlined />
-                <Title level={5} className="!mb-0">Lich su thanh toan</Title>
+                <Title level={5} className="!mb-0">{tCommon('paymentHistory')}</Title>
               </div>
               {payments.length === 0 ? (
-                <Text type="secondary">Chua co thanh toan nao</Text>
+                <Text type="secondary">{tCommon('noPayments')}</Text>
               ) : (
                 <List
                   dataSource={payments}
@@ -258,7 +262,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
                         </div>
                         <div className="text-right">
                           <Tag color={payment.payment_method === 'cash' ? 'green' : 'blue'}>
-                            {payment.payment_method === 'cash' ? 'Tien mat' : 'Chuyen khoan'}
+                            {payment.payment_method === 'cash' ? tCommon('cash') : tCommon('bankTransfer')}
                           </Tag>
                           {payment.notes && (
                             <div className="text-xs text-gray-500">{payment.notes}</div>
@@ -275,11 +279,11 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
 
             {/* Info */}
             <Descriptions column={1} size="small">
-              <Descriptions.Item label="Ngay tao">
+              <Descriptions.Item label={tCommon('createdAt')}>
                 {formatDateTime(debt.created_at)}
               </Descriptions.Item>
               {debt.sale_id && (
-                <Descriptions.Item label="Ma don hang">
+                <Descriptions.Item label={tCommon('orderId')}>
                   {debt.sale_id}
                 </Descriptions.Item>
               )}
@@ -289,11 +293,11 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
             {debt.status === 'active' && (
               <div className="pt-4">
                 <Popconfirm
-                  title="Huy cong no?"
-                  description="Hanh dong nay khong the hoan tac. Ban co chac chan muon huy cong no nay?"
+                  title={tCommon('confirmCancel')}
+                  description={tCommon('confirmCancelDescription')}
                   onConfirm={() => cancelMutation.mutate()}
-                  okText="Huy cong no"
-                  cancelText="Quay lai"
+                  okText={tCommon('cancel')}
+                  cancelText={tCommon('back')}
                   okButtonProps={{ danger: true }}
                 >
                   <Button
@@ -302,7 +306,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
                     block
                     loading={cancelMutation.isPending}
                   >
-                    Huy cong no
+                    {tCommon('cancel')}
                   </Button>
                 </Popconfirm>
               </div>
@@ -310,7 +314,7 @@ export function DebtDetail({ open, onClose, debtId }: DebtDetailProps) {
           </div>
         ) : (
           <div className="text-center py-8">
-            <Text type="secondary">Khong tim thay cong no</Text>
+            <Text type="secondary">{tCommon('notFound')}</Text>
           </div>
         )}
       </Drawer>

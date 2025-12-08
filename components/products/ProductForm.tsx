@@ -5,6 +5,7 @@ import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { useState, useRef, useEffect } from 'react'
 import type { UploadFile } from 'antd/es/upload/interface'
 import type { InputRef } from 'antd'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import type { ProductAttribute, ProductUnitInput, ProductVariantInput } from '@/lib/supabase/functions'
 import { ProductUnitsSection } from './ProductUnitsSection'
@@ -76,8 +77,10 @@ export function ProductForm({
   categories,
   onCategoryCreated,
   initialValues,
-  title = 'Thêm sản phẩm',
+  title,
 }: ProductFormProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fileList, setFileList] = useState<UploadFile[]>([])

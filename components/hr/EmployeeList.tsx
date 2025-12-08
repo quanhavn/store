@@ -6,6 +6,7 @@ import { PlusOutlined, SearchOutlined, UserOutlined, UserDeleteOutlined } from '
 import { useQuery } from '@tanstack/react-query'
 import { api, type Employee } from '@/lib/supabase/functions'
 import { EmployeeCard } from './EmployeeCard'
+import { useTranslations } from 'next-intl'
 
 interface EmployeeListProps {
   onAdd?: () => void
@@ -13,6 +14,8 @@ interface EmployeeListProps {
 }
 
 export function EmployeeList({ onAdd, onSelect }: EmployeeListProps) {
+  const t = useTranslations('hr')
+  const tCommon = useTranslations('common')
   const [search, setSearch] = useState('')
   const [activeOnly, setActiveOnly] = useState(true)
 
@@ -31,7 +34,7 @@ export function EmployeeList({ onAdd, onSelect }: EmployeeListProps) {
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
-          placeholder="Tim nhan vien..."
+          placeholder={t('searchEmployees')}
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -43,7 +46,7 @@ export function EmployeeList({ onAdd, onSelect }: EmployeeListProps) {
           icon={<PlusOutlined />}
           onClick={onAdd}
         >
-          Them
+          {tCommon('add')}
         </Button>
       </div>
 
@@ -52,8 +55,8 @@ export function EmployeeList({ onAdd, onSelect }: EmployeeListProps) {
         value={activeOnly ? 'active' : 'all'}
         onChange={(v) => setActiveOnly(v === 'active')}
         options={[
-          { value: 'active', icon: <UserOutlined />, label: 'Dang lam' },
-          { value: 'all', icon: <UserDeleteOutlined />, label: 'Tat ca' },
+          { value: 'active', icon: <UserOutlined />, label: t('filterActive') },
+          { value: 'all', icon: <UserDeleteOutlined />, label: t('filterAll') },
         ]}
       />
 
@@ -63,7 +66,7 @@ export function EmployeeList({ onAdd, onSelect }: EmployeeListProps) {
         </div>
       ) : filteredEmployees.length === 0 ? (
         <Empty
-          description={search ? 'Khong tim thay nhan vien' : 'Chua co nhan vien'}
+          description={search ? t('noEmployeesFound') : t('noEmployees')}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (

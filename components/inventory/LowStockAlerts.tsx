@@ -3,6 +3,7 @@
 import { List, Empty, Tag, Badge, Typography, Spin, Button } from 'antd'
 import { WarningOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { useInventoryStore } from '@/lib/stores/inventory'
 
@@ -21,6 +22,7 @@ interface LowStockProduct {
 
 export function LowStockAlerts() {
   const { addAdjustmentItem, setAdjustmentType } = useInventoryStore()
+  const t = useTranslations('inventory')
 
   const { data: lowStockProducts = [], isLoading } = useQuery({
     queryKey: ['low-stock-products'],
@@ -56,7 +58,7 @@ export function LowStockAlerts() {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="Không có sản phẩm nào sắp hết hàng"
+        description={t('noLowStockProducts')}
         className="my-8"
       />
     )
@@ -67,11 +69,11 @@ export function LowStockAlerts() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-red-50 p-3 rounded-lg text-center">
           <div className="text-2xl font-bold text-red-600">{outOfStockCount}</div>
-          <div className="text-xs text-red-500">Hết hàng</div>
+          <div className="text-xs text-red-500">{t('outOfStock')}</div>
         </div>
         <div className="bg-orange-50 p-3 rounded-lg text-center">
           <div className="text-2xl font-bold text-orange-600">{lowStockCount}</div>
-          <div className="text-xs text-orange-500">Sắp hết</div>
+          <div className="text-xs text-orange-500">{t('runningLow')}</div>
         </div>
       </div>
 
@@ -106,10 +108,10 @@ export function LowStockAlerts() {
                     <Tag color={isOutOfStock ? 'red' : 'orange'}>
                       {isOutOfStock ? (
                         <span className="flex items-center gap-1">
-                          <WarningOutlined /> Hết hàng
+                          <WarningOutlined /> {t('outOfStock')}
                         </span>
                       ) : (
-                        `Còn ${product.quantity}`
+                        `${t('inStock')} ${product.quantity}`
                       )}
                     </Tag>
                   </div>
@@ -117,9 +119,9 @@ export function LowStockAlerts() {
 
                 <div className="flex justify-between items-center mt-2 ml-4">
                   <div className="text-xs text-gray-500">
-                    <span>Tối thiểu: {product.min_stock} {product.unit}</span>
+                    <span>{t('minimum')}: {product.min_stock} {product.unit}</span>
                     <span className="mx-2">|</span>
-                    <span>Cần nhập: ~{neededQuantity} {product.unit}</span>
+                    <span>{t('needToOrder')}: ~{neededQuantity} {product.unit}</span>
                   </div>
                   <Button
                     type="link"
@@ -127,7 +129,7 @@ export function LowStockAlerts() {
                     icon={<PlusOutlined />}
                     onClick={() => handleQuickImport(product)}
                   >
-                    Nhập kho
+                    {t('quickImport')}
                   </Button>
                 </div>
               </div>
@@ -138,8 +140,7 @@ export function LowStockAlerts() {
 
       <div className="bg-gray-50 p-3 rounded-lg mt-4">
         <Text type="secondary" className="text-xs">
-          Danh sách cập nhật tự động mỗi phút. Sản phẩm được hiển thị khi số lượng tồn
-          bằng hoặc thấp hơn mức tồn kho tối thiểu đã thiết lập.
+          {t('lowStockInfo')}
         </Text>
       </div>
     </div>

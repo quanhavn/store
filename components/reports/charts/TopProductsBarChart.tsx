@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts'
+import { useTranslations } from 'next-intl'
 
 interface TopProduct {
   product_name: string
@@ -52,9 +53,10 @@ interface CustomTooltipProps {
   payload?: Array<{
     payload: TopProduct
   }>
+  soldLabel?: string
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, soldLabel = 'Sold' }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null
   }
@@ -70,7 +72,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         {formatFullCurrency(data.revenue)}
       </p>
       <p className="text-xs text-gray-500">
-        Da ban: {data.quantity_sold} san pham
+        {soldLabel}: {data.quantity_sold}
       </p>
     </div>
   )
@@ -81,6 +83,10 @@ export function TopProductsBarChart({
   isLoading,
   displayMode = 'revenue',
 }: TopProductsBarChartProps) {
+  const t = useTranslations('reports')
+  const tCommon = useTranslations('common')
+  const tProducts = useTranslations('products')
+
   const chartData = useMemo(() => {
     return data
       .slice(0, 10)
@@ -104,10 +110,10 @@ export function TopProductsBarChart({
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm">
         <h3 className="text-base font-semibold text-gray-700 mb-4">
-          Top 10 san pham ban chay
+          Top 10 {tProducts('title')}
         </h3>
         <div className="h-80 flex items-center justify-center text-gray-400">
-          Khong co du lieu
+          {tCommon('noData')}
         </div>
       </div>
     )
@@ -119,8 +125,8 @@ export function TopProductsBarChart({
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm">
       <h3 className="text-base font-semibold text-gray-700 mb-4">
-        Top 10 san pham ban chay
-        {displayMode === 'revenue' ? ' (doanh thu)' : ' (so luong)'}
+        Top 10 {tProducts('title')}
+        {displayMode === 'revenue' ? ` (${t('revenue')})` : ` (${tCommon('quantity')})`}
       </h3>
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
@@ -145,7 +151,7 @@ export function TopProductsBarChart({
               axisLine={{ stroke: '#e5e7eb' }}
               width={75}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip soldLabel={tCommon('quantity')} />} />
             <Bar dataKey={dataKey} radius={[0, 4, 4, 0]}>
               {chartData.map((_, index) => (
                 <Cell

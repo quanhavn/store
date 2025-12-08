@@ -3,6 +3,7 @@
 import { Drawer, Descriptions, Tag, Button, Divider, Spin, Empty, List, Typography } from 'antd'
 import { EditOutlined, PhoneOutlined, EnvironmentOutlined, BankOutlined, FileTextOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency, formatPhone, formatDate } from '@/lib/utils'
 
@@ -16,6 +17,10 @@ interface CustomerDetailProps {
 }
 
 export function CustomerDetail({ open, onClose, customerId, onEdit }: CustomerDetailProps) {
+  const t = useTranslations('customers')
+  const tCommon = useTranslations('common')
+  const tDebts = useTranslations('debts')
+
   const { data, isLoading } = useQuery({
     queryKey: ['customer', customerId],
     queryFn: () => api.customers.get(customerId!),
@@ -30,7 +35,7 @@ export function CustomerDetail({ open, onClose, customerId, onEdit }: CustomerDe
     <Drawer
       open={open}
       onClose={onClose}
-      title={customer?.name || 'Chi tiet khach hang'}
+      title={customer?.name || t('customerDetail')}
       placement="bottom"
       height="85%"
       extra={
@@ -40,7 +45,7 @@ export function CustomerDetail({ open, onClose, customerId, onEdit }: CustomerDe
             icon={<EditOutlined />}
             onClick={onEdit}
           >
-            Sua
+            {tCommon('edit')}
           </Button>
         )
       }
@@ -50,40 +55,40 @@ export function CustomerDetail({ open, onClose, customerId, onEdit }: CustomerDe
           <Spin size="large" />
         </div>
       ) : !customer ? (
-        <Empty description="Khong tim thay khach hang" />
+        <Empty description={t('notFound')} />
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             {customer.total_debt > 0 ? (
-              <Tag color="red">No {formatCurrency(customer.total_debt)}</Tag>
+              <Tag color="red">{tDebts('debt')} {formatCurrency(customer.total_debt)}</Tag>
             ) : (
-              <Tag color="green">Khong no</Tag>
+              <Tag color="green">{tDebts('noDebt')}</Tag>
             )}
           </div>
 
           <Descriptions column={1} size="small" bordered>
-            <Descriptions.Item label={<><PhoneOutlined /> Dien thoai</>}>
+            <Descriptions.Item label={<><PhoneOutlined /> {tCommon('phone')}</>}>
               <a href={`tel:${customer.phone}`}>{formatPhone(customer.phone)}</a>
             </Descriptions.Item>
             {customer.address && (
-              <Descriptions.Item label={<><EnvironmentOutlined /> Dia chi</>}>
+              <Descriptions.Item label={<><EnvironmentOutlined /> {tCommon('address')}</>}>
                 {customer.address}
               </Descriptions.Item>
             )}
             {customer.tax_code && (
-              <Descriptions.Item label={<><BankOutlined /> Ma so thue</>}>
+              <Descriptions.Item label={<><BankOutlined /> {t('taxCode')}</>}>
                 {customer.tax_code}
               </Descriptions.Item>
             )}
             {customer.notes && (
-              <Descriptions.Item label={<><FileTextOutlined /> Ghi chu</>}>
+              <Descriptions.Item label={<><FileTextOutlined /> {tCommon('note')}</>}>
                 {customer.notes}
               </Descriptions.Item>
             )}
           </Descriptions>
 
           <Divider orientationMargin={0}>
-            <span className="text-sm">Thong tin cong no</span>
+            <span className="text-sm">{tDebts('debtInfo')}</span>
           </Divider>
 
           <div className="grid grid-cols-3 gap-4 text-center">
@@ -91,26 +96,26 @@ export function CustomerDetail({ open, onClose, customerId, onEdit }: CustomerDe
               <div className="text-lg font-semibold text-red-600">
                 {formatCurrency(customer.total_debt || 0)}
               </div>
-              <div className="text-xs text-gray-500">Tong no</div>
+              <div className="text-xs text-gray-500">{t('totalDebt')}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-lg font-semibold text-orange-600">
                 {customer.active_debts || 0}
               </div>
-              <div className="text-xs text-gray-500">Hoa don no</div>
+              <div className="text-xs text-gray-500">{tDebts('debtInvoices')}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-lg font-semibold text-purple-600">
                 {customer.overdue_debts || 0}
               </div>
-              <div className="text-xs text-gray-500">Qua han</div>
+              <div className="text-xs text-gray-500">{tDebts('overdue')}</div>
             </div>
           </div>
 
           {customer.debts && customer.debts.length > 0 && (
             <>
               <Divider orientationMargin={0}>
-                <span className="text-sm">Cac khoan no</span>
+                <span className="text-sm">{tDebts('debtItems')}</span>
               </Divider>
 
               <List
@@ -124,7 +129,7 @@ export function CustomerDetail({ open, onClose, customerId, onEdit }: CustomerDe
                         <div className="text-xs text-gray-500">
                           {formatDate(debt.created_at)}
                           {debt.is_overdue && (
-                            <Tag color="red" className="ml-2">Qua han</Tag>
+                            <Tag color="red" className="ml-2">{tDebts('overdue')}</Tag>
                           )}
                         </div>
                       </div>

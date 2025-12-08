@@ -9,11 +9,14 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 
 const { Text } = Typography
 
 export function DebtSummaryCard() {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
   const { data, isLoading } = useQuery({
     queryKey: ['debt-summary'],
     queryFn: () => api.debts.summary(),
@@ -30,12 +33,12 @@ export function DebtSummaryCard() {
   const summary = data?.summary
 
   return (
-    <Card className="mb-4" title={<Text strong>Tong quan cong no</Text>}>
+    <Card className="mb-4" title={<Text strong>{t('title')}</Text>}>
       <Row gutter={[16, 16]}>
         {/* Total outstanding */}
         <Col span={24}>
           <div className="bg-blue-50 rounded-lg p-4 text-center">
-            <Text type="secondary" className="text-sm block mb-1">Tong cong no</Text>
+            <Text type="secondary" className="text-sm block mb-1">{t('totalDebt')}</Text>
             <div className="text-3xl font-bold text-blue-600">
               {summary?.total_outstanding?.toLocaleString('vi-VN') || 0}
               <span className="text-base font-normal ml-1">d</span>
@@ -46,22 +49,22 @@ export function DebtSummaryCard() {
         {/* Customers with debt */}
         <Col span={12}>
           <Statistic
-            title="Khach dang no"
+            title={tCommon('customersWithDebt')}
             value={summary?.total_customers_with_debt || 0}
             prefix={<UserOutlined />}
             valueStyle={{ fontSize: '18px' }}
-            suffix="nguoi"
+            suffix={tCommon('people')}
           />
         </Col>
 
         {/* Active debts */}
         <Col span={12}>
           <Statistic
-            title="Cong no dang xu ly"
+            title={tCommon('activeDebts')}
             value={summary?.active_debts || 0}
             prefix={<FileTextOutlined />}
             valueStyle={{ fontSize: '18px' }}
-            suffix="mon"
+            suffix={tCommon('items')}
           />
         </Col>
 
@@ -71,11 +74,11 @@ export function DebtSummaryCard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <WarningOutlined className="text-red-600" />
-                <Text type="secondary">Qua han</Text>
+                <Text type="secondary">{tCommon('overdue')}</Text>
               </div>
               <div className="text-right">
                 <div className="text-lg font-semibold text-red-600">
-                  {summary?.overdue_debts || 0} mon
+                  {summary?.overdue_debts || 0} {tCommon('items')}
                 </div>
                 <div className="text-sm text-red-500">
                   {(summary?.overdue_amount || 0).toLocaleString('vi-VN')}d
@@ -91,7 +94,7 @@ export function DebtSummaryCard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircleOutlined className="text-green-600" />
-                <Text type="secondary">Thu trong thang</Text>
+                <Text type="secondary">{tCommon('collectedThisMonth')}</Text>
               </div>
               <div className="text-lg font-semibold text-green-600">
                 {(summary?.collected_this_month || 0).toLocaleString('vi-VN')}d

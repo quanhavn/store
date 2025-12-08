@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Drawer, Form, Input, Select, Switch, InputNumber, Button, message } from 'antd'
 import { BankOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type BankAccount } from '@/lib/supabase/functions'
 
 interface BankAccountFormProps {
@@ -34,6 +35,9 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const isEdit = !!editData
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
 
   useEffect(() => {
     if (open && editData) {
@@ -53,12 +57,12 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
     mutationFn: (data: Parameters<typeof api.finance.createBankAccount>[0]) =>
       api.finance.createBankAccount(data),
     onSuccess: () => {
-      message.success('Them tai khoan thanh cong')
+      message.success(t('accountAddedSuccess'))
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -66,12 +70,12 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
     mutationFn: (data: Parameters<typeof api.finance.updateBankAccount>[0]) =>
       api.finance.updateBankAccount(data),
     onSuccess: () => {
-      message.success('Cap nhat tai khoan thanh cong')
+      message.success(t('accountUpdatedSuccess'))
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -101,7 +105,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
             <BankOutlined className="text-white" />
           </div>
-          <span>{isEdit ? 'Chinh sua tai khoan' : 'Them tai khoan ngan hang'}</span>
+          <span>{isEdit ? t('editBankAccount') : t('addBankAccount')}</span>
         </div>
       }
       placement="bottom"
@@ -114,11 +118,11 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
         <Form form={form} layout="vertical">
           <Form.Item
             name="bank_name"
-            label="Ngan hang"
-            rules={[{ required: true, message: 'Vui long chon ngan hang' }]}
+            label={t('bankName')}
+            rules={[{ required: true, message: t('validation.selectBank') }]}
           >
             <Select
-              placeholder="Chon ngan hang"
+              placeholder={t('placeholders.selectBank')}
               showSearch
               optionFilterProp="label"
               options={VIETNAM_BANKS.map((bank) => ({
@@ -130,29 +134,29 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
 
           <Form.Item
             name="account_number"
-            label="So tai khoan"
+            label={t('accountNumber')}
             rules={[
-              { required: true, message: 'Vui long nhap so tai khoan' },
-              { pattern: /^\d{6,20}$/, message: 'So tai khoan khong hop le' },
+              { required: true, message: t('validation.accountNumberRequired') },
+              { pattern: /^\d{6,20}$/, message: t('validation.accountNumberInvalid') },
             ]}
           >
-            <Input placeholder="VD: 1234567890" maxLength={20} />
+            <Input placeholder={t('placeholders.accountNumber')} maxLength={20} />
           </Form.Item>
 
           <Form.Item
             name="account_name"
-            label="Ten chu tai khoan"
-            rules={[{ required: true, message: 'Vui long nhap ten chu tai khoan' }]}
+            label={t('accountHolder')}
+            rules={[{ required: true, message: t('validation.accountHolderRequired') }]}
           >
-            <Input placeholder="VD: NGUYEN VAN A" className="uppercase" />
+            <Input placeholder={t('placeholders.accountHolder')} className="uppercase" />
           </Form.Item>
 
-          <Form.Item name="branch" label="Chi nhanh">
-            <Input placeholder="VD: Chi nhanh Ha Noi" />
+          <Form.Item name="branch" label={t('branch')}>
+            <Input placeholder={t('placeholders.branch')} />
           </Form.Item>
 
           {!isEdit && (
-            <Form.Item name="initial_balance" label="So du ban dau">
+            <Form.Item name="initial_balance" label={t('initialBalance')}>
               <InputNumber
                 className="w-full"
                 placeholder="0"
@@ -164,7 +168,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
             </Form.Item>
           )}
 
-          <Form.Item name="is_default" valuePropName="checked" label="Tai khoan mac dinh">
+          <Form.Item name="is_default" valuePropName="checked" label={t('defaultAccount')}>
             <Switch />
           </Form.Item>
         </Form>
@@ -177,7 +181,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
           onClick={handleSubmit}
           loading={isLoading}
         >
-          {isEdit ? 'Luu thay doi' : 'Them tai khoan'}
+          {isEdit ? tCommon('save') : t('addBankAccount')}
         </Button>
       </div>
     </Drawer>

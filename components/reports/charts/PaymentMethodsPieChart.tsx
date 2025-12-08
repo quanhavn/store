@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { useTranslations } from 'next-intl'
 
 interface PaymentMethodData {
   method: string
@@ -128,6 +129,9 @@ export function PaymentMethodsPieChart({
   data,
   isLoading,
 }: PaymentMethodsPieChartProps) {
+  const t = useTranslations('pos')
+  const tCommon = useTranslations('common')
+
   const chartData = useMemo(() => {
     const totalAmount = data.reduce((sum, item) => sum + item.amount, 0)
 
@@ -154,10 +158,10 @@ export function PaymentMethodsPieChart({
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm">
         <h3 className="text-base font-semibold text-gray-700 mb-4">
-          Phuong thuc thanh toan
+          {t('paymentMethod')}
         </h3>
         <div className="h-64 flex items-center justify-center text-gray-400">
-          Khong co du lieu
+          {tCommon('noData')}
         </div>
       </div>
     )
@@ -166,7 +170,7 @@ export function PaymentMethodsPieChart({
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm">
       <h3 className="text-base font-semibold text-gray-700 mb-4">
-        Phuong thuc thanh toan
+        {t('paymentMethod')}
       </h3>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">

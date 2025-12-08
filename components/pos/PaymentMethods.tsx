@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Card, Radio, InputNumber, Button, Typography, Input, Space, QRCode, Divider, Switch, Alert } from 'antd'
 import {
   DollarOutlined,
@@ -56,13 +57,6 @@ interface PaymentMethodsProps {
   allowPartialPayment?: boolean
 }
 
-const PAYMENT_OPTIONS = [
-  { value: 'cash', label: 'Tien mat', icon: <DollarOutlined /> },
-  { value: 'bank_transfer', label: 'Chuyen khoan', icon: <BankOutlined /> },
-  { value: 'momo', label: 'MoMo', icon: <WalletOutlined /> },
-  { value: 'zalopay', label: 'ZaloPay', icon: <WalletOutlined /> },
-]
-
 export function PaymentMethods({
   total,
   onConfirm,
@@ -73,6 +67,17 @@ export function PaymentMethods({
   onCustomerCreate,
   allowPartialPayment = false,
 }: PaymentMethodsProps) {
+  const t = useTranslations('pos')
+  const tDebts = useTranslations('debts')
+  const tCustomers = useTranslations('customers')
+
+  const PAYMENT_OPTIONS = [
+    { value: 'cash', label: t('cash'), icon: <DollarOutlined /> },
+    { value: 'bank_transfer', label: t('bankTransfer'), icon: <BankOutlined /> },
+    { value: 'momo', label: 'MoMo', icon: <WalletOutlined /> },
+    { value: 'zalopay', label: 'ZaloPay', icon: <WalletOutlined /> },
+  ]
+
   const [method, setMethod] = useState<PaymentInfo['method']>('cash')
   const [cashReceived, setCashReceived] = useState(total)
   const [bankRef, setBankRef] = useState('')
@@ -201,7 +206,7 @@ export function PaymentMethods({
       {/* Customer Selector - show when allowPartialPayment is enabled */}
       {allowPartialPayment && onCustomerSelect && (
         <div className="mb-4">
-          <Text className="block mb-2 font-medium">Khach hang:</Text>
+          <Text className="block mb-2 font-medium">{t('customer')}:</Text>
           <CustomerSelector
             selectedCustomer={customer || null}
             onSelect={onCustomerSelect}
@@ -211,7 +216,7 @@ export function PaymentMethods({
             <Alert
               type="warning"
               icon={<WarningOutlined />}
-              message={`Khach hang dang co no ${formatCurrency(customer.total_debt)}`}
+              message={t('customerHasDebt', { amount: formatCurrency(customer.total_debt) })}
               className="mt-2"
               showIcon
             />
@@ -221,7 +226,7 @@ export function PaymentMethods({
 
       {/* Total amount display */}
       <div className="text-center mb-6">
-        <Text type="secondary">So tien can thanh toan</Text>
+        <Text type="secondary">{t('amountToPay')}</Text>
         <Title level={2} className="!m-0 text-blue-600">
           {total.toLocaleString('vi-VN')}d
         </Title>
@@ -233,9 +238,9 @@ export function PaymentMethods({
           <Card size="small" className={isPartialPayment ? 'border-orange-300 bg-orange-50' : ''}>
             <div className="flex items-center justify-between">
               <div>
-                <Text strong>Thanh toan mot phan</Text>
+                <Text strong>{t('partialPayment')}</Text>
                 <Text type="secondary" className="block text-xs">
-                  Cho phep ghi no so tien con lai
+                  {t('partialPaymentDescription')}
                 </Text>
               </div>
               <Switch
@@ -249,7 +254,7 @@ export function PaymentMethods({
           {isPartialPayment && !customer && (
             <Alert
               type="error"
-              message="Vui long chon khach hang de su dung thanh toan mot phan"
+              message={t('selectCustomerForPartial')}
               className="mt-2"
               showIcon
             />
@@ -260,7 +265,7 @@ export function PaymentMethods({
       {/* Partial Payment Amount Input */}
       {isPartialPayment && (
         <div className="mb-4">
-          <Text className="block mb-2">So tien thanh toan:</Text>
+          <Text className="block mb-2">{t('partialPaymentAmount')}:</Text>
           <Space.Compact className="w-full">
             <InputNumber
               size="large"
@@ -272,7 +277,7 @@ export function PaymentMethods({
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
             />
-            <Space.Addon>đ</Space.Addon>
+            <Space.Addon>d</Space.Addon>
           </Space.Compact>
           <div className="grid grid-cols-4 gap-2 mt-2">
             {[0.25, 0.5, 0.75, 0.9].map((ratio) => (
@@ -318,7 +323,7 @@ export function PaymentMethods({
       {method === 'cash' && (
         <div className="space-y-4">
           <div>
-            <Text className="block mb-2">Tien khach dua:</Text>
+            <Text className="block mb-2">{t('cashReceived')}:</Text>
             <Space.Compact className="w-full">
               <InputNumber
                 size="large"
@@ -329,7 +334,7 @@ export function PaymentMethods({
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
               />
-              <Space.Addon>đ</Space.Addon>
+              <Space.Addon>d</Space.Addon>
             </Space.Compact>
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -345,9 +350,9 @@ export function PaymentMethods({
             <Card size="small" className={applyExtraToDebt ? 'border-blue-300 bg-blue-50' : 'border-dashed'}>
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <Text strong>Tru vao no cu</Text>
+                  <Text strong>{t('deductFromDebt')}</Text>
                   <Text type="secondary" className="block text-xs">
-                    Khach dang no: {formatCurrency(customer.total_debt)}
+                    {tDebts('customerOwes')}: {formatCurrency(customer.total_debt)}
                   </Text>
                 </div>
                 <Switch
@@ -365,7 +370,7 @@ export function PaymentMethods({
               </div>
               {applyExtraToDebt && (
                 <div className="mt-3">
-                  <Text className="block mb-2 text-sm">So tien tru no:</Text>
+                  <Text className="block mb-2 text-sm">{t('debtDeductionAmount')}:</Text>
                   <Space.Compact className="w-full">
                     <InputNumber
                       size="middle"
@@ -377,14 +382,14 @@ export function PaymentMethods({
                       formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
                     />
-                    <Space.Addon>đ</Space.Addon>
+                    <Space.Addon>d</Space.Addon>
                   </Space.Compact>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <Button
                       size="small"
                       onClick={() => setDebtPaymentAmount(Math.min(extraAmount, customer.total_debt))}
                     >
-                      Toi da
+                      {t('maximum')}
                     </Button>
                     <Button
                       size="small"
@@ -396,7 +401,7 @@ export function PaymentMethods({
                       size="small"
                       onClick={() => setDebtPaymentAmount(Math.min(Math.floor(customer.total_debt / 2), extraAmount))}
                     >
-                      50% no
+                      {t('halfDebt')}
                     </Button>
                   </div>
                 </div>
@@ -407,13 +412,13 @@ export function PaymentMethods({
           {/* Change display */}
           {actualChange > 0 && (
             <div className="bg-green-50 p-4 rounded-lg text-center">
-              <Text type="secondary">Tien thoi:</Text>
+              <Text type="secondary">{t('change')}:</Text>
               <Title level={3} className="!m-0 text-green-600">
                 {actualChange.toLocaleString('vi-VN')}d
               </Title>
               {applyExtraToDebt && debtPaymentAmount > 0 && (
                 <Text type="secondary" className="text-xs">
-                  (Da tru {formatCurrency(debtPaymentAmount)} vao no cu)
+                  ({t('deductedFromDebt', { amount: formatCurrency(debtPaymentAmount) })})
                 </Text>
               )}
             </div>
@@ -426,7 +431,7 @@ export function PaymentMethods({
           {bankAccounts.length > 0 ? (
             <>
               <div>
-                <Text className="block mb-2">Chon tai khoan:</Text>
+                <Text className="block mb-2">{t('selectAccount')}:</Text>
                 <Radio.Group
                   value={selectedBankId}
                   onChange={(e) => setSelectedBankId(e.target.value)}
@@ -445,14 +450,14 @@ export function PaymentMethods({
                 <div className="text-center">
                   <QRCode value={vietQRUrl} size={200} className="mx-auto" />
                   <Text type="secondary" className="block mt-2">
-                    Quet ma QR de chuyen khoan
+                    {t('scanQRToPay')}
                   </Text>
                 </div>
               )}
               <div>
-                <Text className="block mb-2">Ma giao dich:</Text>
+                <Text className="block mb-2">{t('transactionCode')}:</Text>
                 <Input
-                  placeholder="Nhap ma giao dich ngan hang"
+                  placeholder={t('enterTransactionCode')}
                   value={bankRef}
                   onChange={(e) => setBankRef(e.target.value)}
                 />
@@ -460,7 +465,7 @@ export function PaymentMethods({
             </>
           ) : (
             <div className="text-center py-4">
-              <Text type="secondary">Chua co tai khoan ngan hang nao</Text>
+              <Text type="secondary">{t('noBankAccount')}</Text>
             </div>
           )}
         </div>
@@ -470,7 +475,7 @@ export function PaymentMethods({
         <div className="text-center py-4">
           <QrcodeOutlined className="text-6xl text-gray-300" />
           <Text type="secondary" className="block mt-2">
-            Tinh nang dang phat trien
+            {t('featureInDevelopment')}
           </Text>
         </div>
       )}
@@ -498,10 +503,10 @@ export function PaymentMethods({
         disabled={!isValid}
       >
         {isPartialPayment && debtAmount > 0
-          ? `Xac nhan thanh toan ${formatCurrency(partialAmount)} & ghi no ${formatCurrency(debtAmount)}`
+          ? t('confirmPartialPayment', { payAmount: formatCurrency(partialAmount), debtAmount: formatCurrency(debtAmount) })
           : applyExtraToDebt && debtPaymentAmount > 0
-            ? `Xac nhan & tru ${formatCurrency(debtPaymentAmount)} vao no`
-            : 'Xac nhan thanh toan'
+            ? t('confirmAndDeductDebt', { amount: formatCurrency(debtPaymentAmount) })
+            : t('confirmPayment')
         }
       </Button>
     </div>

@@ -8,6 +8,7 @@ import {
   WalletOutlined
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
@@ -18,6 +19,9 @@ interface FinanceSummaryCardProps {
 }
 
 export function FinanceSummaryCard({ period = 'month' }: FinanceSummaryCardProps) {
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+
   const { data, isLoading } = useQuery({
     queryKey: ['finance-summary', period],
     queryFn: () => api.finance.summary(period),
@@ -25,10 +29,10 @@ export function FinanceSummaryCard({ period = 'month' }: FinanceSummaryCardProps
 
   const getPeriodLabel = () => {
     switch (period) {
-      case 'day': return 'Hom nay'
-      case 'week': return '7 ngay qua'
-      case 'month': return 'Thang nay'
-      case 'year': return 'Nam nay'
+      case 'day': return t('period.day')
+      case 'week': return t('period.week')
+      case 'month': return t('period.month')
+      case 'year': return t('period.year')
     }
   }
 
@@ -43,11 +47,11 @@ export function FinanceSummaryCard({ period = 'month' }: FinanceSummaryCardProps
   const summary = data?.summary
 
   return (
-    <Card className="mb-4" title={<Text strong>Tong quan - {getPeriodLabel()}</Text>}>
+    <Card className="mb-4" title={<Text strong>{t('overview')} - {getPeriodLabel()}</Text>}>
       <Row gutter={[16, 16]}>
         <Col span={12}>
           <Statistic
-            title="Doanh thu"
+            title={t('revenue')}
             value={summary?.total_revenue || 0}
             precision={0}
             valueStyle={{ color: '#16a34a', fontSize: '18px' }}
@@ -58,7 +62,7 @@ export function FinanceSummaryCard({ period = 'month' }: FinanceSummaryCardProps
         </Col>
         <Col span={12}>
           <Statistic
-            title="Chi phi"
+            title={t('expense')}
             value={summary?.total_expenses || 0}
             precision={0}
             valueStyle={{ color: '#dc2626', fontSize: '18px' }}
@@ -69,7 +73,7 @@ export function FinanceSummaryCard({ period = 'month' }: FinanceSummaryCardProps
         </Col>
         <Col span={12}>
           <Statistic
-            title="Loi nhuan"
+            title={t('profit')}
             value={summary?.net_profit || 0}
             precision={0}
             valueStyle={{
@@ -83,7 +87,7 @@ export function FinanceSummaryCard({ period = 'month' }: FinanceSummaryCardProps
         </Col>
         <Col span={12}>
           <Statistic
-            title="Quy tien mat"
+            title={t('cashBalance')}
             value={summary?.cash_balance || 0}
             precision={0}
             valueStyle={{ color: '#2563eb', fontSize: '18px' }}

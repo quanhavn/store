@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Drawer, Form, Input, Select, InputNumber, Button, message, DatePicker, Switch } from 'antd'
 import { AccountBookOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { AmountKeypad } from './AmountKeypad'
 import dayjs from 'dayjs'
@@ -18,6 +19,9 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
   const [showKeypad, setShowKeypad] = useState(true)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
 
   // Fetch expense categories
   const { data: categoriesData } = useQuery({
@@ -40,7 +44,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
     mutationFn: (data: Parameters<typeof api.finance.createExpense>[0]) =>
       api.finance.createExpense(data),
     onSuccess: () => {
-      message.success('Ghi nhan chi phi thanh cong')
+      message.success(t('expenseSuccess'))
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: ['cash-balance'] })
       queryClient.invalidateQueries({ queryKey: ['cash-transactions'] })
@@ -48,7 +52,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
       handleClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -61,7 +65,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
 
   const handleSubmit = async () => {
     if (amount <= 0) {
-      message.warning('Vui long nhap so tien')
+      message.warning(t('validation.enterAmount'))
       return
     }
 
@@ -94,7 +98,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
           <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
             <AccountBookOutlined className="text-white" />
           </div>
-          <span>Ghi nhan chi phi</span>
+          <span>{t('recordExpense')}</span>
         </div>
       }
       placement="bottom"
@@ -115,7 +119,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
               onClick={() => setShowKeypad(false)}
               disabled={amount <= 0}
             >
-              Tiep tuc
+              {tCommon('continue')}
             </Button>
           </>
         ) : (
@@ -125,25 +129,25 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
                 {amount.toLocaleString('vi-VN')}d
               </div>
               <Button type="link" onClick={() => setShowKeypad(true)}>
-                Sua so tien
+                {t('editAmount')}
               </Button>
             </div>
 
             <Form form={form} layout="vertical" initialValues={{ payment_method: 'cash', expense_date: dayjs() }}>
               <Form.Item
                 name="description"
-                label="Mo ta chi phi"
-                rules={[{ required: true, message: 'Vui long nhap mo ta' }]}
+                label={t('expenseDescription')}
+                rules={[{ required: true, message: t('validation.descriptionRequired') }]}
               >
                 <Input.TextArea
-                  placeholder="VD: Tra tien dien thang 12..."
+                  placeholder={t('placeholders.expenseDescription')}
                   rows={2}
                 />
               </Form.Item>
 
-              <Form.Item name="category_id" label="Loai chi phi">
+              <Form.Item name="category_id" label={t('expenseCategory')}>
                 <Select
-                  placeholder="Chon loai chi phi"
+                  placeholder={t('placeholders.selectCategory')}
                   options={categories.map((cat) => ({
                     value: cat.id,
                     label: cat.name,
@@ -154,13 +158,13 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
 
               <Form.Item
                 name="payment_method"
-                label="Hinh thuc thanh toan"
+                label={t('paymentMethod')}
                 rules={[{ required: true }]}
               >
                 <Select
                   options={[
-                    { value: 'cash', label: 'Tien mat' },
-                    { value: 'bank_transfer', label: 'Chuyen khoan' },
+                    { value: 'cash', label: t('paymentMethods.cash') },
+                    { value: 'bank_transfer', label: t('paymentMethods.bankTransfer') },
                   ]}
                 />
               </Form.Item>
@@ -168,11 +172,11 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
               {paymentMethod === 'bank_transfer' && (
                 <Form.Item
                   name="bank_account_id"
-                  label="Tai khoan ngan hang"
-                  rules={[{ required: true, message: 'Vui long chon tai khoan' }]}
+                  label={t('bankAccount')}
+                  rules={[{ required: true, message: t('validation.selectAccount') }]}
                 >
                   <Select
-                    placeholder="Chon tai khoan"
+                    placeholder={t('placeholders.selectAccount')}
                     options={bankAccounts.map((acc) => ({
                       value: acc.id,
                       label: `${acc.bank_name} - ${acc.account_number}`,
@@ -181,11 +185,11 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
                 </Form.Item>
               )}
 
-              <Form.Item name="expense_date" label="Ngay chi">
+              <Form.Item name="expense_date" label={t('expenseDate')}>
                 <DatePicker className="w-full" format="DD/MM/YYYY" />
               </Form.Item>
 
-              <Form.Item name="vat_amount" label="Thue VAT (neu co)">
+              <Form.Item name="vat_amount" label={t('vatAmount')}>
                 <InputNumber
                   className="w-full"
                   placeholder="0"
@@ -197,16 +201,16 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
               </Form.Item>
 
               <div className="grid grid-cols-2 gap-4">
-                <Form.Item name="invoice_no" label="So hoa don">
-                  <Input placeholder="VD: HD001" />
+                <Form.Item name="invoice_no" label={t('invoiceNumber')}>
+                  <Input placeholder={t('placeholders.invoiceNumber')} />
                 </Form.Item>
-                <Form.Item name="supplier_tax_code" label="MST nha cung cap">
-                  <Input placeholder="VD: 0123456789" />
+                <Form.Item name="supplier_tax_code" label={t('supplierTaxCode')}>
+                  <Input placeholder={t('placeholders.taxCode')} />
                 </Form.Item>
               </div>
 
-              <Form.Item name="supplier_name" label="Ten nha cung cap">
-                <Input placeholder="VD: Cong ty ABC" />
+              <Form.Item name="supplier_name" label={t('supplierName')}>
+                <Input placeholder={t('placeholders.supplierName')} />
               </Form.Item>
             </Form>
 
@@ -218,7 +222,7 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
               onClick={handleSubmit}
               loading={mutation.isPending}
             >
-              Luu chi phi
+              {t('saveExpense')}
             </Button>
           </>
         )}

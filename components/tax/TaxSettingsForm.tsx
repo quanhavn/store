@@ -3,27 +3,31 @@
 import { Card, Form, Select, InputNumber, Switch, Button, message, Spin, Alert } from 'antd'
 import { SettingOutlined, SaveOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type TaxSettings } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
-const BUSINESS_TYPES = [
-  { value: 'retail', label: 'Ban le / Phan phoi' },
-  { value: 'food_service', label: 'Dich vu an uong' },
-  { value: 'other_service', label: 'Dich vu khac' },
-]
-
-const VAT_RATES = [
-  { value: 8, label: '8% (Giam thue)' },
-  { value: 10, label: '10% (Thue suat chuan)' },
-]
-
-const PIT_RATES = [
-  { value: 1, label: '1% (Ban le)' },
-  { value: 1.5, label: '1.5% (An uong)' },
-  { value: 2, label: '2% (Dich vu khac)' },
-]
-
 export function TaxSettingsForm() {
+  const t = useTranslations('tax')
+  const tCommon = useTranslations('common')
+
+  const BUSINESS_TYPES = [
+    { value: 'retail', label: t('businessTypes.retail') },
+    { value: 'food_service', label: t('businessTypes.food_service') },
+    { value: 'other_service', label: t('businessTypes.other_service') },
+  ]
+
+  const VAT_RATES = [
+    { value: 8, label: t('vatRates.reduced') },
+    { value: 10, label: t('vatRates.standard') },
+  ]
+
+  const PIT_RATES = [
+    { value: 1, label: t('pitRates.retail') },
+    { value: 1.5, label: t('pitRates.food') },
+    { value: 2, label: t('pitRates.service') },
+  ]
+
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
 
@@ -40,11 +44,11 @@ export function TaxSettingsForm() {
   const mutation = useMutation({
     mutationFn: (data: Partial<TaxSettings>) => api.tax.updateSettings(data),
     onSuccess: () => {
-      message.success('Cap nhat cau hinh thue thanh cong')
+      message.success(t('updateSuccess'))
       queryClient.invalidateQueries({ queryKey: ['tax-settings'] })
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : t('updateError'))
     },
   })
 
@@ -70,10 +74,10 @@ export function TaxSettingsForm() {
 
   const getTierLabel = (code: string) => {
     switch (code) {
-      case 'under_200m': return 'Duoi 200 trieu/nam (Mien thue)'
-      case '200m_1b': return '200 trieu - 1 ty/nam'
-      case '1b_3b': return '1 ty - 3 ty/nam'
-      case 'over_3b': return 'Tren 3 ty/nam'
+      case 'under_200m': return t('revenueTiers.under_200m')
+      case '200m_1b': return t('revenueTiers.200m_1b')
+      case '1b_3b': return t('revenueTiers.1b_3b')
+      case 'over_3b': return t('revenueTiers.over_3b')
       default: return code
     }
   }
@@ -84,18 +88,18 @@ export function TaxSettingsForm() {
         <Card className="bg-blue-50 border-blue-200">
           <div className="flex items-center gap-2 mb-2">
             <SettingOutlined className="text-blue-600" />
-            <span className="font-medium">Phan loai doanh thu tu dong</span>
+            <span className="font-medium">{t('revenueClassification')}</span>
           </div>
           <div className="text-sm text-gray-600 mb-2">
-            Doanh thu 12 thang qua: <strong>{formatCurrency(tier.annual_revenue)}</strong>
+            {t('annualRevenue')}: <strong>{formatCurrency(tier.annual_revenue)}</strong>
           </div>
           <div className="text-sm text-gray-600 mb-2">
-            Phan loai: <strong>{getTierLabel(tier.code)}</strong>
+            {t('classification')}: <strong>{getTierLabel(tier.code)}</strong>
           </div>
           {tier.e_invoice_required && (
             <Alert
               type="warning"
-              message="Bat buoc su dung hoa don dien tu"
+              message={t('eInvoiceRequired')}
               className="mt-2"
               showIcon
             />
@@ -103,7 +107,7 @@ export function TaxSettingsForm() {
         </Card>
       )}
 
-      <Card title="Cau hinh thue">
+      <Card title={t('taxSettings')}>
         <Form
           form={form}
           layout="vertical"
@@ -111,7 +115,7 @@ export function TaxSettingsForm() {
         >
           <Form.Item
             name="business_type"
-            label="Loai hinh kinh doanh"
+            label={t('businessType')}
             rules={[{ required: true }]}
           >
             <Select options={BUSINESS_TYPES} />
@@ -119,7 +123,7 @@ export function TaxSettingsForm() {
 
           <Form.Item
             name="default_vat_rate"
-            label="Thue suat VAT mac dinh"
+            label={t('defaultVatRate')}
             rules={[{ required: true }]}
           >
             <Select options={VAT_RATES} />
@@ -127,7 +131,7 @@ export function TaxSettingsForm() {
 
           <Form.Item
             name="pit_rate"
-            label="Thue TNCN ho kinh doanh"
+            label={t('pitRate')}
             rules={[{ required: true }]}
           >
             <Select options={PIT_RATES} />
@@ -135,7 +139,7 @@ export function TaxSettingsForm() {
 
           <Form.Item
             name="e_invoice_required"
-            label="Su dung hoa don dien tu"
+            label={t('useEInvoice')}
             valuePropName="checked"
           >
             <Switch />
@@ -149,7 +153,7 @@ export function TaxSettingsForm() {
           loading={mutation.isPending}
           block
         >
-          Luu cau hinh
+          {t('saveSettings')}
         </Button>
       </Card>
     </div>

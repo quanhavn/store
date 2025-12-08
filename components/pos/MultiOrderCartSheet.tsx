@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm, Space } from 'antd'
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMultiOrderStore } from '@/lib/stores/multiOrder'
@@ -13,6 +14,8 @@ interface MultiOrderCartSheetProps {
 }
 
 export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCartSheetProps) {
+  const t = useTranslations('pos')
+  const tCommon = useTranslations('common')
   const {
     getActiveOrder,
     updateQuantity,
@@ -34,22 +37,22 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
 
   return (
     <Drawer
-      title={activeOrder ? `${activeOrder.label} (${items.length})` : 'Giỏ hàng'}
+      title={activeOrder ? `${activeOrder.label} (${items.length})` : t('cart')}
       open={open}
       onClose={onClose}
       styles={{ wrapper: { width: 400 } }}
       footer={
         <div className="space-y-3">
           <div className="flex justify-between">
-            <Text>Tạm tính:</Text>
-            <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
+            <Text>{t('subtotal')}:</Text>
+            <Text>{subtotal.toLocaleString('vi-VN')}d</Text>
           </div>
           <div className="flex justify-between">
-            <Text>VAT:</Text>
-            <Text>{vatAmount.toLocaleString('vi-VN')}đ</Text>
+            <Text>{t('vat')}:</Text>
+            <Text>{vatAmount.toLocaleString('vi-VN')}d</Text>
           </div>
           <div className="flex justify-between items-center">
-            <Text>Giảm giá:</Text>
+            <Text>{t('discount')}:</Text>
             <Space.Compact className="w-32">
               <InputNumber
                 size="small"
@@ -60,24 +63,24 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
               />
-              <Space.Addon>đ</Space.Addon>
+              <Space.Addon>d</Space.Addon>
             </Space.Compact>
           </div>
           <Divider className="my-2" />
           <div className="flex justify-between">
-            <Title level={4} className="!m-0">Tổng cộng:</Title>
-            <Title level={4} className="!m-0 text-blue-600">{total.toLocaleString('vi-VN')}đ</Title>
+            <Title level={4} className="!m-0">{t('total')}:</Title>
+            <Title level={4} className="!m-0 text-blue-600">{total.toLocaleString('vi-VN')}d</Title>
           </div>
           <div className="flex gap-2 pt-2">
             <Popconfirm
-              title="Xóa đơn hàng này?"
-              description="Tất cả sản phẩm sẽ bị xóa và đơn sẽ bị đóng"
+              title={t('deleteOrderConfirm')}
+              description={t('deleteOrderMessage')}
               onConfirm={clearActiveOrder}
-              okText="Xóa"
-              cancelText="Hủy"
+              okText={tCommon('delete')}
+              cancelText={tCommon('cancel')}
             >
               <Button danger className="flex-1" disabled={items.length === 0}>
-                Xóa đơn
+                {t('deleteOrder')}
               </Button>
             </Popconfirm>
             <Button
@@ -86,14 +89,14 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
               disabled={items.length === 0}
               onClick={onCheckout}
             >
-              Thanh toán
+              {t('checkout')}
             </Button>
           </div>
         </div>
       }
     >
       {items.length === 0 ? (
-        <Empty description="Giỏ hàng trống" className="py-12" />
+        <Empty description={t('emptyCart')} className="py-12" />
       ) : (
         <List
           dataSource={items}

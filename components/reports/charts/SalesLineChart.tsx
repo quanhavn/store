@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { useTranslations } from 'next-intl'
 
 interface DailySale {
   date: string
@@ -52,9 +53,10 @@ interface CustomTooltipProps {
     payload: DailySale
   }>
   label?: string
+  ordersLabel?: string
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, ordersLabel = 'orders' }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null
   }
@@ -68,13 +70,17 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         {formatFullCurrency(data.revenue)}
       </p>
       <p className="text-xs text-gray-500">
-        {data.orders} don hang
+        {data.orders} {ordersLabel}
       </p>
     </div>
   )
 }
 
 export function SalesLineChart({ data, isLoading }: SalesLineChartProps) {
+  const t = useTranslations('reports')
+  const tCommon = useTranslations('common')
+  const tDashboard = useTranslations('dashboard')
+
   const chartData = useMemo(() => {
     return data.map(item => ({
       ...item,
@@ -95,10 +101,10 @@ export function SalesLineChart({ data, isLoading }: SalesLineChartProps) {
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm">
         <h3 className="text-base font-semibold text-gray-700 mb-4">
-          Doanh thu theo ngay
+          {t('revenue')} - {t('daily')}
         </h3>
         <div className="h-64 flex items-center justify-center text-gray-400">
-          Khong co du lieu
+          {tCommon('noData')}
         </div>
       </div>
     )
@@ -107,7 +113,7 @@ export function SalesLineChart({ data, isLoading }: SalesLineChartProps) {
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm">
       <h3 className="text-base font-semibold text-gray-700 mb-4">
-        Doanh thu theo ngay (30 ngay)
+        {t('revenue')} - {t('daily')} (30)
       </h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -129,7 +135,7 @@ export function SalesLineChart({ data, isLoading }: SalesLineChartProps) {
               axisLine={{ stroke: '#e5e7eb' }}
               width={50}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip ordersLabel={tCommon('orders')} />} />
             <Line
               type="monotone"
               dataKey="revenue"

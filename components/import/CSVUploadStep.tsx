@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Upload, Alert, Typography, Space } from 'antd'
 import { InboxOutlined, FileExcelOutlined } from '@ant-design/icons'
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface'
+import { useTranslations } from 'next-intl'
 import { useCSVImportStore } from '@/lib/stores/csv-import'
 import { parseCSVFile } from '@/lib/import/csv-parser'
 import { autoMapColumns } from '@/lib/import/column-mapper'
@@ -13,6 +14,7 @@ const { Dragger } = Upload
 const { Text, Paragraph } = Typography
 
 export function CSVUploadStep() {
+  const tImport = useTranslations('import')
   const {
     entityType,
     setRawData,
@@ -57,7 +59,7 @@ export function CSVUploadStep() {
       fileName.endsWith('.xls')
 
     if (!isValidType) {
-      setError('Chỉ hỗ trợ file CSV hoặc Excel (.csv, .xlsx, .xls)')
+      setError(tImport('onlyCsvExcelSupported'))
       return
     }
 
@@ -69,13 +71,13 @@ export function CSVUploadStep() {
       const result = await parseCSVFile(originFile as File)
 
       if (!result.success) {
-        setError(result.error || 'Lỗi đọc file')
+        setError(result.error || tImport('fileReadError'))
         setParsing(false)
         return
       }
 
       if (result.data.length < 2) {
-        setError('File phải có ít nhất 1 dòng tiêu đề và 1 dòng dữ liệu')
+        setError(tImport('fileMinRows'))
         setParsing(false)
         return
       }
@@ -92,7 +94,7 @@ export function CSVUploadStep() {
       setParsing(false)
     } catch (err) {
       console.error('File parse error:', err)
-      setError('Lỗi đọc file. Vui lòng kiểm tra định dạng.')
+      setError(tImport('fileReadErrorCheckFormat'))
       setParsing(false)
     }
   }
@@ -109,8 +111,7 @@ export function CSVUploadStep() {
   return (
     <div>
       <Paragraph className="text-gray-600 mb-4">
-        Tải file CSV hoặc Excel chứa dữ liệu {getEntityLabel(entityType).toLowerCase()}.
-        Dòng đầu tiên phải là tiêu đề cột.
+        {tImport('uploadDescription', { entity: getEntityLabel(entityType).toLowerCase() })}
       </Paragraph>
 
       <Dragger {...uploadProps} disabled={parsing}>
@@ -122,10 +123,10 @@ export function CSVUploadStep() {
           )}
         </p>
         <p className="ant-upload-text">
-          {parsing ? 'Đang xử lý file...' : 'Kéo thả file vào đây hoặc click để chọn'}
+          {parsing ? tImport('processingFile') : tImport('dragDropOrClick')}
         </p>
         <p className="ant-upload-hint">
-          Hỗ trợ file .csv, .xlsx, .xls
+          {tImport('supportedFormats')}
         </p>
       </Dragger>
 
@@ -142,17 +143,17 @@ export function CSVUploadStep() {
 
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <Text strong className="block mb-2">
-          Gợi ý định dạng file:
+          {tImport('formatTips')}:
         </Text>
         <Space direction="vertical" size="small">
           <Text className="text-gray-600">
-            • Dòng đầu tiên là tiêu đề cột (ví dụ: Tên, Số điện thoại, Địa chỉ...)
+            {tImport('formatTip1')}
           </Text>
           <Text className="text-gray-600">
-            • Hệ thống sẽ tự động nhận diện và ghép cột
+            {tImport('formatTip2')}
           </Text>
           <Text className="text-gray-600">
-            • Bạn có thể điều chỉnh ghép cột ở bước tiếp theo
+            {tImport('formatTip3')}
           </Text>
         </Space>
       </div>

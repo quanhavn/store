@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Table, Select, Tag, Typography, Alert, Checkbox } from 'antd'
 import { CheckCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { useTranslations } from 'next-intl'
 import { useCSVImportStore } from '@/lib/stores/csv-import'
 import { getFieldsForEntity } from '@/lib/import/types'
 import { validateMappings } from '@/lib/import/column-mapper'
@@ -21,6 +22,7 @@ interface MappingRow {
 }
 
 export function CSVMappingStep() {
+  const tImport = useTranslations('import')
   const {
     entityType,
     csvColumns,
@@ -33,13 +35,13 @@ export function CSVMappingStep() {
 
   const fieldOptions = useMemo(() => {
     return [
-      { value: '', label: '-- Bỏ qua cột này --' },
+      { value: '', label: tImport('skipThisColumn') },
       ...fields.map((f) => ({
         value: f.key,
         label: `${f.labelVi}${f.required ? ' *' : ''}`,
       })),
     ]
-  }, [fields])
+  }, [fields, tImport])
 
   const tableData: MappingRow[] = useMemo(() => {
     return csvColumns.map((col) => {
@@ -76,7 +78,7 @@ export function CSVMappingStep() {
 
   const columns: ColumnsType<MappingRow> = [
     {
-      title: 'Cột CSV',
+      title: tImport('csvColumn'),
       dataIndex: 'csvHeader',
       key: 'csvHeader',
       width: 150,
@@ -93,7 +95,7 @@ export function CSVMappingStep() {
       ),
     },
     {
-      title: 'Dữ liệu mẫu',
+      title: tImport('sampleData'),
       dataIndex: 'sampleValues',
       key: 'sampleValues',
       width: 200,
@@ -102,17 +104,17 @@ export function CSVMappingStep() {
           {samples.length > 0 ? (
             samples.slice(0, 2).map((s, i) => (
               <div key={i} className="truncate max-w-[180px]" title={s}>
-                {s || <em className="text-gray-400">trống</em>}
+                {s || <em className="text-gray-400">{tImport('empty')}</em>}
               </div>
             ))
           ) : (
-            <em className="text-gray-400">không có dữ liệu</em>
+            <em className="text-gray-400">{tImport('noData')}</em>
           )}
         </div>
       ),
     },
     {
-      title: 'Ghép với trường',
+      title: tImport('mapToField'),
       dataIndex: 'targetField',
       key: 'targetField',
       width: 200,
@@ -130,26 +132,26 @@ export function CSVMappingStep() {
                 mappedFieldKeys.has(opt.value),
             }))}
             style={{ width: '100%' }}
-            placeholder="Chọn trường"
+            placeholder={tImport('selectField')}
           />
         )
       },
     },
     {
-      title: 'Trạng thái',
+      title: tImport('statusLabel'),
       key: 'status',
       width: 120,
       render: (_, record: MappingRow) => {
         if (!record.targetField) {
-          return <Tag color="default">Bỏ qua</Tag>
+          return <Tag color="default">{tImport('skipped')}</Tag>
         }
         if (record.confidence >= 80) {
-          return <Tag color="green">Tự động</Tag>
+          return <Tag color="green">{tImport('auto')}</Tag>
         }
         if (record.confidence >= 60) {
-          return <Tag color="orange">Gợi ý</Tag>
+          return <Tag color="orange">{tImport('suggested')}</Tag>
         }
-        return <Tag color="blue">Thủ công</Tag>
+        return <Tag color="blue">{tImport('manual')}</Tag>
       },
     },
   ]
@@ -159,10 +161,10 @@ export function CSVMappingStep() {
       {!validationResult.valid && (
         <Alert
           type="warning"
-          message="Thiếu trường bắt buộc"
+          message={tImport('missingRequiredFields')}
           description={
             <span>
-              Vui lòng ghép các trường: {validationResult.missingFields.join(', ')}
+              {tImport('pleaseMapFields')}: {validationResult.missingFields.join(', ')}
             </span>
           }
           showIcon
@@ -180,12 +182,12 @@ export function CSVMappingStep() {
 
       <div className="mt-4 flex items-center justify-between">
         <Checkbox onChange={(e) => handleSaveMapping(e.target.checked)}>
-          Lưu cách ghép cột cho lần sau
+          {tImport('saveMappingForLater')}
         </Checkbox>
 
         <div className="text-gray-500 text-sm">
-          <Tag color="green">Tự động</Tag> = nhận diện chính xác
-          <Tag color="orange" className="ml-2">Gợi ý</Tag> = cần kiểm tra
+          <Tag color="green">{tImport('auto')}</Tag> = {tImport('autoDesc')}
+          <Tag color="orange" className="ml-2">{tImport('suggested')}</Tag> = {tImport('suggestedDesc')}
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Drawer, Form, Input, Select, Button, message } from 'antd'
 import { ArrowUpOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { AmountKeypad } from './AmountKeypad'
 
@@ -12,27 +13,31 @@ interface CashInFormProps {
   onClose: () => void
 }
 
-const REFERENCE_TYPES = [
-  { value: 'sale', label: 'Ban hang' },
-  { value: 'adjustment', label: 'Dieu chinh' },
-]
-
 export function CashInForm({ open, onClose }: CashInFormProps) {
   const [amount, setAmount] = useState(0)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
+
+  // Reference types with translations
+  const referenceTypes = [
+    { value: 'sale', label: t('referenceTypes.sale') },
+    { value: 'adjustment', label: t('referenceTypes.adjustment') },
+  ]
 
   const mutation = useMutation({
     mutationFn: (data: { amount: number; description: string; reference_type?: 'sale' | 'adjustment' }) =>
       api.finance.cashIn(data),
     onSuccess: () => {
-      message.success('Thu tien thanh cong')
+      message.success(t('cashInSuccess'))
       queryClient.invalidateQueries({ queryKey: ['cash-balance'] })
       queryClient.invalidateQueries({ queryKey: ['cash-transactions'] })
       handleClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -44,7 +49,7 @@ export function CashInForm({ open, onClose }: CashInFormProps) {
 
   const handleSubmit = async () => {
     if (amount <= 0) {
-      message.warning('Vui long nhap so tien')
+      message.warning(t('validation.enterAmount'))
       return
     }
 
@@ -67,7 +72,7 @@ export function CashInForm({ open, onClose }: CashInFormProps) {
           <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
             <ArrowUpOutlined className="text-white" />
           </div>
-          <span>Thu tien mat</span>
+          <span>{t('cashIn')}</span>
         </div>
       }
       placement="bottom"
@@ -82,19 +87,19 @@ export function CashInForm({ open, onClose }: CashInFormProps) {
         <Form form={form} layout="vertical" className="mt-6">
           <Form.Item
             name="description"
-            label="Mo ta"
-            rules={[{ required: true, message: 'Vui long nhap mo ta' }]}
+            label={tCommon('description')}
+            rules={[{ required: true, message: t('validation.descriptionRequired') }]}
           >
             <Input.TextArea
-              placeholder="VD: Thu tien ban hang, thu no khach hang..."
+              placeholder={t('placeholders.cashInDescription')}
               rows={2}
             />
           </Form.Item>
 
-          <Form.Item name="reference_type" label="Loai giao dich">
+          <Form.Item name="reference_type" label={t('transactionType')}>
             <Select
-              placeholder="Chon loai giao dich"
-              options={REFERENCE_TYPES}
+              placeholder={t('placeholders.selectTransactionType')}
+              options={referenceTypes}
               allowClear
             />
           </Form.Item>
@@ -109,7 +114,7 @@ export function CashInForm({ open, onClose }: CashInFormProps) {
           loading={mutation.isPending}
           disabled={amount <= 0}
         >
-          Xac nhan thu tien
+          {t('confirmCashIn')}
         </Button>
       </div>
     </Drawer>

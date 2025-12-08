@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Drawer, Typography, Divider, Spin, Alert, Table, message } from 'antd'
 import { FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import { InvoiceForm, type InvoiceFormData } from './InvoiceForm'
@@ -18,6 +19,9 @@ interface CreateInvoiceSheetProps {
 }
 
 export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateInvoiceSheetProps) {
+  const t = useTranslations('invoices')
+  const tCommon = useTranslations('common')
+  const tProducts = useTranslations('products')
   const [createdInvoiceNo, setCreatedInvoiceNo] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
@@ -40,13 +44,13 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
     }),
     onSuccess: (data) => {
       const invoiceNo = data.invoice?.invoice_no || data.viettel_response?.invoice_no
-      setCreatedInvoiceNo(invoiceNo || 'Đã tạo')
+      setCreatedInvoiceNo(invoiceNo || t('createSuccess'))
       queryClient.invalidateQueries({ queryKey: ['invoices'] })
-      message.success('Tạo hóa đơn thành công')
+      message.success(t('createSuccess'))
       onSuccess?.(invoiceNo || '')
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Lỗi tạo hóa đơn')
+      message.error(error instanceof Error ? error.message : t('createError'))
     },
   })
 
@@ -61,20 +65,20 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
 
   const itemColumns = [
     {
-      title: 'Sản phẩm',
+      title: tProducts('productName'),
       dataIndex: 'product_name',
       key: 'product_name',
       ellipsis: true,
     },
     {
-      title: 'SL',
+      title: t('qty'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 40,
       align: 'center' as const,
     },
     {
-      title: 'Thành tiền',
+      title: t('lineTotal'),
       key: 'total',
       width: 100,
       align: 'right' as const,
@@ -90,7 +94,7 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
             <FileTextOutlined className="text-white" />
           </div>
-          <span>Tạo hóa đơn điện tử</span>
+          <span>{t('createEInvoice')}</span>
         </div>
       }
       placement="bottom"
@@ -107,7 +111,7 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
         ) : !sale ? (
           <Alert
             type="error"
-            message="Không tìm thấy đơn hàng"
+            message={t('orderNotFound')}
             showIcon
           />
         ) : createdInvoiceNo ? (
@@ -115,24 +119,24 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
               <CheckCircleOutlined className="text-green-500 text-4xl" />
             </div>
-            <Title level={3} className="!mb-2">Tạo hóa đơn thành công</Title>
-            <Text type="secondary">Số hóa đơn:</Text>
+            <Title level={3} className="!mb-2">{t('createSuccess')}</Title>
+            <Text type="secondary">{t('invoiceNumber')}:</Text>
             <Title level={2} className="!mt-1 text-blue-600">{createdInvoiceNo}</Title>
             <button
               onClick={handleClose}
               className="mt-6 w-full h-12 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
             >
-              Đóng
+              {tCommon('close')}
             </button>
           </div>
         ) : (
           <>
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-2">
-                <Text type="secondary">Đơn hàng:</Text>
+                <Text type="secondary">{t('order')}:</Text>
                 <Text strong>{sale.invoice_no || saleId}</Text>
               </div>
-              
+
               <Table
                 dataSource={sale.items}
                 columns={itemColumns}
@@ -146,22 +150,22 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
 
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <Text type="secondary">Tạm tính:</Text>
+                  <Text type="secondary">{t('subtotal')}:</Text>
                   <Text>{formatCurrency(sale.subtotal ?? 0)}</Text>
                 </div>
                 <div className="flex justify-between">
-                  <Text type="secondary">VAT:</Text>
+                  <Text type="secondary">{t('vat')}:</Text>
                   <Text>{formatCurrency(sale.vat_amount ?? 0)}</Text>
                 </div>
                 {(sale.discount ?? 0) > 0 && (
                   <div className="flex justify-between">
-                    <Text type="secondary">Giảm giá:</Text>
+                    <Text type="secondary">{t('discount')}:</Text>
                     <Text className="text-red-500">-{formatCurrency(sale.discount ?? 0)}</Text>
                   </div>
                 )}
                 <Divider className="!my-2" />
                 <div className="flex justify-between">
-                  <Text strong>Tổng cộng:</Text>
+                  <Text strong>{t('grandTotal')}:</Text>
                   <Text strong className="text-blue-600 text-lg">
                     {formatCurrency(sale.total ?? 0)}
                   </Text>
@@ -169,7 +173,7 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
               </div>
             </div>
 
-            <Divider className="!my-4">Thông tin người mua</Divider>
+            <Divider className="!my-4">{t('buyerInfo')}</Divider>
 
             <InvoiceForm
               initialValues={{
@@ -179,13 +183,13 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
               }}
               onSubmit={handleSubmit}
               loading={createMutation.isPending}
-              submitText="Phát hành hóa đơn"
+              submitText={t('issueInvoice')}
             />
 
             {createMutation.isError && (
               <Alert
                 type="error"
-                message={createMutation.error instanceof Error ? createMutation.error.message : 'Lỗi tạo hóa đơn'}
+                message={createMutation.error instanceof Error ? createMutation.error.message : t('createError')}
                 showIcon
                 className="mt-4"
               />

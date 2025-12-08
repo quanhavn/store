@@ -12,6 +12,9 @@ import {
   AppstoreOutlined
 } from '@ant-design/icons'
 import { useNavBadges } from '@/lib/hooks/useNavBadges'
+import { useTranslations } from 'next-intl'
+
+type NavItemKey = 'home' | 'pos' | 'inventory' | 'finance' | 'menu'
 
 /**
  * Navigation items with prefetch configuration
@@ -24,12 +27,12 @@ import { useNavBadges } from '@/lib/hooks/useNavBadges'
  * priority: true - Most frequently accessed routes
  *   - These routes will be prefetched immediately when the layout loads
  */
-const navItems = [
-  { href: '/', icon: HomeOutlined, label: 'Trang chu', prefetch: true, priority: true },
-  { href: '/pos', icon: ShoppingCartOutlined, label: 'Ban hang', prefetch: true, priority: true, isPOS: true },
-  { href: '/inventory', icon: InboxOutlined, label: 'Kho', prefetch: true, priority: false },
-  { href: '/finance', icon: WalletOutlined, label: 'Thu chi', prefetch: true, priority: false },
-  { href: '/menu', icon: AppstoreOutlined, label: 'Menu', prefetch: true, priority: false },
+const navItems: { href: string; icon: typeof HomeOutlined; labelKey: NavItemKey; prefetch: boolean; priority: boolean; isPOS?: boolean }[] = [
+  { href: '/', icon: HomeOutlined, labelKey: 'home', prefetch: true, priority: true },
+  { href: '/pos', icon: ShoppingCartOutlined, labelKey: 'pos', prefetch: true, priority: true, isPOS: true },
+  { href: '/inventory', icon: InboxOutlined, labelKey: 'inventory', prefetch: true, priority: false },
+  { href: '/finance', icon: WalletOutlined, labelKey: 'finance', prefetch: true, priority: false },
+  { href: '/menu', icon: AppstoreOutlined, labelKey: 'menu', prefetch: true, priority: false },
 ]
 
 /**
@@ -44,6 +47,7 @@ const navItems = [
 export function MobileLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { inventory: inventoryBadge } = useNavBadges()
+  const t = useTranslations('nav')
 
   const getBadgeCount = (href: string): number => {
     if (href === '/inventory') return inventoryBadge
@@ -58,7 +62,7 @@ export function MobileLayout({ children }: { children: ReactNode }) {
 
       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 safe-area-bottom">
         <div className="grid grid-cols-5 h-full max-w-lg mx-auto">
-          {navItems.map(({ href, icon: Icon, label, prefetch, isPOS }) => {
+          {navItems.map(({ href, icon: Icon, labelKey, prefetch, isPOS }) => {
             const isActive = pathname === href ||
               (href !== '/' && pathname.startsWith(href))
             const badgeCount = getBadgeCount(href)
@@ -79,7 +83,7 @@ export function MobileLayout({ children }: { children: ReactNode }) {
                     <Icon className={`text-2xl ${isActive ? 'text-blue-500' : ''}`} />
                   </div>
                 </Badge>
-                <span className={isActive ? 'font-medium' : ''}>{label}</span>
+                <span className={isActive ? 'font-medium' : ''}>{t(labelKey)}</span>
               </Link>
             )
           })}

@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Drawer, Form, Input, Select, InputNumber, DatePicker, Button, message, Spin } from 'antd'
 import { SaveOutlined, UserAddOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Employee, type CreateEmployeeData } from '@/lib/supabase/functions'
 import dayjs from 'dayjs'
 
@@ -20,6 +21,9 @@ const CONTRACT_TYPES = [
 ]
 
 export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
+  const t = useTranslations('hr')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
 
@@ -33,12 +37,12 @@ export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
   const createMutation = useMutation({
     mutationFn: (data: CreateEmployeeData) => api.hr.createEmployee(data),
     onSuccess: () => {
-      message.success('Them nhan vien thanh cong')
+      message.success(t('employeeCreated'))
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -46,12 +50,12 @@ export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
     mutationFn: (data: Partial<CreateEmployeeData>) =>
       api.hr.updateEmployee(employee!.id, data),
     onSuccess: () => {
-      message.success('Cap nhat nhan vien thanh cong')
+      message.success(t('employeeUpdated'))
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 

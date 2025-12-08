@@ -6,10 +6,14 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
 
 export function RecentSalesWidget() {
+  const t = useTranslations('pos')
+  const tCommon = useTranslations('common')
+
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => api.reports.dashboardSummary(),
@@ -26,14 +30,14 @@ export function RecentSalesWidget() {
       title={
         <div className="flex items-center gap-2">
           <ShoppingOutlined />
-          <span>Don hang gan day</span>
+          <span>{t('sales')}</span>
         </div>
       }
       size="small"
     >
       {recentSales.length === 0 ? (
         <Empty
-          description="Chua co don hang"
+          description={tCommon('noData')}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
@@ -48,7 +52,7 @@ export function RecentSalesWidget() {
                   <Text className="text-green-600">{formatCurrency(sale.total)}</Text>
                 </div>
                 <div className="flex justify-between text-xs text-gray-400">
-                  <span>{sale.customer_name || 'Khach le'}</span>
+                  <span>{sale.customer_name || t('customer')}</span>
                   <span>{dayjs(sale.completed_at).format('HH:mm')}</span>
                 </div>
               </div>

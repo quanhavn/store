@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button, Card, Form, Input, Typography, Skeleton, Descriptions, App } from 'antd'
 import { ShopOutlined, PhoneOutlined, EnvironmentOutlined, MailOutlined, IdcardOutlined, EditOutlined, CloseOutlined, SaveOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import type { Database } from '@/types/database'
 
@@ -24,6 +25,8 @@ export function StoreInfoForm() {
   const [form] = Form.useForm<StoreFormValues>()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
+  const t = useTranslations('settings')
+  const tCommon = useTranslations('common')
 
   const { data: storeData, isLoading } = useQuery({
     queryKey: ['user-store'],
@@ -35,12 +38,12 @@ export function StoreInfoForm() {
   const updateMutation = useMutation({
     mutationFn: (data: Partial<StoreFormValues>) => api.store.updateStore(data),
     onSuccess: () => {
-      message.success('Cap nhat thong tin thanh cong')
+      message.success(t('updateSuccess'))
       queryClient.invalidateQueries({ queryKey: ['user-store'] })
       setIsEditing(false)
     },
     onError: (error: Error) => {
-      message.error(error.message || 'Khong the cap nhat thong tin')
+      message.error(error.message || t('updateError'))
     },
   })
 
@@ -76,7 +79,7 @@ export function StoreInfoForm() {
       <Card>
         <div className="flex items-center gap-3 mb-4">
           <ShopOutlined className="text-xl" />
-          <Title level={5} className="!mb-0">Thong tin cua hang</Title>
+          <Title level={5} className="!mb-0">{t('storeInfo')}</Title>
         </div>
         <Skeleton active paragraph={{ rows: 4 }} />
       </Card>
@@ -88,9 +91,9 @@ export function StoreInfoForm() {
       <Card>
         <div className="flex items-center gap-3 mb-4">
           <ShopOutlined className="text-xl" />
-          <Title level={5} className="!mb-0">Thong tin cua hang</Title>
+          <Title level={5} className="!mb-0">{t('storeInfo')}</Title>
         </div>
-        <Text type="secondary">Chua thiet lap thong tin cua hang</Text>
+        <Text type="secondary">{t('storeNotConfigured')}</Text>
       </Card>
     )
   }
@@ -100,7 +103,7 @@ export function StoreInfoForm() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <ShopOutlined className="text-xl" />
-          <Title level={5} className="!mb-0">Thong tin cua hang</Title>
+          <Title level={5} className="!mb-0">{t('storeInfo')}</Title>
         </div>
         {!isEditing && (
           <Button
@@ -108,7 +111,7 @@ export function StoreInfoForm() {
             icon={<EditOutlined />}
             onClick={handleEdit}
           >
-            Sua
+            {tCommon('edit')}
           </Button>
         )}
       </div>
@@ -117,17 +120,17 @@ export function StoreInfoForm() {
         <Form form={form} layout="vertical" size="middle">
           <Form.Item
             name="name"
-            label="Ten cua hang"
-            rules={[{ required: true, message: 'Vui long nhap ten cua hang' }]}
+            label={t('storeName')}
+            rules={[{ required: true, message: t('storeNameRequired') }]}
           >
-            <Input prefix={<ShopOutlined />} placeholder="Nhap ten cua hang" />
+            <Input prefix={<ShopOutlined />} placeholder={t('storeNamePlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="phone"
-            label="So dien thoai"
+            label={t('phone')}
             rules={[
-              { pattern: /^0[3|5|7|8|9][0-9]{8}$/, message: 'So dien thoai khong hop le' },
+              { pattern: /^0[3|5|7|8|9][0-9]{8}$/, message: t('phoneInvalid') },
             ]}
           >
             <Input prefix={<PhoneOutlined />} placeholder="0912345678" />
@@ -135,21 +138,21 @@ export function StoreInfoForm() {
 
           <Form.Item
             name="email"
-            label="Email"
-            rules={[{ type: 'email', message: 'Email khong hop le' }]}
+            label={t('email')}
+            rules={[{ type: 'email', message: t('emailInvalid') }]}
           >
             <Input prefix={<MailOutlined />} placeholder="email@example.com" />
           </Form.Item>
 
-          <Form.Item name="address" label="Dia chi">
-            <Input prefix={<EnvironmentOutlined />} placeholder="Nhap dia chi" />
+          <Form.Item name="address" label={t('address')}>
+            <Input prefix={<EnvironmentOutlined />} placeholder={t('addressPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="tax_code"
-            label="Ma so thue"
+            label={t('taxCode')}
             rules={[
-              { pattern: /^[0-9]{10}([0-9]{3})?$/, message: 'MST phai la 10 hoac 13 chu so' },
+              { pattern: /^[0-9]{10}([0-9]{3})?$/, message: t('taxCodeInvalid') },
             ]}
           >
             <Input prefix={<IdcardOutlined />} placeholder="0123456789" />
@@ -162,35 +165,35 @@ export function StoreInfoForm() {
               onClick={handleSave}
               loading={updateMutation.isPending}
             >
-              Luu
+              {tCommon('save')}
             </Button>
             <Button icon={<CloseOutlined />} onClick={handleCancel}>
-              Huy
+              {tCommon('cancel')}
             </Button>
           </div>
         </Form>
       ) : (
         <Descriptions column={1} size="small">
-          <Descriptions.Item label={<span><ShopOutlined className="mr-1" />Ten cua hang</span>}>
+          <Descriptions.Item label={<span><ShopOutlined className="mr-1" />{t('storeName')}</span>}>
             {store.name}
           </Descriptions.Item>
           {store.phone && (
-            <Descriptions.Item label={<span><PhoneOutlined className="mr-1" />So dien thoai</span>}>
+            <Descriptions.Item label={<span><PhoneOutlined className="mr-1" />{t('phone')}</span>}>
               {store.phone}
             </Descriptions.Item>
           )}
           {store.email && (
-            <Descriptions.Item label={<span><MailOutlined className="mr-1" />Email</span>}>
+            <Descriptions.Item label={<span><MailOutlined className="mr-1" />{t('email')}</span>}>
               {store.email}
             </Descriptions.Item>
           )}
           {store.address && (
-            <Descriptions.Item label={<span><EnvironmentOutlined className="mr-1" />Dia chi</span>}>
+            <Descriptions.Item label={<span><EnvironmentOutlined className="mr-1" />{t('address')}</span>}>
               {store.address}
             </Descriptions.Item>
           )}
           {store.tax_code && (
-            <Descriptions.Item label={<span><IdcardOutlined className="mr-1" />Ma so thue</span>}>
+            <Descriptions.Item label={<span><IdcardOutlined className="mr-1" />{t('taxCode')}</span>}>
               {store.tax_code}
             </Descriptions.Item>
           )}

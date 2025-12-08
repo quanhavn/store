@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Drawer, Form, Input, Select, Button, message } from 'antd'
 import { ArrowUpOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type BankAccount } from '@/lib/supabase/functions'
 import { AmountKeypad } from './AmountKeypad'
 
@@ -13,16 +14,20 @@ interface BankInFormProps {
   bankAccountId?: string
 }
 
-const REFERENCE_TYPES: { value: 'sale' | 'transfer' | 'other'; label: string }[] = [
-  { value: 'sale', label: 'Nap tien / Ban hang' },
-  { value: 'transfer', label: 'Nhan chuyen khoan' },
-  { value: 'other', label: 'Khac' },
-]
-
 export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
   const [amount, setAmount] = useState(0)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
+
+  // Reference types with translations
+  const referenceTypes = [
+    { value: 'sale', label: t('referenceTypes.deposit') },
+    { value: 'transfer', label: t('referenceTypes.transfer') },
+    { value: 'other', label: t('referenceTypes.other') },
+  ]
 
   const { data: accountsData } = useQuery({
     queryKey: ['bank-accounts'],
@@ -40,13 +45,13 @@ export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
       reference_type?: 'sale' | 'transfer' | 'other'
     }) => api.finance.bankIn(data),
     onSuccess: () => {
-      message.success('Nap tien thanh cong')
+      message.success(t('bankInSuccess'))
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
       queryClient.invalidateQueries({ queryKey: ['bank-transactions'] })
       handleClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -58,7 +63,7 @@ export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
 
   const handleSubmit = async () => {
     if (amount <= 0) {
-      message.warning('Vui long nhap so tien')
+      message.warning(t('validation.enterAmount'))
       return
     }
 
@@ -83,7 +88,7 @@ export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
           <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
             <ArrowUpOutlined className="text-white" />
           </div>
-          <span>Nap tien vao tai khoan</span>
+          <span>{t('bankIn')}</span>
         </div>
       }
       placement="bottom"
@@ -103,11 +108,11 @@ export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
         >
           <Form.Item
             name="bank_account_id"
-            label="Tai khoan ngan hang"
-            rules={[{ required: true, message: 'Vui long chon tai khoan' }]}
+            label={t('bankAccount')}
+            rules={[{ required: true, message: t('validation.selectAccount') }]}
           >
             <Select
-              placeholder="Chon tai khoan"
+              placeholder={t('placeholders.selectAccount')}
               options={accounts.map((acc: BankAccount) => ({
                 value: acc.id,
                 label: `${acc.bank_name} - ${acc.account_number}`,
@@ -117,23 +122,23 @@ export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
 
           <Form.Item
             name="description"
-            label="Mo ta"
-            rules={[{ required: true, message: 'Vui long nhap mo ta' }]}
+            label={tCommon('description')}
+            rules={[{ required: true, message: t('validation.descriptionRequired') }]}
           >
             <Input.TextArea
-              placeholder="VD: Nap tien mat, nhan chuyen khoan..."
+              placeholder={t('placeholders.bankInDescription')}
               rows={2}
             />
           </Form.Item>
 
-          <Form.Item name="bank_ref" label="Ma giao dich ngan hang">
-            <Input placeholder="VD: FT123456789" />
+          <Form.Item name="bank_ref" label={t('bankReference')}>
+            <Input placeholder={t('placeholders.bankReference')} />
           </Form.Item>
 
-          <Form.Item name="reference_type" label="Loai giao dich">
+          <Form.Item name="reference_type" label={t('transactionType')}>
             <Select
-              placeholder="Chon loai giao dich"
-              options={REFERENCE_TYPES}
+              placeholder={t('placeholders.selectTransactionType')}
+              options={referenceTypes}
               allowClear
             />
           </Form.Item>
@@ -148,7 +153,7 @@ export function BankInForm({ open, onClose, bankAccountId }: BankInFormProps) {
           loading={mutation.isPending}
           disabled={amount <= 0}
         >
-          Xac nhan nap tien
+          {t('confirmBankIn')}
         </Button>
       </div>
     </Drawer>

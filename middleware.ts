@@ -1,5 +1,5 @@
 import { updateSession } from '@/lib/supabase/middleware'
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest } from 'next/server'
 
 /**
  * Security headers for production environment.
@@ -51,13 +51,11 @@ function isProduction(): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  // First, handle Supabase session update
+  // Handle Supabase session update first (for auth)
   const response = await updateSession(request)
 
   // Apply security headers in production only
-  // Development may need relaxed policies for hot reload, etc.
   if (isProduction()) {
-    // Add security headers to the response
     Object.entries(securityHeaders).forEach(([key, value]) => {
       response.headers.set(key, value)
     })

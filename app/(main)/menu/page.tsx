@@ -12,69 +12,64 @@ import {
   AppstoreOutlined
 } from '@ant-design/icons'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 const { Title, Text } = Typography
 
-const menuItems = [
+type MenuItemKey = 'invoices' | 'tax' | 'customers' | 'reports' | 'hr' | 'products' | 'categories' | 'settings'
+
+const menuItems: { titleKey: MenuItemKey; icon: typeof FileTextOutlined; href: string; bgColor: string; iconColor: string }[] = [
   {
-    title: 'Hóa đơn điện tử',
-    description: 'Quản lý hóa đơn',
+    titleKey: 'invoices',
     icon: FileTextOutlined,
     href: '/invoices',
     bgColor: 'bg-purple-100',
     iconColor: 'text-purple-600'
   },
   {
-    title: 'Thuế',
-    description: 'Kê khai thuế',
+    titleKey: 'tax',
     icon: CalculatorOutlined,
     href: '/tax',
     bgColor: 'bg-orange-100',
     iconColor: 'text-orange-600'
   },
   {
-    title: 'Khach hang',
-    description: 'Quan ly cong no',
+    titleKey: 'customers',
     icon: UserOutlined,
     href: '/customers',
     bgColor: 'bg-cyan-100',
     iconColor: 'text-cyan-600'
   },
   {
-    title: 'Báo cáo',
-    description: 'Xem thống kê',
+    titleKey: 'reports',
     icon: BarChartOutlined,
     href: '/reports',
     bgColor: 'bg-blue-100',
     iconColor: 'text-blue-600'
   },
   {
-    title: 'Nhân sự',
-    description: 'Quản lý nhân viên',
+    titleKey: 'hr',
     icon: TeamOutlined,
     href: '/hr',
     bgColor: 'bg-green-100',
     iconColor: 'text-green-600'
   },
   {
-    title: 'Sản phẩm',
-    description: 'Quản lý sản phẩm',
+    titleKey: 'products',
     icon: ShoppingOutlined,
     href: '/products',
     bgColor: 'bg-pink-100',
     iconColor: 'text-pink-600'
   },
   {
-    title: 'Danh mục',
-    description: 'Quản lý danh mục',
+    titleKey: 'categories',
     icon: AppstoreOutlined,
     href: '/categories',
     bgColor: 'bg-indigo-100',
     iconColor: 'text-indigo-600'
   },
   {
-    title: 'Cài đặt',
-    description: 'Tùy chỉnh ứng dụng',
+    titleKey: 'settings',
     icon: SettingOutlined,
     href: '/settings',
     bgColor: 'bg-gray-100',
@@ -83,9 +78,11 @@ const menuItems = [
 ]
 
 export default function MenuPage() {
+  const t = useTranslations('menu')
+
   return (
     <div className="p-4 space-y-4">
-      <Title level={4} className="!mb-0">Menu</Title>
+      <Title level={4} className="!mb-0">{t('title')}</Title>
 
       <Row gutter={[12, 12]}>
         {menuItems.map((item) => {
@@ -99,9 +96,9 @@ export default function MenuPage() {
                       <IconComponent className={`text-2xl ${item.iconColor}`} />
                     </div>
                     <div>
-                      <Text strong>{item.title}</Text>
+                      <Text strong>{t(`${item.titleKey}.title`)}</Text>
                       <br />
-                      <Text type="secondary" className="text-xs">{item.description}</Text>
+                      <Text type="secondary" className="text-xs">{t(`${item.titleKey}.description`)}</Text>
                     </div>
                   </div>
                 </Card>

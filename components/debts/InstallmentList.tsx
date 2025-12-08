@@ -2,6 +2,7 @@
 
 import { Table, Tag, Button, Typography } from 'antd'
 import { DollarOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { DebtInstallment } from '@/lib/supabase/functions'
 
@@ -13,16 +14,19 @@ interface InstallmentListProps {
 }
 
 export function InstallmentList({ installments, onPayInstallment }: InstallmentListProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+
   const getStatusBadge = (status: DebtInstallment['status']) => {
     switch (status) {
       case 'pending':
-        return <Tag color="blue">Chua tra</Tag>
+        return <Tag color="blue">{tCommon('pending')}</Tag>
       case 'partial':
-        return <Tag color="orange">Tra mot phan</Tag>
+        return <Tag color="orange">{tCommon('partial')}</Tag>
       case 'paid':
-        return <Tag color="green">Da tra</Tag>
+        return <Tag color="green">{tCommon('paid')}</Tag>
       case 'overdue':
-        return <Tag color="red">Qua han</Tag>
+        return <Tag color="red">{tCommon('overdue')}</Tag>
       default:
         return null
     }
@@ -42,7 +46,7 @@ export function InstallmentList({ installments, onPayInstallment }: InstallmentL
       render: (num: number) => <Text strong>{num}</Text>,
     },
     {
-      title: 'Han tra',
+      title: t('dueDate'),
       dataIndex: 'due_date',
       key: 'due_date',
       render: (date: string, record: DebtInstallment) => (
@@ -52,13 +56,13 @@ export function InstallmentList({ installments, onPayInstallment }: InstallmentL
       ),
     },
     {
-      title: 'So tien',
+      title: tCommon('amount'),
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: number) => formatCurrency(amount),
     },
     {
-      title: 'Da tra',
+      title: t('paidAmount'),
       dataIndex: 'paid_amount',
       key: 'paid_amount',
       render: (amount: number) => (
@@ -68,7 +72,7 @@ export function InstallmentList({ installments, onPayInstallment }: InstallmentL
       ),
     },
     {
-      title: 'Trang thai',
+      title: tCommon('status'),
       dataIndex: 'status',
       key: 'status',
       render: (status: DebtInstallment['status']) => getStatusBadge(status),
@@ -88,7 +92,7 @@ export function InstallmentList({ installments, onPayInstallment }: InstallmentL
             icon={<DollarOutlined />}
             onClick={() => onPayInstallment?.(record)}
           >
-            Tra
+            {t('payDebt')}
           </Button>
         )
       },

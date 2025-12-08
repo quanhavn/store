@@ -1,10 +1,10 @@
 'use client'
 
 import { Card, Typography, Row, Col, Statistic, Alert, Spin } from 'antd'
-import { 
-  ShoppingCartOutlined, 
-  InboxOutlined, 
-  WalletOutlined, 
+import {
+  ShoppingCartOutlined,
+  InboxOutlined,
+  WalletOutlined,
   RiseOutlined,
   WarningOutlined,
   PlusOutlined,
@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const { Title, Text } = Typography
 
@@ -22,6 +23,9 @@ interface DashboardContentProps {
 }
 
 export function DashboardContent({ storeName }: DashboardContentProps) {
+  const t = useTranslations('dashboard')
+  const tCommon = useTranslations('common')
+
   const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => api.reports.dashboardSummary(),
@@ -47,7 +51,7 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Title level={4} className="!mb-0">Xin chào</Title>
+          <Title level={4} className="!mb-0">{t('greeting')}</Title>
           <Text type="secondary">{storeName}</Text>
         </div>
         <Link href="/settings">
@@ -66,7 +70,7 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
               <div className="py-2"><Spin size="small" /></div>
             ) : (
               <Statistic
-                title={<span className="text-xs"><RiseOutlined /> Doanh thu hôm nay</span>}
+                title={<span className="text-xs"><RiseOutlined /> {t('todayRevenue')}</span>}
                 value={todayRevenue}
                 formatter={(value) => formatCurrency(Number(value))}
                 valueStyle={{ fontSize: 18, color: '#3ecf8e' }}
@@ -80,9 +84,9 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
               <div className="py-2"><Spin size="small" /></div>
             ) : (
               <Statistic
-                title={<span className="text-xs"><ShoppingCartOutlined /> Đơn hàng</span>}
+                title={<span className="text-xs"><ShoppingCartOutlined /> {t('ordersCount')}</span>}
                 value={todayOrders}
-                suffix="đơn"
+                suffix={tCommon('orders')}
                 valueStyle={{ fontSize: 18 }}
               />
             )}
@@ -94,7 +98,7 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
               <div className="py-2"><Spin size="small" /></div>
             ) : (
               <Statistic
-                title={<span className="text-xs"><WalletOutlined /> Tiền mặt</span>}
+                title={<span className="text-xs"><WalletOutlined /> {t('cashBalance')}</span>}
                 value={cashBalance}
                 formatter={(value) => formatCurrency(Number(value))}
                 valueStyle={{ fontSize: 18 }}
@@ -108,9 +112,9 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
               <div className="py-2"><Spin size="small" /></div>
             ) : (
               <Statistic
-                title={<span className="text-xs"><InboxOutlined /> Sản phẩm</span>}
+                title={<span className="text-xs"><InboxOutlined /> {t('productsCount')}</span>}
                 value={totalProducts}
-                suffix="SP"
+                suffix={tCommon('products')}
                 valueStyle={{ fontSize: 18 }}
               />
             )}
@@ -120,13 +124,13 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
 
       {lowStockCount > 0 ? (
         <Alert
-          message="Cảnh báo tồn kho"
+          message={t('alerts.lowStock')}
           description={
             <div>
-              <Text>Có {lowStockCount} sản phẩm sắp hết hàng.</Text>
+              <Text>{t('alerts.lowStockMessage', { count: lowStockCount })}</Text>
               <br />
               <Link href="/inventory" className="text-blue-500 font-medium">
-                Xem chi tiết →
+                {tCommon('viewDetails')} →
               </Link>
             </div>
           }
@@ -136,13 +140,13 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
         />
       ) : totalProducts === 0 ? (
         <Alert
-          message="Bắt đầu kinh doanh"
+          message={t('alerts.getStarted')}
           description={
             <div>
-              <Text>Chưa có sản phẩm nào. Bắt đầu thêm sản phẩm để quản lý kho.</Text>
+              <Text>{t('alerts.noProducts')}</Text>
               <br />
               <Link href="/products" className="text-blue-500 font-medium">
-                Thêm sản phẩm →
+                {t('alerts.addProducts')} →
               </Link>
             </div>
           }
@@ -152,7 +156,7 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
       ) : null}
 
       <div>
-        <Title level={5}>Truy cập nhanh</Title>
+        <Title level={5}>{t('quickAccess')}</Title>
         <Row gutter={[12, 12]}>
           <Col span={12}>
             <Link href="/pos">
@@ -162,9 +166,9 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
                     <ShoppingCartOutlined className="text-xl text-blue-600" />
                   </div>
                   <div>
-                    <Text strong>Bán hàng</Text>
+                    <Text strong>{t('pos.title')}</Text>
                     <br />
-                    <Text type="secondary" className="text-xs">Tạo đơn mới</Text>
+                    <Text type="secondary" className="text-xs">{t('pos.description')}</Text>
                   </div>
                 </div>
               </Card>
@@ -178,9 +182,9 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
                     <PlusOutlined className="text-xl text-green-600" />
                   </div>
                   <div>
-                    <Text strong>Nhập kho</Text>
+                    <Text strong>{t('stockIn.title')}</Text>
                     <br />
-                    <Text type="secondary" className="text-xs">Thêm hàng</Text>
+                    <Text type="secondary" className="text-xs">{t('stockIn.description')}</Text>
                   </div>
                 </div>
               </Card>
@@ -194,9 +198,9 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
                     <WalletOutlined className="text-xl text-purple-600" />
                   </div>
                   <div>
-                    <Text strong>Thu chi</Text>
+                    <Text strong>{t('finance.title')}</Text>
                     <br />
-                    <Text type="secondary" className="text-xs">Quản lý tiền</Text>
+                    <Text type="secondary" className="text-xs">{t('finance.description')}</Text>
                   </div>
                 </div>
               </Card>
@@ -210,9 +214,9 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
                     <FileTextOutlined className="text-xl text-orange-600" />
                   </div>
                   <div>
-                    <Text strong>Báo cáo</Text>
+                    <Text strong>{t('reports.title')}</Text>
                     <br />
-                    <Text type="secondary" className="text-xs">Xem thống kê</Text>
+                    <Text type="secondary" className="text-xs">{t('reports.description')}</Text>
                   </div>
                 </div>
               </Card>

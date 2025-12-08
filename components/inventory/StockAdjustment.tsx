@@ -23,6 +23,7 @@ import {
   DollarOutlined
 } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { useInventoryStore, AdjustmentType } from '@/lib/stores/inventory'
 import { formatCurrency } from '@/lib/utils'
@@ -43,6 +44,9 @@ export function StockAdjustment() {
   const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
+  const t = useTranslations('inventory')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
 
   const {
     adjustmentType,
@@ -104,21 +108,21 @@ export function StockAdjustment() {
     },
     onSuccess: () => {
       const expenseMsg = adjustmentType === 'import' && recordExpense 
-        ? ' (đã ghi chi phí)' 
+        ? ` (${t('expenseRecorded')})` 
         : ''
       message.success(
         adjustmentType === 'import'
-          ? `Nhập kho thành công!${expenseMsg}`
+          ? `${t('stockInSuccess')}${expenseMsg}`
           : adjustmentType === 'export'
-          ? 'Xuất kho thành công!'
-          : 'Điều chỉnh tồn kho thành công!'
+          ? t('stockOutSuccess')
+          : t('adjustmentSuccess')
       )
       clearAdjustment()
       queryClient.invalidateQueries({ queryKey: ['products-stock'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
     onError: (error: Error) => {
-      message.error('Lỗi: ' + error.message)
+      message.error(`${tErrors('generic')}: ${error.message}`)
     },
   })
 
@@ -136,11 +140,11 @@ export function StockAdjustment() {
   const getTypeLabel = (type: AdjustmentType) => {
     switch (type) {
       case 'import':
-        return 'Nhập kho'
+        return t('stockIn')
       case 'export':
-        return 'Xuất kho'
+        return t('stockOut')
       case 'adjustment':
-        return 'Điều chỉnh'
+        return t('adjustment')
     }
   }
 
@@ -149,9 +153,9 @@ export function StockAdjustment() {
       <Segmented
         block
         options={[
-          { value: 'import', label: 'Nhập kho' },
-          { value: 'export', label: 'Xuất kho' },
-          { value: 'adjustment', label: 'Điều chỉnh' },
+          { value: 'import', label: t('stockIn') },
+          { value: 'export', label: t('stockOut') },
+          { value: 'adjustment', label: t('adjustment') },
         ]}
         value={adjustmentType}
         onChange={(value) => setAdjustmentType(value as AdjustmentType)}
@@ -165,12 +169,12 @@ export function StockAdjustment() {
         block
         className="mb-4"
       >
-        Thêm sản phẩm
+        {t('addProduct')}
       </Button>
 
       {adjustmentItems.length === 0 ? (
         <Empty
-          description="Chưa có sản phẩm nào"
+          description={t('noProducts')}
           className="my-8"
         />
       ) : (
@@ -184,7 +188,7 @@ export function StockAdjustment() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{item.product_name}</div>
                       <div className="text-xs text-gray-500">
-                        Tồn hiện tại: {item.current_quantity}
+                        {t('currentStock')}: {item.current_quantity}
                       </div>
                     </div>
                     <Button
@@ -228,7 +232,7 @@ export function StockAdjustment() {
                     </div>
                     {adjustmentType === 'import' && (
                       <InputNumber
-                        placeholder="Giá vốn"
+                        placeholder={t('costPrice')}
                         value={item.unit_cost}
                         onChange={(value) =>
                           updateAdjustmentCost(item.product_id, value)
@@ -250,7 +254,7 @@ export function StockAdjustment() {
           />
 
           <TextArea
-            placeholder="Ghi chú (không bắt buộc)"
+            placeholder={t('notePlaceholder')}
             value={adjustmentNote}
             onChange={(e) => setAdjustmentNote(e.target.value)}
             rows={2}
@@ -260,7 +264,7 @@ export function StockAdjustment() {
           {adjustmentType === 'import' && (
             <>
               <Input
-                placeholder="Tên nhà cung cấp (không bắt buộc)"
+                placeholder={t('supplierNamePlaceholder')}
                 value={supplierName}
                 onChange={(e) => setSupplierName(e.target.value)}
                 className="mt-4"
@@ -268,7 +272,7 @@ export function StockAdjustment() {
               <div className="flex items-center justify-between mt-4 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <DollarOutlined className="text-blue-500" />
-                  <Text>Ghi vào sổ tiền mặt</Text>
+                  <Text>{t('recordExpense')}</Text>
                 </div>
                 <Switch
                   checked={recordExpense}
@@ -277,7 +281,7 @@ export function StockAdjustment() {
               </div>
               {recordExpense && (
                 <div className="text-xs text-gray-500 mt-1 px-3">
-                  Tự động trừ {formatCurrency(getTotalValue())} vào sổ tiền mặt
+                  {t('autoDeductExpense', { amount: formatCurrency(getTotalValue()) })}
                 </div>
               )}
             </>
@@ -285,16 +289,16 @@ export function StockAdjustment() {
 
           <div className="bg-gray-50 p-3 rounded-lg mt-4">
             <div className="flex justify-between mb-1">
-              <Text type="secondary">Loại:</Text>
+              <Text type="secondary">{tCommon('type')}:</Text>
               <Text>{getTypeLabel(adjustmentType)}</Text>
             </div>
             <div className="flex justify-between mb-1">
               <Text type="secondary">Số lượng:</Text>
-              <Text>{getItemCount()} sản phẩm</Text>
+              <Text>{getItemCount()} {tCommon('products')}</Text>
             </div>
             {adjustmentType === 'import' && (
               <div className="flex justify-between">
-                <Text type="secondary">Tổng giá trị:</Text>
+                <Text type="secondary">{t('totalValue')}:</Text>
                 <Text strong>{formatCurrency(getTotalValue())}</Text>
               </div>
             )}
@@ -302,7 +306,7 @@ export function StockAdjustment() {
 
           <div className="flex gap-2 mt-4">
             <Button onClick={clearAdjustment} className="flex-1">
-              Hủy
+              {tCommon('cancel')}
             </Button>
             <Button
               type="primary"
@@ -311,14 +315,14 @@ export function StockAdjustment() {
               loading={submitMutation.isPending}
               className="flex-1"
             >
-              Xác nhận
+              {tCommon('confirm')}
             </Button>
           </div>
         </>
       )}
 
       <Modal
-        title="Chọn sản phẩm"
+        title={t('selectProduct')}
         open={productSearchOpen}
         onCancel={() => {
           setProductSearchOpen(false)
@@ -327,7 +331,7 @@ export function StockAdjustment() {
         footer={null}
       >
         <Input
-          placeholder="Tìm kiếm sản phẩm..."
+          placeholder={t('searchProductPlaceholder')}
           prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -340,7 +344,7 @@ export function StockAdjustment() {
             <Spin />
           </div>
         ) : searchResults.length === 0 ? (
-          <Empty description={searchTerm ? 'Không tìm thấy sản phẩm' : 'Nhập tên sản phẩm để tìm kiếm'} />
+          <Empty description={searchTerm ? t('noProductsFound') : t('enterProductNameToSearch')} />
         ) : (
           <List
             dataSource={searchResults}
@@ -358,11 +362,11 @@ export function StockAdjustment() {
                       <div className="font-medium">{product.name}</div>
                       <div className="text-xs text-gray-500">
                         {product.sku && `SKU: ${product.sku} | `}
-                        Tồn: {product.quantity} {product.unit}
+                        {t('stock')}: {product.quantity} {product.unit}
                       </div>
                     </div>
                     {isAdded ? (
-                      <Text type="secondary">Đã thêm</Text>
+                      <Text type="secondary">{t('added')}</Text>
                     ) : (
                       <PlusOutlined className="text-blue-500" />
                     )}

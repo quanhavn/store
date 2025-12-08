@@ -2,6 +2,7 @@
 
 import { Button } from 'antd'
 import { DeleteOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/utils'
 
 interface AmountKeypadProps {
@@ -13,6 +14,9 @@ interface AmountKeypadProps {
 const QUICK_AMOUNTS = [100000, 200000, 500000, 1000000]
 
 export function AmountKeypad({ value, onChange, maxValue }: AmountKeypadProps) {
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+
   const handleDigit = (digit: string) => {
     const newValue = parseInt(`${value}${digit}`, 10)
     if (maxValue && newValue > maxValue) return
@@ -49,7 +53,7 @@ export function AmountKeypad({ value, onChange, maxValue }: AmountKeypadProps) {
         </div>
         {maxValue && (
           <div className="text-sm text-gray-500 mt-1">
-            Toi da: {formatCurrency(maxValue)}
+            {tCommon('max')}: {formatCurrency(maxValue)}
           </div>
         )}
       </div>
@@ -83,7 +87,7 @@ export function AmountKeypad({ value, onChange, maxValue }: AmountKeypadProps) {
           onClick={handleClear}
           className="h-14 text-sm"
         >
-          Xoa
+          {tCommon('empty')}
         </Button>
         <Button
           onClick={() => handleDigit('0')}

@@ -3,6 +3,7 @@
 import { Button, Input, InputNumber, Table, Space, Popconfirm, Select, Tag, Modal, Form, message } from 'antd'
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProductAttribute, ProductAttributeValue } from '@/lib/supabase/functions'
 
@@ -39,6 +40,8 @@ export function ProductVariantsSection({
   disabled = false,
   onCreateAttribute,
 }: ProductVariantsSectionProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
   const [editingVariant, setEditingVariant] = useState<ProductVariantInput | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form] = Form.useForm()
@@ -152,26 +155,26 @@ export function ProductVariantsSection({
 
   const columns: ColumnsType<ProductVariantInput> = [
     {
-      title: 'Tên biến thể',
+      title: t('variants.variantName'),
       dataIndex: 'name',
       key: 'name',
       width: 200,
       render: (value, record) => (
         <div>
-          <div className="font-medium">{value || 'Chưa đặt tên'}</div>
+          <div className="font-medium">{value || t('variants.unnamed')}</div>
           {getVariantAttributeDisplay(record)}
         </div>
       ),
     },
     {
-      title: 'SKU',
+      title: t('sku'),
       dataIndex: 'sku',
       key: 'sku',
       width: 100,
       render: (value) => value || '-',
     },
     {
-      title: 'Giá bán',
+      title: t('sellPrice'),
       dataIndex: 'sell_price',
       key: 'sell_price',
       width: 120,
@@ -179,7 +182,7 @@ export function ProductVariantsSection({
       render: (value) => formatCurrency(value),
     },
     {
-      title: 'Tồn kho',
+      title: t('quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 80,
@@ -199,7 +202,7 @@ export function ProductVariantsSection({
             size="small"
           />
           <Popconfirm
-            title="Xóa biến thể này?"
+            title={t('variants.deleteConfirm')}
             onConfirm={() => handleDelete(record.id!)}
             disabled={disabled}
           >
@@ -219,7 +222,7 @@ export function ProductVariantsSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">Biến thể sản phẩm</span>
+        <span className="text-sm font-medium text-gray-700">{t('variants.title')}</span>
         <Space>
           {onCreateAttribute && (
             <Button
@@ -228,7 +231,7 @@ export function ProductVariantsSection({
               onClick={onCreateAttribute}
               disabled={disabled}
             >
-              Quản lý thuộc tính
+              {t('manageAttributes')}
             </Button>
           )}
           <Button
@@ -238,14 +241,14 @@ export function ProductVariantsSection({
             onClick={handleAdd}
             disabled={disabled}
           >
-            Thêm biến thể
+            {t('variants.addVariant')}
           </Button>
         </Space>
       </div>
 
       {attributes.length === 0 && (
         <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded">
-          Chưa có thuộc tính nào. Vui lòng tạo thuộc tính (VD: Size, Màu sắc) trước khi thêm biến thể.
+          {t('variants.noAttributesWarning')}
         </div>
       )}
 
@@ -256,11 +259,11 @@ export function ProductVariantsSection({
         pagination={false}
         size="small"
         scroll={{ x: 600 }}
-        locale={{ emptyText: 'Chưa có biến thể. Thêm biến thể để quản lý tồn kho riêng cho từng phiên bản sản phẩm.' }}
+        locale={{ emptyText: t('variants.noVariants') }}
       />
 
       <Modal
-        title={editingVariant?.id?.startsWith('temp-') ? 'Thêm biến thể' : 'Sửa biến thể'}
+        title={editingVariant?.id?.startsWith('temp-') ? t('variants.addVariant') : t('variants.editVariant')}
         open={isModalOpen}
         onOk={handleSaveVariant}
         onCancel={() => {
@@ -268,18 +271,18 @@ export function ProductVariantsSection({
           setEditingVariant(null)
           form.resetFields()
         }}
-        okText="Lưu"
-        cancelText="Hủy"
+        okText={tCommon('save')}
+        cancelText={tCommon('cancel')}
         width={500}
       >
         <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="name" label="Tên biến thể">
-            <Input placeholder="VD: Size M - Màu đỏ (để trống sẽ tự tạo)" />
+          <Form.Item name="name" label={t('variants.variantName')}>
+            <Input placeholder={t('variants.variantNamePlaceholder')} />
           </Form.Item>
 
           {attributes.length > 0 && (
             <div className="mb-4">
-              <div className="text-sm font-medium mb-2">Thuộc tính</div>
+              <div className="text-sm font-medium mb-2">{t('variants.attributes')}</div>
               <div className="space-y-3">
                 {attributes.map(attr => (
                   <Form.Item
@@ -289,7 +292,7 @@ export function ProductVariantsSection({
                     className="mb-2"
                   >
                     <Select
-                      placeholder={`Chọn ${attr.name}`}
+                      placeholder={`${tCommon('select')} ${attr.name}`}
                       allowClear
                       options={attr.values?.map(v => ({
                         label: v.value,
@@ -303,35 +306,35 @@ export function ProductVariantsSection({
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="sku" label="SKU">
-              <Input placeholder="SKU riêng" />
+            <Form.Item name="sku" label={t('sku')}>
+              <Input placeholder={t('variants.skuPlaceholder')} />
             </Form.Item>
-            <Form.Item name="barcode" label="Mã vạch">
-              <Input placeholder="Barcode riêng" />
+            <Form.Item name="barcode" label={t('barcode')}>
+              <Input placeholder={t('variants.barcodePlaceholder')} />
             </Form.Item>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="cost_price" label="Giá nhập">
+            <Form.Item name="cost_price" label={t('costPrice')}>
               <InputNumber<number>
                 className="!w-full"
                 min={0}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
-                addonAfter="đ"
+                addonAfter="d"
               />
             </Form.Item>
             <Form.Item
               name="sell_price"
-              label="Giá bán"
-              rules={[{ required: true, message: 'Nhập giá bán' }]}
+              label={t('sellPrice')}
+              rules={[{ required: true, message: t('validation.sellPriceRequired') }]}
             >
               <InputNumber<number>
                 className="!w-full"
                 min={0}
                 formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
-                addonAfter="đ"
+                addonAfter="d"
               />
             </Form.Item>
           </div>
@@ -339,8 +342,8 @@ export function ProductVariantsSection({
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="quantity"
-              label="Tồn kho"
-              rules={[{ required: true, message: 'Nhập số lượng' }]}
+              label={t('quantity')}
+              rules={[{ required: true, message: t('validation.quantityRequired') }]}
             >
               <InputNumber<number>
                 className="!w-full"
@@ -349,7 +352,7 @@ export function ProductVariantsSection({
                 parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
               />
             </Form.Item>
-            <Form.Item name="min_stock" label="Tồn tối thiểu">
+            <Form.Item name="min_stock" label={t('minStock')}>
               <InputNumber<number>
                 className="!w-full"
                 min={0}

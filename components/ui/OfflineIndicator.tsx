@@ -9,6 +9,7 @@ import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import { useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { useOnlineStatus, usePendingSalesCount, useSyncStatus } from '@/lib/offline/hooks'
 import { performFullSync } from '@/lib/offline/sync'
 
@@ -31,6 +32,7 @@ export function OfflineIndicator({
   compact = false,
   onSyncComplete,
 }: OfflineIndicatorProps) {
+  const t = useTranslations('common')
   const isOnline = useOnlineStatus()
   const { count: pendingSalesCount, refresh: refreshPendingCount } = usePendingSalesCount()
   const { status } = useSyncStatus()
@@ -38,13 +40,13 @@ export function OfflineIndicator({
 
   const handleSync = useCallback(async () => {
     if (!isOnline) {
-      antMessage.warning('Khong co ket noi mang. Vui long thu lai sau khi co mang.')
+      antMessage.warning(t('noNetworkConnection'))
       return
     }
 
     try {
       setSyncing(true)
-      antMessage.loading({ content: 'Dang dong bo...', key: 'sync' })
+      antMessage.loading({ content: t('syncing'), key: 'sync' })
 
       const result = await performFullSync()
 
@@ -53,39 +55,39 @@ export function OfflineIndicator({
 
       if (result.sales.synced > 0) {
         antMessage.success({
-          content: `Da dong bo ${result.sales.synced} don hang`,
+          content: t('syncedOrders', { count: result.sales.synced }),
           key: 'sync',
         })
       } else if (result.products.success) {
         antMessage.success({
-          content: `Da cap nhat ${result.products.count} san pham`,
+          content: t('updatedProducts', { count: result.products.count }),
           key: 'sync',
         })
       } else {
-        antMessage.info({ content: 'Khong co du lieu can dong bo', key: 'sync' })
+        antMessage.info({ content: t('noDataToSync'), key: 'sync' })
       }
 
       if (result.sales.failed > 0) {
-        antMessage.warning(`${result.sales.failed} don hang dong bo that bai`)
+        antMessage.warning(t('syncFailedOrders', { count: result.sales.failed }))
       }
 
       onSyncComplete?.()
     } catch (error) {
       console.error('Sync error:', error)
       antMessage.error({
-        content: 'Dong bo that bai. Vui long thu lai.',
+        content: t('syncFailed'),
         key: 'sync',
       })
     } finally {
       setSyncing(false)
     }
-  }, [isOnline, refreshPendingCount, onSyncComplete])
+  }, [isOnline, refreshPendingCount, onSyncComplete, t])
 
   // Compact mode - just show icons/badges
   if (compact) {
     return (
       <Space size="small">
-        <Tooltip title={isOnline ? 'Dang ket noi' : 'Mat ket noi'}>
+        <Tooltip title={isOnline ? t('online') : t('offline')}>
           <Badge
             status={isOnline ? 'success' : 'error'}
             text={
@@ -100,7 +102,7 @@ export function OfflineIndicator({
         </Tooltip>
 
         {pendingSalesCount > 0 && (
-          <Tooltip title={`${pendingSalesCount} don hang chua dong bo`}>
+          <Tooltip title={t('pendingOrdersToSync', { count: pendingSalesCount })}>
             <Badge count={pendingSalesCount} size="small">
               <CloudSyncOutlined style={{ fontSize: 16, color: '#faad14' }} />
             </Badge>
@@ -108,7 +110,7 @@ export function OfflineIndicator({
         )}
 
         {showSyncButton && isOnline && (
-          <Tooltip title="Dong bo du lieu">
+          <Tooltip title={t('syncData')}>
             <Button
               type="text"
               size="small"
@@ -128,8 +130,8 @@ export function OfflineIndicator({
       {showBanner && !isOnline && (
         <Alert
           type="warning"
-          message="Mat ket noi mang"
-          description="Cac thao tac se duoc luu lai va dong bo khi co mang tro lai."
+          message={t('networkDisconnected')}
+          description={t('offlineDescription')}
           icon={<ExclamationCircleOutlined />}
           showIcon
           banner
@@ -148,7 +150,7 @@ export function OfflineIndicator({
               <Badge status="error" />
             )}
             <span className="text-sm text-gray-600">
-              {isOnline ? 'Dang ket noi' : 'Offline'}
+              {isOnline ? t('online') : t('offline')}
             </span>
           </div>
 
@@ -157,7 +159,7 @@ export function OfflineIndicator({
             <div className="flex items-center gap-2 px-2 py-1 bg-yellow-50 rounded">
               <Badge count={pendingSalesCount} size="small" />
               <span className="text-sm text-yellow-700">
-                don hang cho dong bo
+                {t('ordersWaitingSync')}
               </span>
             </div>
           )}
@@ -167,7 +169,7 @@ export function OfflineIndicator({
             <div className="flex items-center gap-2 px-2 py-1 bg-red-50 rounded">
               <ExclamationCircleOutlined className="text-red-500" />
               <span className="text-sm text-red-700">
-                {status.failedSyncCount} loi dong bo
+                {t('syncErrors', { count: status.failedSyncCount })}
               </span>
             </div>
           )}
@@ -175,12 +177,12 @@ export function OfflineIndicator({
           {/* Last Sync Time */}
           {status.lastProductsSync && (
             <Tooltip
-              title={`Dong bo san pham luc: ${new Date(status.lastProductsSync).toLocaleString('vi-VN')}`}
+              title={t('productsSyncedAt', { time: new Date(status.lastProductsSync).toLocaleString('vi-VN') })}
             >
               <div className="flex items-center gap-1 text-xs text-gray-400">
                 <CheckCircleOutlined />
                 <span>
-                  {formatRelativeTime(new Date(status.lastProductsSync))}
+                  {formatRelativeTime(new Date(status.lastProductsSync), t)}
                 </span>
               </div>
             </Tooltip>
@@ -197,7 +199,7 @@ export function OfflineIndicator({
             loading={syncing}
             disabled={!isOnline}
           >
-            {pendingSalesCount > 0 ? `Dong bo (${pendingSalesCount})` : 'Dong bo'}
+            {pendingSalesCount > 0 ? t('syncWithCount', { count: pendingSalesCount }) : t('sync')}
           </Button>
         )}
       </div>
@@ -209,6 +211,7 @@ export function OfflineIndicator({
  * Minimal offline status badge for headers/navs
  */
 export function OfflineStatusBadge() {
+  const t = useTranslations('common')
   const isOnline = useOnlineStatus()
   const { count: pendingSalesCount } = usePendingSalesCount()
 
@@ -219,25 +222,25 @@ export function OfflineStatusBadge() {
   return (
     <div className="flex items-center gap-2">
       {!isOnline && (
-        <Badge status="error" text="Offline" />
+        <Badge status="error" text={t('offline')} />
       )}
       {pendingSalesCount > 0 && (
-        <Badge count={pendingSalesCount} size="small" title="Don hang cho dong bo" />
+        <Badge count={pendingSalesCount} size="small" title={t('ordersWaitingSync')} />
       )}
     </div>
   )
 }
 
 // Helper function to format relative time
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: Date, t: (key: string, values?: Record<string, number>) => string): string {
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
 
-  if (minutes < 1) return 'Vua xong'
-  if (minutes < 60) return `${minutes} phut truoc`
-  if (hours < 24) return `${hours} gio truoc`
-  return `${days} ngay truoc`
+  if (minutes < 1) return t('justNow')
+  if (minutes < 60) return t('minutesAgo', { count: minutes })
+  if (hours < 24) return t('hoursAgo', { count: hours })
+  return t('daysAgo', { count: days })
 }

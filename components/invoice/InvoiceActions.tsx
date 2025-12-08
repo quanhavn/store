@@ -2,14 +2,15 @@
 
 import { useState } from 'react'
 import { Button, Modal, Input, message, Space } from 'antd'
-import { 
-  FilePdfOutlined, 
-  FileTextOutlined, 
+import {
+  FilePdfOutlined,
+  FileTextOutlined,
   CloseCircleOutlined,
   EditOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 
 interface InvoiceActionsProps {
@@ -20,6 +21,8 @@ interface InvoiceActionsProps {
 }
 
 export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }: InvoiceActionsProps) {
+  const t = useTranslations('invoices')
+  const tCommon = useTranslations('common')
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const queryClient = useQueryClient()
@@ -34,7 +37,7 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
       }
       const byteArray = new Uint8Array(byteNumbers)
       const blob = new Blob([byteArray], { type: 'application/pdf' })
-      
+
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -43,11 +46,11 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-      
-      message.success('Đã tải xuống PDF')
+
+      message.success(t('downloadedPdf'))
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Lỗi tải PDF')
+      message.error(error instanceof Error ? error.message : t('pdfError'))
     },
   })
 
@@ -56,7 +59,7 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
     onSuccess: (data) => {
       const byteCharacters = atob(data.file_data)
       const blob = new Blob([byteCharacters], { type: 'application/xml' })
-      
+
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -65,18 +68,18 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-      
-      message.success('Đã tải xuống XML')
+
+      message.success(t('downloadedXml'))
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Lỗi tải XML')
+      message.error(error instanceof Error ? error.message : t('xmlError'))
     },
   })
 
   const cancelMutation = useMutation({
     mutationFn: () => api.invoice.cancel(invoiceId, cancelReason),
     onSuccess: () => {
-      message.success('Đã hủy hóa đơn')
+      message.success(t('invoiceCancelled'))
       setCancelModalOpen(false)
       setCancelReason('')
       queryClient.invalidateQueries({ queryKey: ['invoices'] })
@@ -84,13 +87,13 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
       onSuccess?.()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Lỗi hủy hóa đơn')
+      message.error(error instanceof Error ? error.message : t('cancelError'))
     },
   })
 
   const handleCancel = () => {
     if (cancelReason.trim().length < 5) {
-      message.warning('Lý do hủy phải có ít nhất 5 ký tự')
+      message.warning(t('cancelReasonMinChars'))
       return
     }
     cancelMutation.mutate()
@@ -127,20 +130,20 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
           />
         )}
         <Modal
-          title="Hủy hóa đơn"
+          title={t('cancelInvoice')}
           open={cancelModalOpen}
           onCancel={() => setCancelModalOpen(false)}
           onOk={handleCancel}
-          okText="Xác nhận hủy"
-          cancelText="Đóng"
+          okText={t('confirmCancel')}
+          cancelText={tCommon('close')}
           okButtonProps={{ danger: true, loading: cancelMutation.isPending }}
         >
-          <p className="mb-2">Vui lòng nhập lý do hủy hóa đơn (tối thiểu 5 ký tự):</p>
+          <p className="mb-2">{t('cancelReasonRequired')}</p>
           <Input.TextArea
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
             rows={3}
-            placeholder="VD: Sai thông tin người mua..."
+            placeholder={t('cancelReasonPlaceholder')}
           />
         </Modal>
       </Space>
@@ -158,7 +161,7 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
               loading={downloadPdfMutation.isPending}
               block
             >
-              Tải PDF
+              {t('downloadPdf')}
             </Button>
             <Button
               icon={<FileTextOutlined />}
@@ -166,11 +169,11 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
               loading={downloadXmlMutation.isPending}
               block
             >
-              Tải XML
+              {t('downloadXml')}
             </Button>
           </>
         )}
-        
+
         {isIssued && (
           <>
             <Button
@@ -178,14 +181,14 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
               disabled
               block
             >
-              Điều chỉnh
+              {t('adjust')}
             </Button>
             <Button
               icon={<SwapOutlined />}
               disabled
               block
             >
-              Thay thế
+              {t('replace')}
             </Button>
             <Button
               icon={<CloseCircleOutlined />}
@@ -194,19 +197,19 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
               className="col-span-2"
               block
             >
-              Hủy hóa đơn
+              {t('cancelInvoice')}
             </Button>
           </>
         )}
       </div>
 
       <Modal
-        title="Hủy hóa đơn điện tử"
+        title={t('cancelEInvoice')}
         open={cancelModalOpen}
         onCancel={() => setCancelModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setCancelModalOpen(false)}>
-            Đóng
+            {tCommon('close')}
           </Button>,
           <Button
             key="confirm"
@@ -215,23 +218,23 @@ export function InvoiceActions({ invoiceId, status, onSuccess, compact = false }
             onClick={handleCancel}
             loading={cancelMutation.isPending}
           >
-            Xác nhận hủy
+            {t('confirmCancel')}
           </Button>,
         ]}
       >
         <p className="mb-4 text-gray-600">
-          Hóa đơn đã hủy không thể khôi phục. Vui lòng nhập lý do hủy (tối thiểu 5 ký tự):
+          {t('cancelWarning')}
         </p>
         <Input.TextArea
           value={cancelReason}
           onChange={(e) => setCancelReason(e.target.value)}
           rows={3}
-          placeholder="VD: Sai thông tin người mua, khách hàng yêu cầu hủy..."
+          placeholder={t('cancelReasonPlaceholder')}
           status={cancelReason.length > 0 && cancelReason.length < 5 ? 'error' : undefined}
         />
         {cancelReason.length > 0 && cancelReason.length < 5 && (
           <p className="text-red-500 text-sm mt-1">
-            Cần thêm {5 - cancelReason.length} ký tự nữa
+            {t('needMoreChars', { count: 5 - cancelReason.length })}
           </p>
         )}
       </Modal>

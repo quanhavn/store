@@ -3,6 +3,7 @@
 import { Card, Typography, Skeleton, Statistic } from 'antd'
 import { ArrowUpOutlined, ArrowDownOutlined, BankOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
@@ -19,6 +20,9 @@ interface BankBalanceCardProps {
 }
 
 export function BankBalanceCard({ onBankIn, onBankOut }: BankBalanceCardProps) {
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+
   const { data: accountsData, isLoading: accountsLoading } = useQuery({
     queryKey: ['bank-accounts'],
     queryFn: () => api.finance.listBankAccounts(),
@@ -56,18 +60,18 @@ export function BankBalanceCard({ onBankIn, onBankOut }: BankBalanceCardProps) {
           <BankOutlined className="text-white text-xl" />
         </div>
         <div>
-          <Text type="secondary" className="text-sm">Tong so du ngan hang</Text>
+          <Text type="secondary" className="text-sm">{t('totalBankBalance')}</Text>
           <div className="text-2xl font-bold text-blue-700">
             {formatCurrency(totalBalance)}
           </div>
-          <Text type="secondary" className="text-xs">{accounts.length} tai khoan</Text>
+          <Text type="secondary" className="text-xs">{t('accountCount', { count: accounts.length })}</Text>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-white rounded-lg p-3">
           <Statistic
-            title={<span className="text-xs">Nhan hom nay</span>}
+            title={<span className="text-xs">{t('receivedToday')}</span>}
             value={todaySummary.bankIn}
             precision={0}
             valueStyle={{ color: '#2563eb', fontSize: '16px' }}
@@ -78,7 +82,7 @@ export function BankBalanceCard({ onBankIn, onBankOut }: BankBalanceCardProps) {
         </div>
         <div className="bg-white rounded-lg p-3">
           <Statistic
-            title={<span className="text-xs">Chi hom nay</span>}
+            title={<span className="text-xs">{t('spentToday')}</span>}
             value={todaySummary.bankOut}
             precision={0}
             valueStyle={{ color: '#dc2626', fontSize: '16px' }}
@@ -95,14 +99,14 @@ export function BankBalanceCard({ onBankIn, onBankOut }: BankBalanceCardProps) {
           disabled={accounts.length === 0}
           className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
         >
-          <ArrowUpOutlined /> Nap tien
+          <ArrowUpOutlined /> {t('deposit')}
         </button>
         <button
           onClick={onBankOut}
           disabled={accounts.length === 0}
           className="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
         >
-          <ArrowDownOutlined /> Rut tien
+          <ArrowDownOutlined /> {t('withdraw')}
         </button>
       </div>
     </Card>

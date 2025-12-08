@@ -5,10 +5,15 @@ import { WarningOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/supabase/functions'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
 
 export function AlertsWidget() {
+  const t = useTranslations('dashboard')
+  const tInventory = useTranslations('inventory')
+  const tTax = useTranslations('tax')
+
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => api.reports.dashboardSummary(),
@@ -35,7 +40,7 @@ export function AlertsWidget() {
               <Badge status="warning" />
               <WarningOutlined className="text-yellow-600" />
               <Text className="flex-1">
-                <strong>{alerts?.lowStockCount}</strong> san pham sap het hang
+                <strong>{alerts?.lowStockCount}</strong> {tInventory('lowStock')}
               </Text>
             </div>
           </Card>
@@ -58,7 +63,7 @@ export function AlertsWidget() {
                 className={(alerts?.taxDeadlineDays ?? 999) <= 7 ? 'text-red-600' : 'text-orange-600'}
               />
               <Text className="flex-1">
-                Con <strong>{alerts?.taxDeadlineDays}</strong> ngay ke khai thue quy
+                {alerts?.taxDeadlineDays} {tTax('quarterly')}
               </Text>
             </div>
           </Card>

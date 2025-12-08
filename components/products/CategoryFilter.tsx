@@ -2,6 +2,7 @@
 
 import { Tag, Space } from 'antd'
 import { CheckCircleOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 
 interface Category {
   id: string
@@ -15,6 +16,8 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ categories, selectedId, onChange }: CategoryFilterProps) {
+  const tCommon = useTranslations('common')
+
   return (
     <div className="overflow-x-auto pb-2 -mx-4 px-4">
       <Space size={[8, 8]} wrap={false}>
@@ -24,7 +27,7 @@ export function CategoryFilter({ categories, selectedId, onChange }: CategoryFil
           onClick={() => onChange(undefined)}
           icon={!selectedId ? <CheckCircleOutlined /> : undefined}
         >
-          Tất cả
+          {tCommon('all')}
         </Tag>
         {categories.map((cat) => (
           <Tag

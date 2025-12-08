@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Modal, Form, Input, InputNumber, Select, DatePicker, Button, message, Typography, Divider, Alert, Space } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Customer } from '@/lib/supabase/functions'
 import dayjs from 'dayjs'
 
@@ -15,23 +16,26 @@ interface CreateDebtModalProps {
   onSuccess?: () => void
 }
 
-const DEBT_TYPES = [
-  { value: 'credit', label: 'Ghi no (tra 1 lan)' },
-  { value: 'installment', label: 'Tra gop (chia ky)' },
-]
-
-const INSTALLMENT_FREQUENCIES = [
-  { value: 'weekly', label: 'Hang tuan' },
-  { value: 'biweekly', label: 'Hai tuan mot' },
-  { value: 'monthly', label: 'Hang thang' },
-]
-
 export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+  const tCustomers = useTranslations('customers')
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const debtType = Form.useWatch('debt_type', form)
   const [customerSearch, setCustomerSearch] = useState('')
   const selectedCustomerId = Form.useWatch('customer_id', form)
+
+  const DEBT_TYPES = [
+    { value: 'credit', label: t('credit') },
+    { value: 'installment', label: t('installment') },
+  ]
+
+  const INSTALLMENT_FREQUENCIES = [
+    { value: 'weekly', label: t('weekly') },
+    { value: 'biweekly', label: t('biweekly') },
+    { value: 'monthly', label: t('monthly') },
+  ]
 
   const { data: customersData, isLoading: loadingCustomers } = useQuery({
     queryKey: ['customers-search', customerSearch],
@@ -52,7 +56,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
       notes?: string
     }) => api.debts.createCredit(data),
     onSuccess: () => {
-      message.success('Tao cong no thanh cong')
+      message.success(tCommon('success'))
       queryClient.invalidateQueries({ queryKey: ['debts'] })
       queryClient.invalidateQueries({ queryKey: ['debt-summary'] })
       form.resetFields()
@@ -60,7 +64,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
@@ -74,7 +78,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
       notes?: string
     }) => api.debts.createInstallment(data),
     onSuccess: () => {
-      message.success('Tao cong no tra gop thanh cong')
+      message.success(tCommon('success'))
       queryClient.invalidateQueries({ queryKey: ['debts'] })
       queryClient.invalidateQueries({ queryKey: ['debt-summary'] })
       form.resetFields()
@@ -82,7 +86,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
@@ -104,7 +108,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
       const values = await form.validateFields()
 
       if (!values.customer_id) {
-        message.error('Vui long chon khach hang')
+        message.error(tCustomers('selectCustomer'))
         return
       }
 
@@ -134,12 +138,12 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
 
   return (
     <Modal
-      title="Tao cong no moi"
+      title={t('createDebt')}
       open={open}
       onCancel={onClose}
       footer={[
         <Button key="cancel" onClick={onClose}>
-          Huy
+          {tCommon('cancel')}
         </Button>,
         <Button
           key="submit"
@@ -148,7 +152,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
           onClick={handleSubmit}
           loading={isPending}
         >
-          Tao cong no
+          {t('createDebt')}
         </Button>,
       ]}
       width={500}
@@ -161,18 +165,18 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
         {/* Customer selection */}
         <Form.Item
           name="customer_id"
-          label="Khach hang"
-          rules={[{ required: true, message: 'Vui long chon khach hang' }]}
+          label={tCustomers('customer')}
+          rules={[{ required: true, message: tCustomers('selectCustomer') }]}
         >
           <Select
-            placeholder="Chon khach hang"
+            placeholder={tCustomers('selectCustomer')}
             showSearch
             loading={loadingCustomers}
             onSearch={setCustomerSearch}
             filterOption={false}
             options={customers.map(c => ({
               value: c.id,
-              label: `${c.name} - ${c.phone || 'Chua co SDT'}`,
+              label: `${c.name} - ${c.phone || tCustomers('noPhone')}`,
             }))}
           />
         </Form.Item>
@@ -184,7 +188,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
             message={
               <div className="text-sm">
                 <div><strong>{selectedCustomer.name}</strong></div>
-                {selectedCustomer.phone && <div>SDT: {selectedCustomer.phone}</div>}
+                {selectedCustomer.phone && <div>{tCustomers('phone')}: {selectedCustomer.phone}</div>}
               </div>
             }
           />
@@ -194,7 +198,7 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
 
         <Form.Item
           name="debt_type"
-          label="Loai cong no"
+          label={t('debtType')}
           rules={[{ required: true }]}
         >
           <Select options={DEBT_TYPES} />
@@ -202,10 +206,10 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
 
         <Form.Item
           name="amount"
-          label="So tien"
+          label={tCommon('amount')}
           rules={[
-            { required: true, message: 'Nhap so tien' },
-            { type: 'number', min: 1000, message: 'So tien toi thieu 1,000d' },
+            { required: true, message: tCommon('enterAmount') },
+            { type: 'number', min: 1000, message: tCommon('minAmount') },
           ]}
         >
           <Space.Compact className="w-full">
@@ -225,8 +229,8 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
         {debtType === 'credit' && (
           <Form.Item
             name="due_date"
-            label="Han tra no"
-            rules={[{ required: true, message: 'Chon ngay han tra' }]}
+            label={t('dueDate')}
+            rules={[{ required: true, message: tCommon('selectDate') }]}
           >
             <DatePicker
               className="w-full"
@@ -241,26 +245,26 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
           <>
             <Form.Item
               name="installments"
-              label="So ky tra gop"
-              rules={[{ required: true, message: 'Nhap so ky' }]}
+              label={t('installments')}
+              rules={[{ required: true, message: tCommon('required') }]}
             >
               <Select
                 options={[
-                  { value: 2, label: '2 ky' },
-                  { value: 3, label: '3 ky' },
-                  { value: 4, label: '4 ky' },
-                  { value: 5, label: '5 ky' },
-                  { value: 6, label: '6 ky' },
-                  { value: 8, label: '8 ky' },
-                  { value: 10, label: '10 ky' },
-                  { value: 12, label: '12 ky' },
+                  { value: 2, label: '2' },
+                  { value: 3, label: '3' },
+                  { value: 4, label: '4' },
+                  { value: 5, label: '5' },
+                  { value: 6, label: '6' },
+                  { value: 8, label: '8' },
+                  { value: 10, label: '10' },
+                  { value: 12, label: '12' },
                 ]}
               />
             </Form.Item>
 
             <Form.Item
               name="frequency"
-              label="Tan suat tra"
+              label={t('frequency')}
               rules={[{ required: true }]}
             >
               <Select options={INSTALLMENT_FREQUENCIES} />
@@ -268,8 +272,8 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
 
             <Form.Item
               name="first_due_date"
-              label="Ngay tra ky dau"
-              rules={[{ required: true, message: 'Chon ngay tra ky dau' }]}
+              label={t('firstDueDate')}
+              rules={[{ required: true, message: tCommon('selectDate') }]}
             >
               <DatePicker
                 className="w-full"
@@ -282,11 +286,11 @@ export function CreateDebtModal({ open, onClose, onSuccess }: CreateDebtModalPro
 
         <Form.Item
           name="notes"
-          label="Ghi chu"
+          label={tCommon('notes')}
         >
           <Input.TextArea
             rows={2}
-            placeholder="Ghi chu them ve cong no nay"
+            placeholder={tCommon('notesPlaceholder')}
           />
         </Form.Item>
       </Form>

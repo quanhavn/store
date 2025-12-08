@@ -13,6 +13,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Text, Title } = Typography
 const { RangePicker } = DatePicker
@@ -23,61 +24,62 @@ interface ReportsHubProps {
   onViewReport: (reportType: string, dateFrom: string, dateTo: string) => void
 }
 
-const REPORTS = [
-  {
-    key: 'revenue',
-    title: 'So doanh thu',
-    description: 'Doanh thu ban hang',
-    icon: <DollarOutlined className="text-green-600" />,
-    color: 'bg-green-50',
-  },
-  {
-    key: 'cash',
-    title: 'So tien mat',
-    description: 'Thu chi tien mat',
-    icon: <WalletOutlined className="text-blue-600" />,
-    color: 'bg-blue-50',
-  },
-  {
-    key: 'bank',
-    title: 'So tien gui',
-    description: 'Thu chi ngan hang',
-    icon: <BankOutlined className="text-purple-600" />,
-    color: 'bg-purple-50',
-  },
-  {
-    key: 'expense',
-    title: 'So chi phi',
-    description: 'Chi phi theo danh muc',
-    icon: <FileTextOutlined className="text-orange-600" />,
-    color: 'bg-orange-50',
-  },
-  {
-    key: 'inventory',
-    title: 'So ton kho',
-    description: 'Xuat nhap ton',
-    icon: <InboxOutlined className="text-cyan-600" />,
-    color: 'bg-cyan-50',
-  },
-  {
-    key: 'tax',
-    title: 'So nghia vu thue',
-    description: 'VAT, TNCN theo quy',
-    icon: <PercentageOutlined className="text-red-600" />,
-    color: 'bg-red-50',
-  },
-  {
-    key: 'salary',
-    title: 'So luong',
-    description: 'Luong nhan vien',
-    icon: <TeamOutlined className="text-indigo-600" />,
-    color: 'bg-indigo-50',
-  },
-]
-
 export function ReportsHub({ onViewReport }: ReportsHubProps) {
+  const t = useTranslations('reports')
   const [datePreset, setDatePreset] = useState<DatePreset>('month')
   const [customRange, setCustomRange] = useState<[Dayjs, Dayjs] | null>(null)
+
+  const REPORTS = [
+    {
+      key: 'revenue',
+      title: t('revenueReport'),
+      description: t('revenueReportDesc'),
+      icon: <DollarOutlined className="text-green-600" />,
+      color: 'bg-green-50',
+    },
+    {
+      key: 'cash',
+      title: t('cashReport'),
+      description: t('cashReportDesc'),
+      icon: <WalletOutlined className="text-blue-600" />,
+      color: 'bg-blue-50',
+    },
+    {
+      key: 'bank',
+      title: t('bankReport'),
+      description: t('bankReportDesc'),
+      icon: <BankOutlined className="text-purple-600" />,
+      color: 'bg-purple-50',
+    },
+    {
+      key: 'expense',
+      title: t('expenseReport'),
+      description: t('expenseReportDesc'),
+      icon: <FileTextOutlined className="text-orange-600" />,
+      color: 'bg-orange-50',
+    },
+    {
+      key: 'inventory',
+      title: t('inventoryReport'),
+      description: t('inventoryReportDesc'),
+      icon: <InboxOutlined className="text-cyan-600" />,
+      color: 'bg-cyan-50',
+    },
+    {
+      key: 'tax',
+      title: t('taxReport'),
+      description: t('taxReportDesc'),
+      icon: <PercentageOutlined className="text-red-600" />,
+      color: 'bg-red-50',
+    },
+    {
+      key: 'salary',
+      title: t('salaryReport'),
+      description: t('salaryReportDesc'),
+      icon: <TeamOutlined className="text-indigo-600" />,
+      color: 'bg-indigo-50',
+    },
+  ]
 
   const getDateRange = (): [string, string] => {
     const now = dayjs()
@@ -113,17 +115,17 @@ export function ReportsHub({ onViewReport }: ReportsHubProps) {
     <div className="space-y-4">
       <Card size="small">
         <div className="space-y-3">
-          <Text type="secondary" className="text-xs">Chon ky bao cao:</Text>
+          <Text type="secondary" className="text-xs">{t('selectPeriod')}:</Text>
           <Segmented
             block
             size="small"
             value={datePreset}
             onChange={(v) => setDatePreset(v as DatePreset)}
             options={[
-              { value: 'today', label: 'Hom nay' },
-              { value: 'week', label: 'Tuan' },
-              { value: 'month', label: 'Thang' },
-              { value: 'quarter', label: 'Quy' },
+              { value: 'today', label: t('today') },
+              { value: 'week', label: t('thisWeek') },
+              { value: 'month', label: t('thisMonth') },
+              { value: 'quarter', label: t('quarter') },
             ]}
           />
           <div className="flex gap-2">
@@ -132,14 +134,14 @@ export function ReportsHub({ onViewReport }: ReportsHubProps) {
               type={datePreset === 'year' ? 'primary' : 'default'}
               onClick={() => setDatePreset('year')}
             >
-              Ca nam
+              {t('thisYear')}
             </Button>
             <Button
               size="small"
               type={datePreset === 'custom' ? 'primary' : 'default'}
               onClick={() => setDatePreset('custom')}
             >
-              Tuy chon
+              {t('custom')}
             </Button>
           </div>
           {datePreset === 'custom' && (

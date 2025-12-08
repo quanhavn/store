@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type PayrollWithEmployee } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface PayslipDetailProps {
   open: boolean
@@ -14,18 +15,20 @@ interface PayslipDetailProps {
 }
 
 export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
+  const t = useTranslations('hr')
+  const tCommon = useTranslations('common')
   const queryClient = useQueryClient()
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank_transfer'>('cash')
 
   const markPaidMutation = useMutation({
     mutationFn: () => api.hr.markPaid(payroll!.id, paymentMethod),
     onSuccess: () => {
-      message.success('Da danh dau tra luong')
+      message.success(t('salaryPaidSuccess'))
       queryClient.invalidateQueries({ queryKey: ['payroll'] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
@@ -37,7 +40,7 @@ export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
     <Drawer
       open={open}
       onClose={onClose}
-      title={`Phieu luong T${payroll.period_month}/${payroll.period_year}`}
+      title={t('payslipTitle', { month: payroll.period_month, year: payroll.period_year })}
       placement="bottom"
       height="90%"
     >
@@ -52,53 +55,53 @@ export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
             }
             className="mt-2"
           >
-            {payroll.status === 'paid' ? 'Da tra' :
-             payroll.status === 'approved' ? 'Da duyet' : 'Da tinh'}
+            {payroll.status === 'paid' ? t('payrollStatus.paid') :
+             payroll.status === 'approved' ? t('payrollStatus.approved') : t('payrollStatus.calculated')}
           </Tag>
         </div>
 
         <div className="text-center">
-          <div className="text-sm text-gray-500">Ngay cong</div>
+          <div className="text-sm text-gray-500">{t('workingDays')}</div>
           <div className="text-2xl font-bold">
             {payroll.working_days}/{payroll.standard_days}
           </div>
         </div>
 
-        <Divider orientationMargin={0}><span className="text-sm">Thu nhap</span></Divider>
+        <Divider orientationMargin={0}><span className="text-sm">{t('income')}</span></Divider>
 
         <Descriptions column={1} size="small" bordered>
-          <Descriptions.Item label="Luong co ban">
+          <Descriptions.Item label={t('baseSalary')}>
             {formatCurrency(payroll.base_salary)}
           </Descriptions.Item>
-          <Descriptions.Item label="Luong thuc te">
+          <Descriptions.Item label={t('proRatedSalary')}>
             {formatCurrency(payroll.pro_rated_salary)}
           </Descriptions.Item>
-          <Descriptions.Item label="Phu cap">
+          <Descriptions.Item label={t('allowances')}>
             {formatCurrency(payroll.allowances)}
           </Descriptions.Item>
-          <Descriptions.Item label="Tong thu nhap">
+          <Descriptions.Item label={t('totalIncome')}>
             <span className="font-bold text-blue-600">
               {formatCurrency(payroll.gross_salary)}
             </span>
           </Descriptions.Item>
         </Descriptions>
 
-        <Divider orientationMargin={0}><span className="text-sm">Khau tru</span></Divider>
+        <Divider orientationMargin={0}><span className="text-sm">{t('deductions')}</span></Divider>
 
         <Descriptions column={1} size="small" bordered>
-          <Descriptions.Item label="BHXH (8%)">
+          <Descriptions.Item label={t('socialInsuranceRate', { rate: '8%' })}>
             -{formatCurrency(payroll.social_insurance)}
           </Descriptions.Item>
-          <Descriptions.Item label="BHYT (1.5%)">
+          <Descriptions.Item label={t('healthInsuranceRate', { rate: '1.5%' })}>
             -{formatCurrency(payroll.health_insurance)}
           </Descriptions.Item>
-          <Descriptions.Item label="BHTN (1%)">
+          <Descriptions.Item label={t('unemploymentInsuranceRate', { rate: '1%' })}>
             -{formatCurrency(payroll.unemployment_insurance)}
           </Descriptions.Item>
-          <Descriptions.Item label="Thue TNCN">
+          <Descriptions.Item label={t('personalIncomeTax')}>
             -{formatCurrency(payroll.pit)}
           </Descriptions.Item>
-          <Descriptions.Item label="Tong khau tru">
+          <Descriptions.Item label={t('totalDeductions')}>
             <span className="font-bold text-red-600">
               -{formatCurrency(payroll.total_deductions)}
             </span>
@@ -106,22 +109,22 @@ export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
         </Descriptions>
 
         <div className="p-4 bg-green-50 rounded-lg text-center">
-          <div className="text-sm text-gray-600">THUC LINH</div>
+          <div className="text-sm text-gray-600">{t('netSalary').toUpperCase()}</div>
           <div className="text-3xl font-bold text-green-600">
             {formatCurrency(payroll.net_salary)}
           </div>
         </div>
 
-        <Divider orientationMargin={0}><span className="text-sm">Chi tiet thue TNCN</span></Divider>
+        <Divider orientationMargin={0}><span className="text-sm">{t('pitDetails')}</span></Divider>
 
         <Descriptions column={1} size="small">
-          <Descriptions.Item label="Giam tru ban than">
+          <Descriptions.Item label={t('personalDeduction')}>
             {formatCurrency(payroll.personal_deduction)}
           </Descriptions.Item>
-          <Descriptions.Item label="Giam tru nguoi phu thuoc">
+          <Descriptions.Item label={t('dependentDeduction')}>
             {formatCurrency(payroll.dependent_deduction)}
           </Descriptions.Item>
-          <Descriptions.Item label="Thu nhap chiu thue">
+          <Descriptions.Item label={t('taxableIncome')}>
             {formatCurrency(payroll.taxable_income)}
           </Descriptions.Item>
         </Descriptions>
@@ -130,33 +133,33 @@ export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
           <>
             <Divider />
             <div className="space-y-3">
-              <div className="text-sm font-medium">Phuong thuc tra:</div>
+              <div className="text-sm font-medium">{t('paymentMethod')}:</div>
               <Radio.Group
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="w-full"
               >
                 <Radio.Button value="cash" className="w-1/2 text-center">
-                  Tien mat
+                  {t('paymentCash')}
                 </Radio.Button>
                 <Radio.Button value="bank_transfer" className="w-1/2 text-center">
-                  Chuyen khoan
+                  {t('paymentBankTransfer')}
                 </Radio.Button>
               </Radio.Group>
 
               {paymentMethod === 'bank_transfer' && employee?.bank_account && (
                 <div className="p-2 bg-gray-50 rounded text-sm">
-                  <div>Ngan hang: {employee.bank_name}</div>
-                  <div>STK: {employee.bank_account}</div>
+                  <div>{t('bankName')}: {employee.bank_name}</div>
+                  <div>{t('accountNumber')}: {employee.bank_account}</div>
                 </div>
               )}
 
               <Popconfirm
-                title="Xac nhan tra luong?"
-                description={`Tra ${formatCurrency(payroll.net_salary)} cho ${employee?.name}`}
+                title={t('confirmPaySalary')}
+                description={t('confirmPaySalaryDescription', { amount: formatCurrency(payroll.net_salary), name: employee?.name || '' })}
                 onConfirm={() => markPaidMutation.mutate()}
-                okText="Xac nhan"
-                cancelText="Huy"
+                okText={tCommon('confirm')}
+                cancelText={tCommon('cancel')}
               >
                 <Button
                   type="primary"
@@ -165,7 +168,7 @@ export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
                   block
                   className="bg-green-500 hover:bg-green-600"
                 >
-                  Tra luong
+                  {t('paySalary')}
                 </Button>
               </Popconfirm>
             </div>
@@ -176,7 +179,7 @@ export function PayslipDetail({ open, onClose, payroll }: PayslipDetailProps) {
           <div className="flex items-center justify-center gap-2 p-3 bg-green-50 rounded">
             <CheckCircleOutlined className="text-green-600" />
             <span className="text-green-600">
-              Da tra ngay {payroll.paid_date} ({payroll.payment_method === 'cash' ? 'Tien mat' : 'Chuyen khoan'})
+              {t('paidOn', { date: payroll.paid_date || '', method: payroll.payment_method === 'cash' ? t('paymentCash') : t('paymentBankTransfer') })}
             </span>
           </div>
         )}

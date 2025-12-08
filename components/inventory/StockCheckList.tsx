@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { List, Input, Spin, Empty, Tag, Typography } from 'antd'
 import { SearchOutlined, InboxOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
@@ -23,6 +24,7 @@ interface Product {
 }
 
 export function StockCheckList() {
+  const t = useTranslations('inventory')
   const [search, setSearch] = useState('')
 
   const { data: products = [], isLoading } = useQuery({
@@ -39,12 +41,12 @@ export function StockCheckList() {
 
   const getStockStatus = (product: Product) => {
     if (product.quantity <= 0) {
-      return { color: 'red', text: 'Hết hàng' }
+      return { color: 'red', text: t('outOfStock') }
     }
     if (product.quantity <= product.min_stock) {
-      return { color: 'orange', text: 'Sắp hết' }
+      return { color: 'orange', text: t('runningLow') }
     }
-    return { color: 'green', text: 'Còn hàng' }
+    return { color: 'green', text: t('inStock') }
   }
 
   const getTotalValue = () => {
@@ -62,7 +64,7 @@ export function StockCheckList() {
   return (
     <div>
       <Input
-        placeholder="Tìm sản phẩm..."
+        placeholder={t('searchProductPlaceholder')}
         prefix={<SearchOutlined className="text-gray-400" />}
         onChange={(e) => handleSearch(e.target.value)}
         className="mb-4"
@@ -71,11 +73,11 @@ export function StockCheckList() {
 
       <div className="bg-blue-50 p-3 rounded-lg mb-4">
         <div className="flex justify-between items-center">
-          <Text type="secondary">Tổng giá trị tồn kho:</Text>
+          <Text type="secondary">{t('totalInventoryValue')}:</Text>
           <Text strong className="text-blue-600">{formatCurrency(getTotalValue())}</Text>
         </div>
         <div className="flex justify-between items-center mt-1">
-          <Text type="secondary">Số sản phẩm:</Text>
+          <Text type="secondary">{t('productCount')}:</Text>
           <Text>{products.length}</Text>
         </div>
       </div>
@@ -83,7 +85,7 @@ export function StockCheckList() {
       {products.length === 0 ? (
         <Empty
           image={<InboxOutlined className="text-5xl text-gray-300" />}
-          description="Không tìm thấy sản phẩm"
+          description={t('noProductsFound')}
         />
       ) : (
         <List
@@ -112,8 +114,8 @@ export function StockCheckList() {
                     </div>
                   </div>
                   <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>Tối thiểu: {product.min_stock} {product.unit}</span>
-                    <span>Giá vốn: {formatCurrency(product.cost_price)}</span>
+                    <span>{t('minimum')}: {product.min_stock} {product.unit}</span>
+                    <span>{t('costPrice')}: {formatCurrency(product.cost_price)}</span>
                   </div>
                 </div>
               </List.Item>

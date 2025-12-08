@@ -7,6 +7,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { useCSVImportStore } from '@/lib/stores/csv-import'
 import { api } from '@/lib/supabase/functions'
 import type { ImportEntityType, ParsedRow } from '@/lib/import/types'
@@ -25,6 +26,7 @@ interface ExistingData {
 }
 
 export function CSVProgressStep() {
+  const tImport = useTranslations('import')
   const {
     entityType,
     parsedRows,
@@ -93,14 +95,14 @@ export function CSVProgressStep() {
       case 'category': {
         const name = (data.name as string)?.toLowerCase()
         if (name && existing.categoryNames.has(name)) {
-          return `Danh mục "${data.name}" đã tồn tại`
+          return tImport('duplicates.categoryExists', { name: String(data.name || '') })
         }
         break
       }
       case 'customer': {
         const phone = data.phone as string
         if (phone && existing.customerPhones.has(phone)) {
-          return `Số điện thoại "${phone}" đã tồn tại`
+          return tImport('duplicates.phoneExists', { phone })
         }
         break
       }
@@ -108,10 +110,10 @@ export function CSVProgressStep() {
         const sku = data.sku as string
         const barcode = data.barcode as string
         if (sku && existing.productSkus.has(sku)) {
-          return `Mã SKU "${sku}" đã tồn tại`
+          return tImport('duplicates.skuExists', { sku })
         }
         if (barcode && existing.productBarcodes.has(barcode)) {
-          return `Mã vạch "${barcode}" đã tồn tại`
+          return tImport('duplicates.barcodeExists', { barcode })
         }
         break
       }
@@ -119,16 +121,16 @@ export function CSVProgressStep() {
         const idCard = data.id_card as string
         const phone = data.phone as string
         if (idCard && existing.employeeIdCards.has(idCard)) {
-          return `CMND/CCCD "${idCard}" đã tồn tại`
+          return tImport('duplicates.idCardExists', { idCard })
         }
         if (phone && existing.employeePhones.has(phone)) {
-          return `Số điện thoại "${phone}" đã tồn tại`
+          return tImport('duplicates.phoneExists', { phone })
         }
         break
       }
     }
     return null
-  }, [entityType])
+  }, [entityType, tImport])
 
   const addToExisting = useCallback((row: ParsedRow, existing: ExistingData) => {
     const data = row.data
@@ -173,7 +175,7 @@ export function CSVProgressStep() {
         totalRows: parsedRows.length,
         importedCount: 0,
         skippedCount: parsedRows.length,
-        errors: [{ row: 0, message: 'Không có dữ liệu hợp lệ để import' }],
+        errors: [{ row: 0, message: tImport('noValidDataToImport') }],
       })
       setStep('complete')
       return
@@ -183,7 +185,7 @@ export function CSVProgressStep() {
       current: 0,
       total: validRows.length,
       status: 'importing',
-      message: 'Đang kiểm tra dữ liệu trùng...',
+      message: tImport('checkingDuplicates'),
     })
 
     // Fetch existing data for duplicate checking
@@ -218,7 +220,7 @@ export function CSVProgressStep() {
         } catch (err) {
           errors.push({
             row: row.rowIndex,
-            message: err instanceof Error ? err.message : 'Lỗi không xác định',
+            message: err instanceof Error ? err.message : tImport('unknownError'),
           })
         }
       }
@@ -227,7 +229,7 @@ export function CSVProgressStep() {
         current: Math.min(i + BATCH_SIZE, validRows.length),
         total: validRows.length,
         status: 'importing',
-        message: `Đang import ${Math.min(i + BATCH_SIZE, validRows.length)}/${validRows.length}...`,
+        message: tImport('importingProgress', { current: Math.min(i + BATCH_SIZE, validRows.length), total: validRows.length }),
       })
     }
 
@@ -243,11 +245,11 @@ export function CSVProgressStep() {
       current: validRows.length,
       total: validRows.length,
       status: 'complete',
-      message: 'Hoàn tất',
+      message: tImport('complete'),
     })
 
     setStep('complete')
-  }, [parsedRows, validRowCount, entityType, setProgress, setResult, setStep, fetchExistingData, isDuplicate, addToExisting])
+  }, [parsedRows, validRowCount, entityType, setProgress, setResult, setStep, fetchExistingData, isDuplicate, addToExisting, tImport])
 
   useEffect(() => {
     if (progress.status === 'idle' && !importStarted.current) {
@@ -259,15 +261,15 @@ export function CSVProgressStep() {
     return (
       <Result
         status={result?.success ? 'success' : 'warning'}
-        title={result?.success ? 'Import thành công!' : 'Import hoàn tất với lỗi'}
+        title={result?.success ? tImport('importSuccess') : tImport('importCompletedWithErrors')}
         subTitle={
           <Space direction="vertical">
             <Text>
-              Đã import: <Text strong className="text-green-600">{result?.importedCount || 0}</Text> / {result?.totalRows || 0} dòng
+              {tImport('importedCount')}: <Text strong className="text-green-600">{result?.importedCount || 0}</Text> / {result?.totalRows || 0} {tImport('rows')}
             </Text>
             {(result?.skippedCount || 0) > 0 && (
               <Text>
-                Bỏ qua: <Text type="secondary">{result?.skippedCount}</Text> dòng
+                {tImport('skippedCount')}: <Text type="secondary">{result?.skippedCount}</Text> {tImport('rows')}
               </Text>
             )}
           </Space>
@@ -275,20 +277,20 @@ export function CSVProgressStep() {
         extra={
           result?.errors && result.errors.length > 0 && (
             <div className="text-left max-h-[200px] overflow-y-auto">
-              <Text strong className="block mb-2">Chi tiết lỗi:</Text>
+              <Text strong className="block mb-2">{tImport('errorDetails')}:</Text>
               <List
                 size="small"
                 dataSource={result.errors.slice(0, 10)}
                 renderItem={(item) => (
                   <List.Item>
-                    <Tag color="red">Dòng {item.row}</Tag>
+                    <Tag color="red">{tImport('rowNumber', { row: item.row })}</Tag>
                     <Text type="secondary">{item.message}</Text>
                   </List.Item>
                 )}
               />
               {result.errors.length > 10 && (
                 <Text type="secondary" className="mt-2 block">
-                  ...và {result.errors.length - 10} lỗi khác
+                  {tImport('andMoreErrors', { count: result.errors.length - 10 })}
                 </Text>
               )}
             </div>
@@ -308,7 +310,7 @@ export function CSVProgressStep() {
         strokeColor={{ from: '#108ee9', to: '#87d068' }}
       />
       <Text type="secondary" className="mt-2 block">
-        {progress.current} / {progress.total} dòng
+        {progress.current} / {progress.total} {tImport('rows')}
       </Text>
     </div>
   )

@@ -3,6 +3,7 @@
 import { List, Tag, Empty, Spin, Typography } from 'antd'
 import { ArrowUpOutlined, ArrowDownOutlined, InboxOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type CashTransaction } from '@/lib/supabase/functions'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 
@@ -15,6 +16,9 @@ interface CashTransactionListProps {
 }
 
 export function CashTransactionList({ dateFrom, dateTo, limit = 20 }: CashTransactionListProps) {
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+
   const { data, isLoading } = useQuery({
     queryKey: ['cash-transactions', dateFrom, dateTo, limit],
     queryFn: () => api.finance.cashTransactions({
@@ -28,11 +32,11 @@ export function CashTransactionList({ dateFrom, dateTo, limit = 20 }: CashTransa
 
   const getReferenceLabel = (type: string | null) => {
     switch (type) {
-      case 'sale': return { color: 'green', text: 'Ban hang' }
-      case 'expense': return { color: 'orange', text: 'Chi phi' }
-      case 'salary': return { color: 'purple', text: 'Luong' }
-      case 'adjustment': return { color: 'blue', text: 'Dieu chinh' }
-      default: return { color: 'default', text: 'Khac' }
+      case 'sale': return { color: 'green', text: t('referenceTypes.sale') }
+      case 'expense': return { color: 'orange', text: t('referenceTypes.expense') }
+      case 'salary': return { color: 'purple', text: t('referenceTypes.salary') }
+      case 'adjustment': return { color: 'blue', text: t('referenceTypes.adjustment') }
+      default: return { color: 'default', text: t('referenceTypes.other') }
     }
   }
 
@@ -48,7 +52,7 @@ export function CashTransactionList({ dateFrom, dateTo, limit = 20 }: CashTransa
     return (
       <Empty
         image={<InboxOutlined className="text-5xl text-gray-300" />}
-        description="Chua co giao dich nao"
+        description={t('noTransactions')}
       />
     )
   }
@@ -89,7 +93,7 @@ export function CashTransactionList({ dateFrom, dateTo, limit = 20 }: CashTransa
                   {isIncome ? '+' : '-'}{formatCurrency(amount)}
                 </div>
                 <Text type="secondary" className="text-xs">
-                  SD: {formatCurrency(tx.balance)}
+                  {t('balanceAbbrev')}: {formatCurrency(tx.balance)}
                 </Text>
               </div>
             </div>

@@ -1,11 +1,14 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Tabs, Button, Badge, Popconfirm, Input, message } from 'antd'
 import { PlusOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useMultiOrderStore, type Order } from '@/lib/stores/multiOrder'
 
 export function OrderTabs() {
+  const t = useTranslations('pos')
+  const tCommon = useTranslations('common')
   const {
     orders,
     activeOrderId,
@@ -22,16 +25,16 @@ export function OrderTabs() {
   const handleAddOrder = () => {
     try {
       createOrder()
-      message.success('Đã tạo đơn hàng mới')
+      message.success(t('orderCreated'))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Không thể tạo đơn hàng')
+      message.error(error instanceof Error ? error.message : t('cannotCreateOrder'))
     }
   }
 
   const handleDeleteOrder = (orderId: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
     deleteOrder(orderId)
-    message.success('Đã xóa đơn hàng')
+    message.success(t('orderDeleted'))
   }
 
   const handleStartEdit = (order: Order, e: React.MouseEvent) => {
@@ -56,14 +59,14 @@ export function OrderTabs() {
   if (orders.length === 0) {
     return (
       <div className="flex items-center gap-2 mb-4 p-2 bg-gray-50 rounded-lg">
-        <span className="text-gray-500 text-sm">Chưa có đơn hàng</span>
+        <span className="text-gray-500 text-sm">{t('noOrder')}</span>
         <Button
           type="primary"
           size="small"
           icon={<PlusOutlined />}
           onClick={handleAddOrder}
         >
-          Tạo đơn
+          {t('createOrder')}
         </Button>
       </div>
     )
@@ -103,12 +106,12 @@ export function OrderTabs() {
           )}
           {orders.length > 1 && (
             <Popconfirm
-              title="Xóa đơn hàng?"
-              description="Các sản phẩm trong đơn sẽ bị xóa"
+              title={t('deleteOrderConfirm')}
+              description={t('deleteOrderMessage')}
               onConfirm={(e) => handleDeleteOrder(order.id, e)}
               onCancel={(e) => e?.stopPropagation()}
-              okText="Xóa"
-              cancelText="Hủy"
+              okText={tCommon('delete')}
+              cancelText={tCommon('cancel')}
             >
               <CloseOutlined
                 className="text-gray-400 hover:text-red-500 text-xs cursor-pointer"
@@ -137,7 +140,7 @@ export function OrderTabs() {
               onClick={handleAddOrder}
               className="text-blue-500"
             >
-              Thêm đơn
+              {t('addOrder')}
             </Button>
           )
         }

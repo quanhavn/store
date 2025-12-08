@@ -3,6 +3,7 @@
 import { Modal, Button, Input, Space, Tag, Popconfirm, message, List, Empty } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import type { ProductAttribute } from '@/lib/supabase/functions'
 
@@ -19,6 +20,9 @@ export function AttributeManagementModal({
   attributes,
   onAttributesChange,
 }: AttributeManagementModalProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
   const [newAttributeName, setNewAttributeName] = useState('')
   const [newValueInputs, setNewValueInputs] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -27,12 +31,12 @@ export function AttributeManagementModal({
   const handleCreateAttribute = async () => {
     const name = newAttributeName.trim()
     if (!name) {
-      message.warning('Vui lòng nhập tên thuộc tính')
+      message.warning(t('validation.attributeNameRequired'))
       return
     }
 
     if (attributes.some(a => a.name.toLowerCase() === name.toLowerCase())) {
-      message.warning('Thuộc tính đã tồn tại')
+      message.warning(t('validation.attributeExists'))
       return
     }
 
@@ -41,9 +45,9 @@ export function AttributeManagementModal({
       const result = await api.attributes.create({ name })
       onAttributesChange([...attributes, result.attribute])
       setNewAttributeName('')
-      message.success(`Đã tạo thuộc tính "${name}"`)
+      message.success(t('attributeCreated', { name }))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Không thể tạo thuộc tính')
+      message.error(error instanceof Error ? error.message : tErrors('createAttribute'))
     } finally {
       setLoading(false)
     }
@@ -108,26 +112,26 @@ export function AttributeManagementModal({
         }
         return a
       }))
-      message.success('Đã xóa giá trị')
+      message.success(t('valueDeleted'))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Không thể xóa giá trị')
+      message.error(error instanceof Error ? error.message : tErrors('deleteValue'))
     }
   }
 
   return (
     <Modal
-      title="Quản lý thuộc tính sản phẩm"
+      title={t('manageAttributes')}
       open={open}
       onCancel={onClose}
       footer={
-        <Button onClick={onClose}>Đóng</Button>
+        <Button onClick={onClose}>{tCommon('close')}</Button>
       }
       width={600}
     >
       <div className="space-y-4">
         <div className="flex gap-2">
           <Input
-            placeholder="Tên thuộc tính mới (VD: Size, Màu sắc)"
+            placeholder={t('attributeNamePlaceholder')}
             value={newAttributeName}
             onChange={(e) => setNewAttributeName(e.target.value)}
             onPressEnter={handleCreateAttribute}
@@ -139,13 +143,13 @@ export function AttributeManagementModal({
             onClick={handleCreateAttribute}
             loading={loading}
           >
-            Thêm
+            {tCommon('add')}
           </Button>
         </div>
 
         {attributes.length === 0 ? (
           <Empty
-            description="Chưa có thuộc tính nào"
+            description={t('noAttributes')}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
@@ -160,8 +164,8 @@ export function AttributeManagementModal({
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{attr.name}</span>
                     <Popconfirm
-                      title="Xóa thuộc tính này?"
-                      description="Các giá trị thuộc tính cũng sẽ bị xóa."
+                      title={t('deleteAttribute')}
+                      description={t('deleteAttributeMessage')}
                       onConfirm={() => handleDeleteAttribute(attr.id)}
                     >
                       <Button
@@ -170,7 +174,7 @@ export function AttributeManagementModal({
                         size="small"
                         icon={<DeleteOutlined />}
                       >
-                        Xóa
+                        {tCommon('delete')}
                       </Button>
                     </Popconfirm>
                   </div>
@@ -192,7 +196,7 @@ export function AttributeManagementModal({
 
                   <Space.Compact className="w-full max-w-xs">
                     <Input
-                      placeholder="Thêm giá trị..."
+                      placeholder={t('addValuePlaceholder')}
                       size="small"
                       value={newValueInputs[attr.id] || ''}
                       onChange={(e) => setNewValueInputs(prev => ({

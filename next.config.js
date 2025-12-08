@@ -1,4 +1,5 @@
 const { withSentryConfig } = require('@sentry/nextjs')
+const createNextIntlPlugin = require('next-intl/plugin')
 
 // Bundle analyzer for performance debugging
 // Run: pnpm analyze
@@ -12,6 +13,8 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
 })
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -72,9 +75,10 @@ const sentryWebpackPluginOptions = {
   automaticVercelMonitors: true,
 }
 
-// Wrap with Bundle Analyzer first, then PWA, then Sentry
+// Wrap with Bundle Analyzer first, then next-intl, then PWA, then Sentry
 const configWithAnalyzer = withBundleAnalyzer(nextConfig)
-const configWithPWA = withPWA(configWithAnalyzer)
+const configWithIntl = withNextIntl(configWithAnalyzer)
+const configWithPWA = withPWA(configWithIntl)
 
 // Only wrap with Sentry if auth token is available (for source map uploads)
 // Otherwise, just export the PWA config

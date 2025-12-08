@@ -12,6 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { useTranslations } from 'next-intl'
 
 interface MonthlyData {
   month: string
@@ -60,9 +61,12 @@ interface CustomTooltipProps {
     payload: MonthlyData
   }>
   label?: string
+  revenueLabel?: string
+  expenseLabel?: string
+  profitLabel?: string
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, revenueLabel = 'Revenue', expenseLabel = 'Expense', profitLabel = 'Profit' }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null
   }
@@ -75,21 +79,21 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <div className="space-y-1">
         <p className="text-sm">
           <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#3ecf8e' }} />
-          <span className="text-gray-600">Doanh thu: </span>
+          <span className="text-gray-600">{revenueLabel}: </span>
           <span className="font-semibold text-[#3ecf8e]">
             {formatFullCurrency(data.revenue)}
           </span>
         </p>
         <p className="text-sm">
           <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#ef4444' }} />
-          <span className="text-gray-600">Chi phi: </span>
+          <span className="text-gray-600">{expenseLabel}: </span>
           <span className="font-semibold text-[#ef4444]">
             {formatFullCurrency(data.expenses)}
           </span>
         </p>
         {data.profit !== undefined && (
           <p className="text-sm pt-1 border-t border-gray-100">
-            <span className="text-gray-600">Loi nhuan: </span>
+            <span className="text-gray-600">{profitLabel}: </span>
             <span className={`font-semibold ${data.profit >= 0 ? 'text-[#3ecf8e]' : 'text-[#ef4444]'}`}>
               {formatFullCurrency(data.profit)}
             </span>
@@ -104,6 +108,10 @@ export function RevenueExpenseChart({
   data,
   isLoading,
 }: RevenueExpenseChartProps) {
+  const t = useTranslations('reports')
+  const tCommon = useTranslations('common')
+  const tFinance = useTranslations('finance')
+
   const chartData = useMemo(() => {
     return data.map(item => ({
       ...item,
@@ -125,10 +133,10 @@ export function RevenueExpenseChart({
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm">
         <h3 className="text-base font-semibold text-gray-700 mb-4">
-          Doanh thu vs Chi phi
+          {t('revenue')} vs {tFinance('expense')}
         </h3>
         <div className="h-64 flex items-center justify-center text-gray-400">
-          Khong co du lieu
+          {tCommon('noData')}
         </div>
       </div>
     )
@@ -137,7 +145,7 @@ export function RevenueExpenseChart({
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm">
       <h3 className="text-base font-semibold text-gray-700 mb-4">
-        Doanh thu vs Chi phi
+        {t('revenue')} vs {tFinance('expense')}
       </h3>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
@@ -159,7 +167,7 @@ export function RevenueExpenseChart({
               axisLine={{ stroke: '#e5e7eb' }}
               width={55}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip revenueLabel={t('revenue')} expenseLabel={tFinance('expense')} profitLabel={t('profit')} />} />
             <Legend
               verticalAlign="top"
               align="right"
@@ -171,7 +179,7 @@ export function RevenueExpenseChart({
             <Line
               type="monotone"
               dataKey="revenue"
-              name="Doanh thu"
+              name={t('revenue')}
               stroke="#3ecf8e"
               strokeWidth={2}
               dot={{ fill: '#3ecf8e', strokeWidth: 0, r: 4 }}
@@ -180,7 +188,7 @@ export function RevenueExpenseChart({
             <Line
               type="monotone"
               dataKey="expenses"
-              name="Chi phi"
+              name={tFinance('expense')}
               stroke="#ef4444"
               strokeWidth={2}
               dot={{ fill: '#ef4444', strokeWidth: 0, r: 4 }}

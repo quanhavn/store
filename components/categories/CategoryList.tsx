@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Card, Button, Space, Typography } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined, FolderOutlined, FolderOpenOutlined } from '@ant-design/icons'
 import type { Category } from '@/lib/supabase/functions'
@@ -15,6 +16,9 @@ interface CategoryListProps {
 }
 
 export function CategoryList({ categories, onEdit, onDelete, onAddSubcategory, level = 0 }: CategoryListProps) {
+  const t = useTranslations('categories')
+  const tCommon = useTranslations('common')
+
   if (categories.length === 0) {
     return null
   }
@@ -34,7 +38,7 @@ export function CategoryList({ categories, onEdit, onDelete, onAddSubcategory, l
                 <Text strong={level === 0}>{category.name}</Text>
                 {category.children && category.children.length > 0 && (
                   <Text type="secondary" className="text-xs">
-                    ({category.children.length} danh muc con)
+                    ({t('subcategoriesCount', { count: category.children.length })})
                   </Text>
                 )}
               </div>
@@ -44,14 +48,14 @@ export function CategoryList({ categories, onEdit, onDelete, onAddSubcategory, l
                   size="small"
                   icon={<PlusOutlined />}
                   onClick={() => onAddSubcategory(category)}
-                  title="Them danh muc con"
+                  title={t('addSubcategory')}
                 />
                 <Button
                   type="text"
                   size="small"
                   icon={<EditOutlined />}
                   onClick={() => onEdit(category)}
-                  title="Sua"
+                  title={tCommon('edit')}
                 />
                 <Button
                   type="text"
@@ -59,7 +63,7 @@ export function CategoryList({ categories, onEdit, onDelete, onAddSubcategory, l
                   danger
                   icon={<DeleteOutlined />}
                   onClick={() => onDelete(category)}
-                  title="Xoa"
+                  title={tCommon('delete')}
                 />
               </Space>
             </div>

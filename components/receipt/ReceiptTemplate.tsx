@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import type { Database } from '@/types/database'
 import { PAPER_WIDTH, type PaperWidth } from '@/lib/receipt/thermal-commands'
 
@@ -47,17 +48,6 @@ function formatTime(dateString: string): string {
   return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
-function getPaymentMethodLabel(method: string): string {
-  const labels: Record<string, string> = {
-    cash: 'Tien mat',
-    bank_transfer: 'Chuyen khoan',
-    momo: 'MoMo',
-    zalopay: 'ZaloPay',
-    vnpay: 'VNPay',
-  }
-  return labels[method] || method
-}
-
 // Group items by VAT rate for breakdown
 function groupByVatRate(items: SaleItem[]): Array<{ rate: number; amount: number }> {
   const vatGroups: Record<number, number> = {}
@@ -97,11 +87,23 @@ export function ReceiptTemplate({
   showQrCode = true,
   qrCodeUrl,
 }: ReceiptProps) {
+  const t = useTranslations('pos')
   const charWidth = PAPER_WIDTH[paperWidth]
   const vatBreakdown = groupByVatRate(items)
   const totalAmount = sale.total || 0
   const cashReceived = payments.reduce((sum, p) => sum + p.amount, 0)
   const change = calculateChange(payments, totalAmount)
+
+  const getPaymentMethodLabel = (method: string): string => {
+    const labels: Record<string, string> = {
+      cash: t('paymentCash'),
+      bank_transfer: t('paymentBankTransfer'),
+      momo: 'MoMo',
+      zalopay: 'ZaloPay',
+      vnpay: 'VNPay',
+    }
+    return labels[method] || method
+  }
 
   // Print-specific styles are defined inline for the print media query
   const printStyles = `
@@ -148,7 +150,7 @@ export function ReceiptTemplate({
         {/* Store Header */}
         <div style={{ textAlign: 'center', marginBottom: '4px' }}>
           <div style={{ fontWeight: 'bold', fontSize: paperWidth === 'MM_58' ? '13px' : '14px' }}>
-            {store.name?.toUpperCase() || 'CUA HANG'}
+            {store.name?.toUpperCase() || t('store')}
           </div>
           {store.address && (
             <div style={{ fontSize: paperWidth === 'MM_58' ? '10px' : '11px' }}>
@@ -157,12 +159,12 @@ export function ReceiptTemplate({
           )}
           {store.phone && (
             <div style={{ fontSize: paperWidth === 'MM_58' ? '10px' : '11px' }}>
-              DT: {store.phone}
+              {t('receiptPhone')}: {store.phone}
             </div>
           )}
           {store.tax_code && (
             <div style={{ fontSize: paperWidth === 'MM_58' ? '10px' : '11px' }}>
-              MST: {store.tax_code}
+              {t('receiptTaxCode')}: {store.tax_code}
             </div>
           )}
         </div>
@@ -172,7 +174,7 @@ export function ReceiptTemplate({
 
         {/* Invoice Title */}
         <div style={{ textAlign: 'center', fontWeight: 'bold', margin: '4px 0' }}>
-          HOA DON BAN HANG
+          {t('salesInvoice')}
         </div>
 
         {/* Double line separator */}
@@ -180,21 +182,21 @@ export function ReceiptTemplate({
 
         {/* Invoice Info */}
         <div style={{ marginBottom: '4px' }}>
-          <div>So HD: {sale.invoice_no || '---'}</div>
+          <div>{t('invoiceNo')}: {sale.invoice_no || '---'}</div>
           {sale.completed_at && (
             <div>
-              Ngay: {formatDate(sale.completed_at)} {formatTime(sale.completed_at)}
+              {t('receiptDate')}: {formatDate(sale.completed_at)} {formatTime(sale.completed_at)}
             </div>
           )}
-          {cashier && <div>Thu ngan: {cashier}</div>}
+          {cashier && <div>{t('cashier')}: {cashier}</div>}
         </div>
 
         {/* Customer Info (if available) */}
         {(sale.customer_name || sale.customer_phone || sale.customer_tax_code) && (
           <div style={{ marginBottom: '4px' }}>
-            {sale.customer_name && <div>KH: {sale.customer_name}</div>}
-            {sale.customer_phone && <div>SDT: {sale.customer_phone}</div>}
-            {sale.customer_tax_code && <div>MST KH: {sale.customer_tax_code}</div>}
+            {sale.customer_name && <div>{t('customer')}: {sale.customer_name}</div>}
+            {sale.customer_phone && <div>{t('customerPhone')}: {sale.customer_phone}</div>}
+            {sale.customer_tax_code && <div>{t('customerTaxCode')}: {sale.customer_tax_code}</div>}
           </div>
         )}
 
@@ -202,7 +204,7 @@ export function ReceiptTemplate({
         <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
 
         {/* Items Header */}
-        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>San pham</div>
+        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>{t('products')}</div>
 
         {/* Dashed line separator */}
         <div style={{ borderTop: '1px dashed #000', margin: '2px 0' }} />
@@ -227,7 +229,7 @@ export function ReceiptTemplate({
               {/* Discount if any */}
               {item.discount && item.discount > 0 && (
                 <div style={{ textAlign: 'right', fontSize: '10px' }}>
-                  Giam: -{formatCurrency(item.discount)}
+                  {t('discount')}: -{formatCurrency(item.discount)}
                 </div>
               )}
             </div>
@@ -241,7 +243,7 @@ export function ReceiptTemplate({
         <div style={{ marginBottom: '4px' }}>
           {/* Subtotal */}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Tam tinh:</span>
+            <span>{t('subtotal')}:</span>
             <span>{formatCurrency(sale.subtotal || 0)}</span>
           </div>
 
@@ -256,7 +258,7 @@ export function ReceiptTemplate({
           {/* Discount */}
           {sale.discount && sale.discount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Giam gia:</span>
+              <span>{t('discount')}:</span>
               <span>-{formatCurrency(sale.discount)}</span>
             </div>
           )}
@@ -274,7 +276,7 @@ export function ReceiptTemplate({
             fontSize: paperWidth === 'MM_58' ? '13px' : '14px',
           }}
         >
-          <span>TONG CONG:</span>
+          <span>{t('total')}:</span>
           <span>{formatCurrency(totalAmount)}</span>
         </div>
 
@@ -285,7 +287,7 @@ export function ReceiptTemplate({
         <div style={{ marginBottom: '4px' }}>
           {payments.map((payment, index) => (
             <div key={payment.id || index} style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Thanh toan ({getPaymentMethodLabel(payment.method)}):</span>
+              <span>{t('payment')} ({getPaymentMethodLabel(payment.method)}):</span>
               <span>{formatCurrency(payment.amount)}</span>
             </div>
           ))}
@@ -294,11 +296,11 @@ export function ReceiptTemplate({
           {change > 0 && (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Tien nhan:</span>
+                <span>{t('cashReceived')}:</span>
                 <span>{formatCurrency(cashReceived)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Tien thua:</span>
+                <span>{t('change')}:</span>
                 <span>{formatCurrency(change)}</span>
               </div>
             </>
@@ -309,7 +311,7 @@ export function ReceiptTemplate({
         {sale.note && (
           <>
             <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-            <div style={{ fontSize: '10px' }}>Ghi chu: {sale.note}</div>
+            <div style={{ fontSize: '10px' }}>{t('note')}: {sale.note}</div>
           </>
         )}
 
@@ -318,8 +320,8 @@ export function ReceiptTemplate({
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: '8px' }}>
-          <div style={{ fontWeight: 'bold' }}>Cam on quy khach!</div>
-          <div>Hen gap lai</div>
+          <div style={{ fontWeight: 'bold' }}>{t('thankYou')}</div>
+          <div>{t('seeYouAgain')}</div>
         </div>
 
         {/* QR Code Placeholder */}
@@ -339,7 +341,7 @@ export function ReceiptTemplate({
             >
               [QR Code]
             </div>
-            <div style={{ fontSize: '9px' }}>Tra cuu hoa don dien tu</div>
+            <div style={{ fontSize: '9px' }}>{t('lookupEInvoice')}</div>
             {qrCodeUrl && (
               <div style={{ fontSize: '8px', wordBreak: 'break-all' }}>{qrCodeUrl}</div>
             )}
@@ -357,6 +359,7 @@ export function ReceiptTemplate({
  * Receipt Preview Container with print button
  */
 export function ReceiptPreview(props: ReceiptProps & { onClose?: () => void }) {
+  const t = useTranslations('pos')
   return (
     <div
       style={{
@@ -379,7 +382,7 @@ export function ReceiptPreview(props: ReceiptProps & { onClose?: () => void }) {
             marginRight: '8px',
           }}
         >
-          In hoa don
+          {t('printInvoice')}
         </button>
         {props.onClose && (
           <button
@@ -394,7 +397,7 @@ export function ReceiptPreview(props: ReceiptProps & { onClose?: () => void }) {
               fontSize: '14px',
             }}
           >
-            Dong
+            {t('close')}
           </button>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { Card, Tag, Progress, Typography } from 'antd'
 import { UserOutlined, CalendarOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { DebtWithCustomer, DebtInstallment } from '@/lib/supabase/functions'
 
@@ -32,7 +33,7 @@ export function transformDebtForDisplay(debt: DebtWithCustomer): DebtDisplayData
     id: debt.id,
     store_id: debt.store_id,
     customer_id: debt.customer_id,
-    customer_name: debt.customer?.name || 'Khach hang',
+    customer_name: debt.customer?.name || '',
     customer_phone: debt.customer?.phone || null,
     debt_type: debt.debt_type,
     original_amount: debt.original_amount,
@@ -52,6 +53,10 @@ interface DebtCardProps {
 }
 
 export function DebtCard({ debt, onClick }: DebtCardProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+  const tCustomers = useTranslations('customers')
+
   const paidAmount = debt.original_amount - debt.remaining_amount
   const paidPercentage = debt.original_amount > 0
     ? Math.round((paidAmount / debt.original_amount) * 100)
@@ -60,13 +65,13 @@ export function DebtCard({ debt, onClick }: DebtCardProps) {
   const getStatusBadge = (status: DebtDisplayData['status']) => {
     switch (status) {
       case 'active':
-        return <Tag color="blue">Dang no</Tag>
+        return <Tag color="blue">{tCommon('active')}</Tag>
       case 'overdue':
-        return <Tag color="red">Qua han</Tag>
+        return <Tag color="red">{tCommon('overdue')}</Tag>
       case 'paid':
-        return <Tag color="green">Da tra</Tag>
+        return <Tag color="green">{tCommon('paid')}</Tag>
       case 'cancelled':
-        return <Tag color="default">Da huy</Tag>
+        return <Tag color="default">{tCommon('cancelled')}</Tag>
       default:
         return null
     }
@@ -75,9 +80,9 @@ export function DebtCard({ debt, onClick }: DebtCardProps) {
   const getDebtTypeTag = (type: DebtDisplayData['debt_type']) => {
     switch (type) {
       case 'credit':
-        return <Tag color="purple">Ghi no</Tag>
+        return <Tag color="purple">{t('credit')}</Tag>
       case 'installment':
-        return <Tag color="orange">Tra gop</Tag>
+        return <Tag color="orange">{t('installment')}</Tag>
       default:
         return null
     }
@@ -101,7 +106,7 @@ export function DebtCard({ debt, onClick }: DebtCardProps) {
               <UserOutlined className="text-blue-600" />
             </div>
             <div className="min-w-0">
-              <Text strong className="truncate block">{debt.customer_name}</Text>
+              <Text strong className="truncate block">{debt.customer_name || tCustomers('customer')}</Text>
               {debt.customer_phone && (
                 <Text type="secondary" className="text-xs">{debt.customer_phone}</Text>
               )}
@@ -116,13 +121,13 @@ export function DebtCard({ debt, onClick }: DebtCardProps) {
         {/* Amount info */}
         <div className="flex items-center justify-between">
           <div>
-            <Text type="secondary" className="text-xs block">Con no</Text>
+            <Text type="secondary" className="text-xs block">{t('remainingAmount')}</Text>
             <Text strong className={`text-lg ${isOverdue ? 'text-red-600' : 'text-blue-600'}`}>
               {formatCurrency(debt.remaining_amount)}
             </Text>
           </div>
           <div className="text-right">
-            <Text type="secondary" className="text-xs block">Tong no</Text>
+            <Text type="secondary" className="text-xs block">{t('totalDebt')}</Text>
             <Text className="text-sm">{formatCurrency(debt.original_amount)}</Text>
           </div>
         </div>
@@ -130,7 +135,7 @@ export function DebtCard({ debt, onClick }: DebtCardProps) {
         {/* Progress bar */}
         <div>
           <div className="flex justify-between text-xs mb-1">
-            <Text type="secondary">Da tra: {formatCurrency(paidAmount)}</Text>
+            <Text type="secondary">{t('paidAmount')}: {formatCurrency(paidAmount)}</Text>
             <Text type="secondary">{paidPercentage}%</Text>
           </div>
           <Progress
@@ -146,7 +151,7 @@ export function DebtCard({ debt, onClick }: DebtCardProps) {
           <div className={`flex items-center gap-2 text-xs ${isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
             <CalendarOutlined />
             <span>
-              {isOverdue ? 'Qua han: ' : 'Han tra: '}
+              {isOverdue ? `${tCommon('overdue')}: ` : `${t('dueDate')}: `}
               {formatDate(debt.due_date)}
             </span>
           </div>

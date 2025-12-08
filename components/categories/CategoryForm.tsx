@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Modal, Form, Input, Select, InputNumber } from 'antd'
 import type { Category } from '@/lib/supabase/functions'
 
@@ -25,6 +26,8 @@ export function CategoryForm({
   title,
   loading,
 }: CategoryFormProps) {
+  const t = useTranslations('categories')
+  const tCommon = useTranslations('common')
   const [form] = Form.useForm()
 
   useEffect(() => {
@@ -90,28 +93,28 @@ export function CategoryForm({
       onCancel={onClose}
       onOk={handleOk}
       confirmLoading={loading}
-      okText={initialValues ? 'Cap nhat' : 'Tao'}
-      cancelText="Huy"
+      okText={initialValues ? tCommon('update') : tCommon('create')}
+      cancelText={tCommon('cancel')}
     >
       <Form form={form} layout="vertical" className="mt-4">
         <Form.Item
           name="name"
-          label="Ten danh muc"
-          rules={[{ required: true, message: 'Vui long nhap ten danh muc' }]}
+          label={t('name')}
+          rules={[{ required: true, message: t('nameRequired') }]}
         >
-          <Input placeholder="Nhap ten danh muc" autoFocus />
+          <Input placeholder={t('namePlaceholder')} autoFocus />
         </Form.Item>
 
         {!parentCategory && (
           <Form.Item
             name="parent_id"
-            label="Danh muc cha"
+            label={t('parentCategory')}
           >
             <Select
-              placeholder="Chon danh muc cha (khong bat buoc)"
+              placeholder={t('parentCategoryPlaceholder')}
               allowClear
               options={[
-                { value: '', label: 'Khong co (danh muc goc)' },
+                { value: '', label: t('noParent') },
                 ...availableParents.map(c => ({
                   value: c.id,
                   label: c.name,
@@ -123,7 +126,7 @@ export function CategoryForm({
 
         <Form.Item
           name="sort_order"
-          label="Thu tu sap xep"
+          label={t('sortOrder')}
           initialValue={0}
         >
           <InputNumber min={0} className="w-full" />

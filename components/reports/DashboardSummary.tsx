@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/supabase/functions'
+import { useTranslations } from 'next-intl'
 import { TodaySalesWidget } from './TodaySalesWidget'
 import { MonthSummaryWidget } from './MonthSummaryWidget'
 import { AlertsWidget } from './AlertsWidget'
@@ -17,6 +18,8 @@ import {
 } from './charts'
 
 export function DashboardSummary() {
+  const t = useTranslations('reports')
+
   const { isLoading: isDashboardLoading } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => api.reports.dashboardSummary(),
@@ -61,7 +64,7 @@ export function DashboardSummary() {
       {/* Charts Section */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Bieu do phan tich
+          {t('tabs.dashboard')}
         </h2>
 
         {/* Sales Line Chart - Full width */}

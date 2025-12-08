@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Drawer, Form, InputNumber, Select, Input, Button, message, Typography, Space } from 'antd'
 import { DollarOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type DebtInstallment } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import type { DebtDisplayData } from './DebtCard'
@@ -19,11 +20,14 @@ interface DebtPaymentFormProps {
 }
 
 const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Tien mat' },
-  { value: 'bank_transfer', label: 'Chuyen khoan' },
+  { value: 'cash', label: 'cash' },
+  { value: 'bank_transfer', label: 'bankTransfer' },
 ]
 
 export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }: DebtPaymentFormProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+  const tCustomers = useTranslations('customers')
   const [form] = Form.useForm()
   const paymentMethod = Form.useWatch('payment_method', form)
 
@@ -46,12 +50,12 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
       installment_id?: string
     }) => api.debts.recordPayment(data),
     onSuccess: () => {
-      message.success('Ghi nhan thanh toan thanh cong')
+      message.success(tCommon('success'))
       form.resetFields()
       onSuccess()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
@@ -76,7 +80,7 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
       const values = await form.validateFields()
 
       if (values.amount > debt.remaining_amount) {
-        message.error('So tien thanh toan khong duoc lon hon so no con lai')
+        message.error(t('maxDebtPayment'))
         return
       }
 
@@ -102,7 +106,7 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
     <Drawer
       open={open}
       onClose={onClose}
-      title={installment ? `Thanh toan ky ${installment.installment_number}` : 'Thanh toan cong no'}
+      title={installment ? `${t('debtPayment')} #${installment.installment_number}` : t('debtPayment')}
       placement="bottom"
       height="auto"
       extra={
@@ -112,7 +116,7 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
           onClick={handleSubmit}
           loading={recordPaymentMutation.isPending}
         >
-          Xac nhan
+          {tCommon('confirm')}
         </Button>
       }
     >
@@ -120,16 +124,16 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
         {/* Debt info */}
         <div className="bg-gray-50 rounded-lg p-3">
           <div className="flex justify-between mb-2">
-            <Text type="secondary">Khach hang</Text>
-            <Text strong>{debt.customer_name}</Text>
+            <Text type="secondary">{tCustomers('customer')}</Text>
+            <Text strong>{debt.customer_name || tCustomers('customer')}</Text>
           </div>
           <div className="flex justify-between">
-            <Text type="secondary">Con no</Text>
+            <Text type="secondary">{t('remainingAmount')}</Text>
             <Text strong className="text-blue-600">{formatCurrency(debt.remaining_amount)}</Text>
           </div>
           {installment && (
             <div className="flex justify-between mt-2 pt-2 border-t">
-              <Text type="secondary">Ky {installment.installment_number} con lai</Text>
+              <Text type="secondary">{t('installment')} #{installment.installment_number}</Text>
               <Text strong className="text-orange-600">
                 {formatCurrency(installment.amount - installment.paid_amount)}
               </Text>
@@ -143,13 +147,13 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
         >
           <Form.Item
             name="amount"
-            label="So tien thanh toan"
+            label={t('paymentAmount')}
             rules={[
-              { required: true, message: 'Nhap so tien thanh toan' },
+              { required: true, message: tCommon('enterAmount') },
               {
                 validator: (_, value) => {
                   if (value && value > maxAmount) {
-                    return Promise.reject(`So tien khong duoc vuot qua ${formatCurrency(maxAmount)}`)
+                    return Promise.reject(`${t('maxDebtPayment')}: ${formatCurrency(maxAmount)}`)
                   }
                   return Promise.resolve()
                 },
@@ -177,7 +181,7 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
                 size="small"
                 onClick={() => form.setFieldValue('amount', installment.amount - installment.paid_amount)}
               >
-                Tra het ky ({formatCurrency(installment.amount - installment.paid_amount)})
+                {tCommon('payFull')} ({formatCurrency(installment.amount - installment.paid_amount)})
               </Button>
             ) : (
               <>
@@ -211,7 +215,7 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
                   ghost
                   onClick={() => form.setFieldValue('amount', debt.remaining_amount)}
                 >
-                  Tra het ({formatCurrency(debt.remaining_amount)})
+                  {tCommon('payFull')} ({formatCurrency(debt.remaining_amount)})
                 </Button>
               </>
             )}
@@ -219,21 +223,21 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
 
           <Form.Item
             name="payment_method"
-            label="Phuong thuc thanh toan"
-            rules={[{ required: true, message: 'Chon phuong thuc thanh toan' }]}
+            label={tCommon('paymentMethod')}
+            rules={[{ required: true, message: tCommon('required') }]}
           >
-            <Select options={PAYMENT_METHODS} />
+            <Select options={PAYMENT_METHODS.map(m => ({ value: m.value, label: tCommon(m.label) }))} />
           </Form.Item>
 
           {paymentMethod === 'bank_transfer' && (
             <>
               <Form.Item
                 name="bank_account_id"
-                label="Tai khoan ngan hang"
-                rules={[{ required: true, message: 'Chon tai khoan ngan hang' }]}
+                label={tCommon('bankAccount')}
+                rules={[{ required: true, message: tCommon('required') }]}
               >
                 <Select
-                  placeholder="Chon tai khoan"
+                  placeholder={tCommon('select')}
                   options={bankAccounts.map(acc => ({
                     value: acc.id,
                     label: `${acc.bank_name} - ${acc.account_number}`,
@@ -243,7 +247,7 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
 
               <Form.Item
                 name="bank_ref"
-                label="Ma giao dich"
+                label={tCommon('transactionRef')}
               >
                 <Input placeholder="VD: FT123456789" />
               </Form.Item>
@@ -252,11 +256,11 @@ export function DebtPaymentForm({ open, onClose, debt, installment, onSuccess }:
 
           <Form.Item
             name="notes"
-            label="Ghi chu"
+            label={tCommon('notes')}
           >
             <Input.TextArea
               rows={2}
-              placeholder="Ghi chu them (neu co)"
+              placeholder={tCommon('notesPlaceholder')}
             />
           </Form.Item>
         </Form>

@@ -3,6 +3,7 @@
 import { Form, Input, InputNumber, Select, Button, Upload, Drawer, Tabs, Switch, Table, Space, Tag, Popconfirm, message, Divider } from 'antd'
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import type { UploadFile } from 'antd/es/upload/interface'
 import type { InputRef } from 'antd'
 import type { ProductUnit, ProductVariant, ProductAttribute, ProductAttributeValue } from '@/types/database'
@@ -72,11 +73,6 @@ const VAT_OPTIONS = [
   { label: '10%', value: 10 },
 ]
 
-const UNIT_OPTIONS = [
-  'cái', 'chiếc', 'hộp', 'gói', 'chai', 'lon', 'kg', 'gram',
-  'lít', 'ml', 'mét', 'bộ', 'đôi', 'cuộn', 'tờ',
-]
-
 export function ProductFormAdvanced({
   open,
   onClose,
@@ -87,14 +83,21 @@ export function ProductFormAdvanced({
   initialValues,
   initialUnits = [],
   initialVariants = [],
-  title = 'Thêm sản phẩm',
+  title,
 }: ProductFormAdvancedProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
   const [form] = Form.useForm()
   const [unitForm] = Form.useForm()
   const [variantForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [activeTab, setActiveTab] = useState('basic')
+
+  const UNIT_OPTIONS = [
+    'cái', 'chiếc', 'hộp', 'gói', 'chai', 'lon', 'kg', 'gram',
+    'lít', 'ml', 'mét', 'bộ', 'đôi', 'cuộn', 'tờ',
+  ]
 
   // Category creation state
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -154,13 +157,13 @@ export function ProductFormAdvanced({
     e.preventDefault()
     const trimmedName = newCategoryName.trim()
     if (!trimmedName) {
-      message.warning('Vui lòng nhập tên danh mục')
+      message.warning(t('validation.categoryNameRequired'))
       return
     }
 
     // Check if category already exists
     if (categories.some(c => c.name.toLowerCase() === trimmedName.toLowerCase())) {
-      message.warning('Danh mục này đã tồn tại')
+      message.warning(t('validation.categoryExists'))
       return
     }
 
@@ -176,9 +179,9 @@ export function ProductFormAdvanced({
       form.setFieldValue('category_id', newCategory.id)
 
       setNewCategoryName('')
-      message.success(`Đã tạo danh mục "${trimmedName}"`)
+      message.success(t('categoryCreated', { name: trimmedName }))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Không thể tạo danh mục')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     } finally {
       setCreatingCategory(false)
     }
@@ -199,9 +202,9 @@ export function ProductFormAdvanced({
       setHasUnits(false)
       setHasVariants(false)
       onClose()
-      message.success(initialValues ? 'Cập nhật thành công' : 'Thêm sản phẩm thành công')
+      message.success(initialValues ? t('updateSuccess') : t('createSuccess'))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Có lỗi xảy ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     } finally {
       setLoading(false)
     }
@@ -290,37 +293,37 @@ export function ProductFormAdvanced({
   }
 
   const unitColumns = [
-    { title: 'Đơn vị', dataIndex: 'unit_name', key: 'unit_name' },
+    { title: t('unit'), dataIndex: 'unit_name', key: 'unit_name' },
     {
-      title: 'Tỷ lệ quy đổi',
+      title: t('units.conversionRate'),
       dataIndex: 'conversion_rate',
       key: 'conversion_rate',
       render: (rate: number) => `x${rate}`,
     },
-    { title: 'Mã vạch', dataIndex: 'barcode', key: 'barcode', render: (v: string) => v || '-' },
+    { title: t('barcode'), dataIndex: 'barcode', key: 'barcode', render: (v: string) => v || '-' },
     {
-      title: 'Giá bán',
+      title: t('sellPrice'),
       dataIndex: 'sell_price',
       key: 'sell_price',
       render: formatPrice,
     },
     {
-      title: 'Trạng thái',
+      title: tCommon('status'),
       key: 'status',
       render: (_: unknown, record: UnitFormData) => (
         <Space>
-          {record.is_base_unit && <Tag color="blue">Đơn vị gốc</Tag>}
-          {record.is_default && <Tag color="green">Mặc định</Tag>}
+          {record.is_base_unit && <Tag color="blue">{t('units.baseUnit')}</Tag>}
+          {record.is_default && <Tag color="green">{t('units.default')}</Tag>}
         </Space>
       ),
     },
     {
-      title: 'Thao tác',
+      title: tCommon('actions'),
       key: 'actions',
       render: (_: unknown, record: UnitFormData) => (
         <Space>
           <Button size="small" icon={<EditOutlined />} onClick={() => handleEditUnit(record)} />
-          <Popconfirm title="Xóa đơn vị này?" onConfirm={() => handleDeleteUnit(record.id!)}>
+          <Popconfirm title={t('units.deleteConfirm')} onConfirm={() => handleDeleteUnit(record.id!)}>
             <Button size="small" icon={<DeleteOutlined />} danger />
           </Popconfirm>
         </Space>
@@ -329,23 +332,23 @@ export function ProductFormAdvanced({
   ]
 
   const variantColumns = [
-    { title: 'Tên biến thể', dataIndex: 'name', key: 'name' },
-    { title: 'SKU', dataIndex: 'sku', key: 'sku', render: (v: string) => v || '-' },
-    { title: 'Mã vạch', dataIndex: 'barcode', key: 'barcode', render: (v: string) => v || '-' },
-    { title: 'Tồn kho', dataIndex: 'quantity', key: 'quantity' },
+    { title: t('variants.variantName'), dataIndex: 'name', key: 'name' },
+    { title: t('sku'), dataIndex: 'sku', key: 'sku', render: (v: string) => v || '-' },
+    { title: t('barcode'), dataIndex: 'barcode', key: 'barcode', render: (v: string) => v || '-' },
+    { title: t('quantity'), dataIndex: 'quantity', key: 'quantity' },
     {
-      title: 'Giá bán',
+      title: t('sellPrice'),
       dataIndex: 'sell_price',
       key: 'sell_price',
       render: formatPrice,
     },
     {
-      title: 'Thao tác',
+      title: tCommon('actions'),
       key: 'actions',
       render: (_: unknown, record: VariantFormData) => (
         <Space>
           <Button size="small" icon={<EditOutlined />} onClick={() => handleEditVariant(record)} />
-          <Popconfirm title="Xóa biến thể này?" onConfirm={() => handleDeleteVariant(record.id!)}>
+          <Popconfirm title={t('variants.deleteConfirm')} onConfirm={() => handleDeleteVariant(record.id!)}>
             <Button size="small" icon={<DeleteOutlined />} danger />
           </Popconfirm>
         </Space>
@@ -356,7 +359,7 @@ export function ProductFormAdvanced({
   const tabItems = [
     {
       key: 'basic',
-      label: 'Thông tin cơ bản',
+      label: t('tabs.basicInfo'),
       children: (
         <Form
           form={form}
@@ -373,24 +376,24 @@ export function ProductFormAdvanced({
         >
           <Form.Item
             name="name"
-            label="Tên sản phẩm"
-            rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
+            label={t('productName')}
+            rules={[{ required: true, message: t('validation.productNameRequired') }]}
           >
-            <Input placeholder="VD: Mì Hảo Hảo" />
+            <Input placeholder={t('productNamePlaceholder')} />
           </Form.Item>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="sku" label="Mã SKU">
+            <Form.Item name="sku" label={t('sku')}>
               <Input placeholder="SKU001" />
             </Form.Item>
-            <Form.Item name="barcode" label="Mã vạch">
+            <Form.Item name="barcode" label={t('barcode')}>
               <Input placeholder="8934563..." />
             </Form.Item>
           </div>
 
-          <Form.Item name="category_id" label="Danh mục">
+          <Form.Item name="category_id" label={t('category')}>
             <Select
-              placeholder="Chọn danh mục"
+              placeholder={tCommon('selectCategory')}
               allowClear
               showSearch
               filterOption={(input, option) =>
@@ -403,7 +406,7 @@ export function ProductFormAdvanced({
                   <Divider style={{ margin: '8px 0' }} />
                   <Space style={{ padding: '0 8px 4px' }}>
                     <Input
-                      placeholder="Tên danh mục mới"
+                      placeholder={t('newCategoryPlaceholder')}
                       ref={categoryInputRef}
                       value={newCategoryName}
                       onChange={(e) => setNewCategoryName(e.target.value)}
@@ -416,7 +419,7 @@ export function ProductFormAdvanced({
                       onClick={handleCreateCategory}
                       loading={creatingCategory}
                     >
-                      Thêm
+                      {tCommon('add')}
                     </Button>
                   </Space>
                 </>
@@ -427,37 +430,37 @@ export function ProductFormAdvanced({
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="cost_price"
-              label="Giá nhập"
-              rules={[{ required: true, message: 'Nhập giá nhập' }]}
+              label={t('costPrice')}
+              rules={[{ required: true, message: t('validation.costPriceRequired') }]}
             >
               <InputNumber<number>
                 className="!w-full"
                 min={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                addonAfter="đ"
+                addonAfter="d"
               />
             </Form.Item>
             <Form.Item
               name="sell_price"
-              label="Giá bán"
-              rules={[{ required: true, message: 'Nhập giá bán' }]}
+              label={t('sellPrice')}
+              rules={[{ required: true, message: t('validation.sellPriceRequired') }]}
             >
               <InputNumber<number>
                 className="!w-full"
                 min={0}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                addonAfter="đ"
+                addonAfter="d"
               />
             </Form.Item>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="vat_rate" label="VAT">
+            <Form.Item name="vat_rate" label={t('vatRate')}>
               <Select options={VAT_OPTIONS} />
             </Form.Item>
-            <Form.Item name="unit" label="Đơn vị gốc">
+            <Form.Item name="unit" label={t('units.baseUnit')}>
               <Select
                 showSearch
                 options={UNIT_OPTIONS.map((u) => ({ label: u, value: u }))}
@@ -467,16 +470,16 @@ export function ProductFormAdvanced({
 
           {!hasVariants && (
             <div className="grid grid-cols-2 gap-4">
-              <Form.Item name="quantity" label="Tồn kho">
+              <Form.Item name="quantity" label={t('quantity')}>
                 <InputNumber className="w-full" min={0} />
               </Form.Item>
-              <Form.Item name="min_stock" label="Tồn tối thiểu">
+              <Form.Item name="min_stock" label={t('minStock')}>
                 <InputNumber className="w-full" min={0} />
               </Form.Item>
             </div>
           )}
 
-          <Form.Item name="image_url" label="Hình ảnh">
+          <Form.Item name="image_url" label={t('image')}>
             <Upload
               listType="picture-card"
               fileList={fileList}
@@ -487,7 +490,7 @@ export function ProductFormAdvanced({
               {fileList.length === 0 && (
                 <div>
                   <PlusOutlined />
-                  <div className="mt-2">Tải ảnh</div>
+                  <div className="mt-2">{t('uploadImage')}</div>
                 </div>
               )}
             </Upload>
@@ -497,17 +500,17 @@ export function ProductFormAdvanced({
     },
     {
       key: 'units',
-      label: 'Đa đơn vị',
+      label: t('tabs.multiUnit'),
       children: (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Switch checked={hasUnits} onChange={setHasUnits} />
-              <span>Bật đa đơn vị (VD: thùng = 24 lon)</span>
+              <span>{t('enableMultiUnit')}</span>
             </div>
             {hasUnits && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAddUnit}>
-                Thêm đơn vị
+                {t('units.addUnit')}
               </Button>
             )}
           </div>
@@ -519,66 +522,66 @@ export function ProductFormAdvanced({
               rowKey="id"
               pagination={false}
               size="small"
-              locale={{ emptyText: 'Chưa có đơn vị nào' }}
+              locale={{ emptyText: t('units.noUnits') }}
             />
           )}
 
           {/* Unit Form Modal */}
           <Drawer
-            title={editingUnit ? 'Sửa đơn vị' : 'Thêm đơn vị'}
+            title={editingUnit ? t('units.editUnit') : t('units.addUnit')}
             open={unitModalOpen}
             onClose={() => setUnitModalOpen(false)}
             styles={{ wrapper: { width: 360 } }}
             footer={
               <div className="flex gap-2">
-                <Button onClick={() => setUnitModalOpen(false)} className="flex-1">Hủy</Button>
-                <Button type="primary" onClick={() => unitForm.submit()} className="flex-1">Lưu</Button>
+                <Button onClick={() => setUnitModalOpen(false)} className="flex-1">{tCommon('cancel')}</Button>
+                <Button type="primary" onClick={() => unitForm.submit()} className="flex-1">{tCommon('save')}</Button>
               </div>
             }
           >
             <Form form={unitForm} layout="vertical" onFinish={handleSaveUnit}>
               <Form.Item
                 name="unit_name"
-                label="Tên đơn vị"
-                rules={[{ required: true, message: 'Nhập tên đơn vị' }]}
+                label={t('units.unitName')}
+                rules={[{ required: true, message: t('validation.unitNameRequired') }]}
               >
                 <Select
                   showSearch
                   allowClear
                   options={UNIT_OPTIONS.map(u => ({ label: u, value: u }))}
-                  placeholder="VD: thùng, hộp, kg"
+                  placeholder={t('units.unitNamePlaceholder')}
                 />
               </Form.Item>
 
               <Form.Item
                 name="conversion_rate"
-                label="Tỷ lệ quy đổi (so với đơn vị gốc)"
-                rules={[{ required: true, message: 'Nhập tỷ lệ' }]}
-                extra="VD: 1 thùng = 24 lon → nhập 24"
+                label={t('units.conversionRateLabel')}
+                rules={[{ required: true, message: t('validation.conversionRateRequired') }]}
+                extra={t('units.conversionRateHelp')}
               >
                 <InputNumber className="w-full" min={0.0001} step={0.01} />
               </Form.Item>
 
-              <Form.Item name="barcode" label="Mã vạch riêng">
-                <Input placeholder="Mã vạch cho đơn vị này" />
+              <Form.Item name="barcode" label={t('units.separateBarcode')}>
+                <Input placeholder={t('units.barcodePlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="sell_price" label="Giá bán riêng">
+              <Form.Item name="sell_price" label={t('units.separateSellPrice')}>
                 <InputNumber<number>
                   className="w-full"
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                  placeholder="Để trống sẽ tính tự động"
-                  addonAfter="đ"
+                  placeholder={t('units.autoCalculate')}
+                  addonAfter="d"
                 />
               </Form.Item>
 
               <div className="grid grid-cols-2 gap-4">
-                <Form.Item name="is_base_unit" label="Đơn vị gốc" valuePropName="checked">
+                <Form.Item name="is_base_unit" label={t('units.baseUnit')} valuePropName="checked">
                   <Switch />
                 </Form.Item>
-                <Form.Item name="is_default" label="Mặc định ở POS" valuePropName="checked">
+                <Form.Item name="is_default" label={t('units.defaultAtPOS')} valuePropName="checked">
                   <Switch />
                 </Form.Item>
               </div>
@@ -589,27 +592,27 @@ export function ProductFormAdvanced({
     },
     {
       key: 'variants',
-      label: 'Biến thể',
+      label: t('tabs.variants'),
       children: (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Switch checked={hasVariants} onChange={setHasVariants} />
-              <span>Bật biến thể (size, màu, mùi vị...)</span>
+              <span>{t('enableVariants')}</span>
             </div>
             {hasVariants && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAddVariant}>
-                Thêm biến thể
+                {t('variants.addVariant')}
               </Button>
             )}
           </div>
 
           {hasVariants && attributes.length > 0 && (
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Thuộc tính áp dụng</label>
+              <label className="block text-sm font-medium mb-2">{t('variants.applicableAttributes')}</label>
               <Select
                 mode="multiple"
-                placeholder="Chọn thuộc tính"
+                placeholder={t('variants.selectAttributes')}
                 className="w-full"
                 value={selectedAttributes}
                 onChange={setSelectedAttributes}
@@ -625,20 +628,20 @@ export function ProductFormAdvanced({
               rowKey="id"
               pagination={false}
               size="small"
-              locale={{ emptyText: 'Chưa có biến thể nào' }}
+              locale={{ emptyText: t('variants.noVariants') }}
             />
           )}
 
           {/* Variant Form Modal */}
           <Drawer
-            title={editingVariant ? 'Sửa biến thể' : 'Thêm biến thể'}
+            title={editingVariant ? t('variants.editVariant') : t('variants.addVariant')}
             open={variantModalOpen}
             onClose={() => setVariantModalOpen(false)}
             styles={{ wrapper: { width: 400 } }}
             footer={
               <div className="flex gap-2">
-                <Button onClick={() => setVariantModalOpen(false)} className="flex-1">Hủy</Button>
-                <Button type="primary" onClick={() => variantForm.submit()} className="flex-1">Lưu</Button>
+                <Button onClick={() => setVariantModalOpen(false)} className="flex-1">{tCommon('cancel')}</Button>
+                <Button type="primary" onClick={() => variantForm.submit()} className="flex-1">{tCommon('save')}</Button>
               </div>
             }
           >
@@ -651,48 +654,48 @@ export function ProductFormAdvanced({
                     key={attrId}
                     name={['attribute_values', attrId]}
                     label={attr.name}
-                    rules={[{ required: true, message: `Chọn ${attr.name}` }]}
+                    rules={[{ required: true, message: `${tCommon('select')} ${attr.name}` }]}
                   >
                     <Select
-                      placeholder={`Chọn ${attr.name}`}
+                      placeholder={`${tCommon('select')} ${attr.name}`}
                       options={attr.values?.map(v => ({ label: v.value, value: v.id })) || []}
                     />
                   </Form.Item>
                 )
               })}
 
-              <Form.Item name="name" label="Tên biến thể (tùy chọn)">
-                <Input placeholder="Để trống sẽ tự động tạo từ thuộc tính" />
+              <Form.Item name="name" label={t('variants.variantNameOptional')}>
+                <Input placeholder={t('variants.autoGeneratePlaceholder')} />
               </Form.Item>
 
               <div className="grid grid-cols-2 gap-4">
-                <Form.Item name="sku" label="SKU">
-                  <Input placeholder="SKU riêng" />
+                <Form.Item name="sku" label={t('sku')}>
+                  <Input placeholder={t('variants.skuPlaceholder')} />
                 </Form.Item>
-                <Form.Item name="barcode" label="Mã vạch">
-                  <Input placeholder="Mã vạch riêng" />
+                <Form.Item name="barcode" label={t('barcode')}>
+                  <Input placeholder={t('variants.barcodePlaceholder')} />
                 </Form.Item>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Form.Item name="cost_price" label="Giá nhập">
+                <Form.Item name="cost_price" label={t('costPrice')}>
                   <InputNumber<number>
                     className="w-full"
                     min={0}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                    placeholder="Giá sản phẩm gốc"
-                    addonAfter="đ"
+                    placeholder={t('variants.basePricePlaceholder')}
+                    addonAfter="d"
                   />
                 </Form.Item>
-                <Form.Item name="sell_price" label="Giá bán">
+                <Form.Item name="sell_price" label={t('sellPrice')}>
                   <InputNumber<number>
                     className="w-full"
                     min={0}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                    placeholder="Giá sản phẩm gốc"
-                    addonAfter="đ"
+                    placeholder={t('variants.basePricePlaceholder')}
+                    addonAfter="d"
                   />
                 </Form.Item>
               </div>
@@ -700,8 +703,8 @@ export function ProductFormAdvanced({
               <div className="grid grid-cols-2 gap-4">
                 <Form.Item
                   name="quantity"
-                  label="Tồn kho"
-                  rules={[{ required: true, message: 'Nhập số lượng' }]}
+                  label={t('quantity')}
+                  rules={[{ required: true, message: t('validation.quantityRequired') }]}
                 >
                   <InputNumber<number>
                     className="w-full"
@@ -710,7 +713,7 @@ export function ProductFormAdvanced({
                     parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
                   />
                 </Form.Item>
-                <Form.Item name="min_stock" label="Tồn tối thiểu">
+                <Form.Item name="min_stock" label={t('minStock')}>
                   <InputNumber<number>
                     className="w-full"
                     min={0}
@@ -728,20 +731,20 @@ export function ProductFormAdvanced({
 
   return (
     <Drawer
-      title={title}
+      title={title || (initialValues ? t('editProduct') : t('addProduct'))}
       open={open}
       onClose={onClose}
       styles={{ wrapper: { width: 500 } }}
       footer={
         <div className="flex gap-2">
-          <Button onClick={onClose} className="flex-1">Hủy</Button>
+          <Button onClick={onClose} className="flex-1">{tCommon('cancel')}</Button>
           <Button
             type="primary"
             onClick={() => form.submit()}
             loading={loading}
             className="flex-1"
           >
-            {initialValues ? 'Cập nhật' : 'Thêm'}
+            {initialValues ? tCommon('update') : tCommon('add')}
           </Button>
         </div>
       }

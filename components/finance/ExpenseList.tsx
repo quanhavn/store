@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { List, Tag, Empty, Spin, Typography, Button } from 'antd'
 import { AccountBookOutlined, PlusOutlined, InboxOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Expense } from '@/lib/supabase/functions'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { ExpenseForm } from './ExpenseForm'
@@ -19,6 +20,8 @@ interface ExpenseListProps {
 
 export function ExpenseList({ dateFrom, dateTo, categoryId, limit = 20 }: ExpenseListProps) {
   const [formOpen, setFormOpen] = useState(false)
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
 
   const { data, isLoading } = useQuery({
     queryKey: ['expenses', dateFrom, dateTo, categoryId, limit],
@@ -48,7 +51,7 @@ export function ExpenseList({ dateFrom, dateTo, categoryId, limit = 20 }: Expens
     <div>
       <div className="flex justify-between items-center mb-4">
         <div className="bg-red-50 px-4 py-2 rounded-lg">
-          <Text type="secondary" className="text-sm">Tong chi phi:</Text>
+          <Text type="secondary" className="text-sm">{t('totalExpenses')}:</Text>
           <span className="ml-2 font-semibold text-red-600">{formatCurrency(getTotalAmount())}</span>
         </div>
         <Button
@@ -57,17 +60,17 @@ export function ExpenseList({ dateFrom, dateTo, categoryId, limit = 20 }: Expens
           onClick={() => setFormOpen(true)}
           className="bg-red-500 hover:!bg-red-600"
         >
-          Them chi phi
+          {t('addExpense')}
         </Button>
       </div>
 
       {expenses.length === 0 ? (
         <Empty
           image={<InboxOutlined className="text-5xl text-gray-300" />}
-          description="Chua co chi phi nao"
+          description={t('noExpenses')}
         >
           <Button type="primary" onClick={() => setFormOpen(true)}>
-            Ghi nhan chi phi dau tien
+            {t('addFirstExpense')}
           </Button>
         </Empty>
       ) : (
@@ -89,7 +92,7 @@ export function ExpenseList({ dateFrom, dateTo, categoryId, limit = 20 }: Expens
                       </Tag>
                     )}
                     <Tag color={expense.payment_method === 'cash' ? 'green' : 'blue'} className="text-xs m-0">
-                      {expense.payment_method === 'cash' ? 'Tien mat' : 'Chuyen khoan'}
+                      {expense.payment_method === 'cash' ? t('paymentMethods.cash') : t('paymentMethods.bankTransfer')}
                     </Tag>
                     <Text type="secondary" className="text-xs">
                       {formatDate(expense.expense_date)}

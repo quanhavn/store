@@ -1,3 +1,5 @@
+'use client'
+
 import { Card, Typography } from 'antd'
 import Link from 'next/link'
 import { ArrowLeftOutlined, ShopOutlined } from '@ant-design/icons'

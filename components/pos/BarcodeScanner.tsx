@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Modal, Button, Typography, Alert, Spin, Space } from 'antd'
 import { CameraOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
@@ -26,6 +27,8 @@ const SUPPORTED_FORMATS = [
 ]
 
 export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
+  const t = useTranslations('pos.barcodeScanner')
+  const tCommon = useTranslations('common')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastScanned, setLastScanned] = useState<string | null>(null)
@@ -80,7 +83,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
       // Get available cameras
       const cameras = await Html5Qrcode.getCameras()
       if (cameras.length === 0) {
-        throw new Error('Khong tim thay camera')
+        throw new Error(t('noCameraFound'))
       }
 
       // Prefer back camera
@@ -120,17 +123,17 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     } catch (err) {
       console.error('Scanner error:', err)
 
-      let errorMessage = 'Khong the khoi dong camera'
+      let errorMessage = t('cameraStartError')
 
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
-          errorMessage = 'Vui long cap quyen truy cap camera de quet ma vach'
-        } else if (err.name === 'NotFoundError' || err.message.includes('Khong tim thay')) {
-          errorMessage = 'Khong tim thay camera tren thiet bi'
+          errorMessage = t('cameraPermissionError')
+        } else if (err.name === 'NotFoundError' || err.message.includes(t('noCameraFound'))) {
+          errorMessage = t('noCameraFound')
         } else if (err.name === 'NotReadableError') {
-          errorMessage = 'Camera dang duoc su dung boi ung dung khac'
+          errorMessage = t('cameraInUseError')
         } else if (err.message.includes('secure context') || err.message.includes('HTTPS')) {
-          errorMessage = 'Can HTTPS de su dung camera'
+          errorMessage = t('httpsRequiredError')
         }
       }
 
@@ -170,7 +173,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
       title={
         <Space>
           <CameraOutlined />
-          <span>Quet ma vach</span>
+          <span>{t('title')}</span>
         </Space>
       }
       open={open}
@@ -195,7 +198,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
             <div className="text-center">
               <Spin size="large" />
-              <Text className="block mt-2 text-white">Dang khoi dong camera...</Text>
+              <Text className="block mt-2 text-white">{t('startingCamera')}</Text>
             </div>
           </div>
         )}
@@ -206,7 +209,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
             <div className="text-center">
               <Alert
                 type="error"
-                message="Loi camera"
+                message={t('cameraError')}
                 description={error}
                 showIcon
                 className="mb-4"
@@ -216,7 +219,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
                 icon={<ReloadOutlined />}
                 onClick={handleRetry}
               >
-                Thu lai
+                {tCommon('retry')}
               </Button>
             </div>
           </div>
@@ -226,7 +229,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
         {lastScanned && (
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
             <Text type="success" strong>
-              Da quet: {lastScanned}
+              {t('scanned')}: {lastScanned}
             </Text>
           </div>
         )}
@@ -234,14 +237,14 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
         {/* Instructions */}
         <div className="mt-4 text-center">
           <Text type="secondary" className="text-sm">
-            Huong camera vao ma vach de quet
+            {t('instruction')}
           </Text>
         </div>
 
         {/* Supported formats info */}
         <div className="mt-2 text-center">
           <Text type="secondary" className="text-xs">
-            Ho tro: EAN-13, EAN-8, Code-128, Code-39, UPC-A, QR Code
+            {t('supportedFormats')}: EAN-13, EAN-8, Code-128, Code-39, UPC-A, QR Code
           </Text>
         </div>
       </div>

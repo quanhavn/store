@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Row, Col, Empty, Spin, Segmented } from 'antd'
 import { AppstoreOutlined, BarsOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { ProductCard } from './ProductCard'
 
 interface Product {
@@ -33,6 +34,7 @@ export function ProductGrid({
   onProductClick,
   showAddToCart = false,
 }: ProductGridProps) {
+  const t = useTranslations('products')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   if (loading) {
@@ -47,7 +49,7 @@ export function ProductGrid({
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="Không có sản phẩm nào"
+        description={t('noProducts')}
         className="py-12"
       />
     )

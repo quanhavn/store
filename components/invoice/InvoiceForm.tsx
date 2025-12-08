@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Form, Input, Button, message } from 'antd'
 import { UserOutlined, BankOutlined, HomeOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { validateTaxCode, validateVietnamesePhone } from '@/lib/utils'
 
 export interface InvoiceFormData {
@@ -20,7 +21,9 @@ interface InvoiceFormProps {
   submitText?: string
 }
 
-export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'Tạo hóa đơn' }: InvoiceFormProps) {
+export function InvoiceForm({ initialValues, onSubmit, loading, submitText }: InvoiceFormProps) {
+  const t = useTranslations('invoices')
+  const tCommon = useTranslations('common')
   const [form] = Form.useForm<InvoiceFormData>()
 
   const validateMST = (_: unknown, value: string) => {
@@ -29,7 +32,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
     }
     const cleaned = value.replace(/\D/g, '')
     if (cleaned.length !== 10 && cleaned.length !== 13) {
-      return Promise.reject(new Error('MST phải có 10 hoặc 13 chữ số'))
+      return Promise.reject(new Error(t('validation.taxCodeInvalid')))
     }
     return Promise.resolve()
   }
@@ -39,7 +42,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
       return Promise.resolve()
     }
     if (!validateVietnamesePhone(value)) {
-      return Promise.reject(new Error('Số điện thoại không hợp lệ'))
+      return Promise.reject(new Error(t('validation.phoneInvalid')))
     }
     return Promise.resolve()
   }
@@ -50,7 +53,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(value)) {
-      return Promise.reject(new Error('Email không hợp lệ'))
+      return Promise.reject(new Error(t('validation.emailInvalid')))
     }
     return Promise.resolve()
   }
@@ -73,24 +76,24 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
     >
       <Form.Item
         name="buyerName"
-        label="Tên người mua"
-        rules={[{ required: true, message: 'Vui lòng nhập tên người mua' }]}
+        label={t('buyerName')}
+        rules={[{ required: true, message: t('validation.buyerNameRequired') }]}
       >
         <Input
           prefix={<UserOutlined className="text-gray-400" />}
-          placeholder="Họ và tên / Tên công ty"
+          placeholder={t('buyerNamePlaceholder')}
           size="large"
         />
       </Form.Item>
 
       <Form.Item
         name="buyerTaxCode"
-        label="Mã số thuế (MST)"
+        label={t('taxCode')}
         rules={[{ validator: validateMST }]}
       >
         <Input
           prefix={<BankOutlined className="text-gray-400" />}
-          placeholder="10 hoặc 13 chữ số"
+          placeholder={t('taxCodePlaceholder')}
           size="large"
           maxLength={14}
         />
@@ -98,10 +101,10 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
 
       <Form.Item
         name="buyerAddress"
-        label="Địa chỉ"
+        label={t('address')}
       >
         <Input.TextArea
-          placeholder="Địa chỉ người mua"
+          placeholder={t('addressPlaceholder')}
           rows={2}
         />
       </Form.Item>
@@ -109,7 +112,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
       <div className="grid grid-cols-2 gap-4">
         <Form.Item
           name="buyerEmail"
-          label="Email"
+          label={t('email')}
           rules={[{ validator: validateEmail }]}
         >
           <Input
@@ -120,7 +123,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
 
         <Form.Item
           name="buyerPhone"
-          label="Số điện thoại"
+          label={t('phone')}
           rules={[{ validator: validatePhone }]}
         >
           <Input
@@ -138,7 +141,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText = 'T�
         loading={loading}
         className="mt-4 h-12"
       >
-        {submitText}
+        {submitText || t('createInvoice')}
       </Button>
     </Form>
   )

@@ -8,6 +8,7 @@ import {
   BarChartSkeleton,
   ChartSkeleton,
 } from '@/components/ui/Skeletons'
+import { useTranslations } from 'next-intl'
 
 // ============================================================================
 // Types
@@ -103,10 +104,12 @@ export function LazySalesLineChart({
   children: ReactNode
   className?: string
 }) {
+  const t = useTranslations('reports')
+
   return (
     <LazyChartWrapper
       type="line"
-      title="Doanh thu theo ngay (30 ngay)"
+      title={`${t('revenue')} - ${t('daily')} (30)`}
       minHeight={300}
       className={className}
     >
@@ -125,10 +128,13 @@ export function LazyCategoryPieChart({
   children: ReactNode
   className?: string
 }) {
+  const t = useTranslations('reports')
+  const tCommon = useTranslations('common')
+
   return (
     <LazyChartWrapper
       type="pie"
-      title="Doanh thu theo danh muc"
+      title={`${t('revenue')} - ${tCommon('category')}`}
       minHeight={320}
       className={className}
     >
@@ -147,10 +153,12 @@ export function LazyTopProductsBarChart({
   children: ReactNode
   className?: string
 }) {
+  const tProducts = useTranslations('products')
+
   return (
     <LazyChartWrapper
       type="bar"
-      title="Top 10 san pham ban chay"
+      title={`Top 10 ${tProducts('title')}`}
       minHeight={360}
       className={className}
     >
@@ -169,10 +177,12 @@ export function LazyPaymentMethodsPieChart({
   children: ReactNode
   className?: string
 }) {
+  const t = useTranslations('pos')
+
   return (
     <LazyChartWrapper
       type="pie"
-      title="Phuong thuc thanh toan"
+      title={t('paymentMethod')}
       minHeight={320}
       className={className}
     >
@@ -191,10 +201,13 @@ export function LazyRevenueExpenseChart({
   children: ReactNode
   className?: string
 }) {
+  const t = useTranslations('reports')
+  const tFinance = useTranslations('finance')
+
   return (
     <LazyChartWrapper
       type="generic"
-      title="Doanh thu va chi phi"
+      title={`${t('revenue')} vs ${tFinance('expense')}`}
       minHeight={360}
       className={className}
     >

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Card, Radio, DatePicker, InputNumber, Select, Typography, Divider, List, Space } from 'antd'
 import { CalendarOutlined, CreditCardOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
@@ -21,17 +22,6 @@ export interface DebtOptionsFormProps {
   onOptionsChange: (options: DebtOptionsFormProps['debtOptions']) => void
 }
 
-const FREQUENCY_OPTIONS = [
-  { value: 'weekly', label: 'Hang tuan' },
-  { value: 'biweekly', label: '2 tuan/lan' },
-  { value: 'monthly', label: 'Hang thang' },
-]
-
-const INSTALLMENT_OPTIONS = Array.from({ length: 11 }, (_, i) => ({
-  value: i + 2,
-  label: `${i + 2} ky`,
-}))
-
 export function DebtOptionsForm({
   amount,
   debtType,
@@ -39,6 +29,19 @@ export function DebtOptionsForm({
   debtOptions,
   onOptionsChange,
 }: DebtOptionsFormProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+
+  const FREQUENCY_OPTIONS = [
+    { value: 'weekly', label: t('weekly') },
+    { value: 'biweekly', label: t('biweekly') },
+    { value: 'monthly', label: t('monthly') },
+  ]
+
+  const INSTALLMENT_OPTIONS = Array.from({ length: 11 }, (_, i) => ({
+    value: i + 2,
+    label: t('installmentPeriods', { count: i + 2 }),
+  }))
   // Calculate default values
   const defaultDueDate = useMemo(() => dayjs().add(30, 'day').format('YYYY-MM-DD'), [])
   const defaultFirstDueDate = useMemo(() => dayjs().add(7, 'day').format('YYYY-MM-DD'), [])
@@ -111,7 +114,7 @@ export function DebtOptionsForm({
   return (
     <div className="space-y-4">
       <div className="bg-orange-50 p-3 rounded-lg">
-        <Text type="secondary">So tien ghi no:</Text>
+        <Text type="secondary">{t('debtAmount')}:</Text>
         <Title level={4} className="!m-0 text-orange-600">
           {formatCurrency(amount)}
         </Title>
@@ -131,11 +134,11 @@ export function DebtOptionsForm({
             <Radio value="credit">
               <Space>
                 <CreditCardOutlined />
-                Ghi no thong thuong
+                {t('credit')}
               </Space>
             </Radio>
             <Text type="secondary" className="block ml-6 text-xs">
-              Thanh toan 1 lan khi den han
+              {t('creditDescription')}
             </Text>
           </Card>
 
@@ -147,11 +150,11 @@ export function DebtOptionsForm({
             <Radio value="installment">
               <Space>
                 <UnorderedListOutlined />
-                Tra gop
+                {t('installment')}
               </Space>
             </Radio>
             <Text type="secondary" className="block ml-6 text-xs">
-              Chia thanh nhieu ky thanh toan
+              {t('installmentDescription')}
             </Text>
           </Card>
         </Space>
@@ -163,7 +166,7 @@ export function DebtOptionsForm({
         <div>
           <Text className="block mb-2">
             <CalendarOutlined className="mr-2" />
-            Ngay den han:
+            {t('dueDate')}:
           </Text>
           <DatePicker
             className="w-full"
@@ -171,10 +174,10 @@ export function DebtOptionsForm({
             value={debtOptions.due_date ? dayjs(debtOptions.due_date) : dayjs(defaultDueDate)}
             onChange={handleDueDateChange}
             disabledDate={(current) => current && current < dayjs().startOf('day')}
-            placeholder="Chon ngay den han"
+            placeholder={t('selectDueDate')}
           />
           <Text type="secondary" className="block mt-1 text-xs">
-            Mac dinh: 30 ngay ke tu hom nay
+            {t('defaultDueDate')}
           </Text>
         </div>
       )}
@@ -182,31 +185,31 @@ export function DebtOptionsForm({
       {debtType === 'installment' && (
         <div className="space-y-4">
           <div>
-            <Text className="block mb-2">So ky tra gop:</Text>
+            <Text className="block mb-2">{t('numberOfInstallments')}:</Text>
             <Select
               className="w-full"
               options={INSTALLMENT_OPTIONS}
               value={debtOptions.installments || 2}
               onChange={handleInstallmentsChange}
-              placeholder="Chon so ky"
+              placeholder={t('selectInstallments')}
             />
           </div>
 
           <div>
-            <Text className="block mb-2">Tan suat thanh toan:</Text>
+            <Text className="block mb-2">{t('paymentFrequency')}:</Text>
             <Select
               className="w-full"
               options={FREQUENCY_OPTIONS}
               value={debtOptions.frequency || 'monthly'}
               onChange={handleFrequencyChange}
-              placeholder="Chon tan suat"
+              placeholder={t('selectFrequency')}
             />
           </div>
 
           <div>
             <Text className="block mb-2">
               <CalendarOutlined className="mr-2" />
-              Ngay thanh toan dau tien:
+              {t('firstPaymentDate')}:
             </Text>
             <DatePicker
               className="w-full"
@@ -214,21 +217,21 @@ export function DebtOptionsForm({
               value={debtOptions.first_due_date ? dayjs(debtOptions.first_due_date) : dayjs(defaultFirstDueDate)}
               onChange={handleFirstDueDateChange}
               disabledDate={(current) => current && current < dayjs().startOf('day')}
-              placeholder="Chon ngay"
+              placeholder={t('selectDate')}
             />
           </div>
 
           {installmentSchedule.length > 0 && (
             <div>
               <Divider className="my-3" />
-              <Text strong className="block mb-2">Lich tra gop:</Text>
+              <Text strong className="block mb-2">{t('installmentSchedule')}:</Text>
               <List
                 size="small"
                 bordered
                 dataSource={installmentSchedule}
                 renderItem={(item) => (
                   <List.Item className="flex justify-between">
-                    <Text>Ky {item.number}</Text>
+                    <Text>{t('period', { number: item.number })}</Text>
                     <div className="text-right">
                       <Text strong>{formatCurrency(item.amount)}</Text>
                       <Text type="secondary" className="block text-xs">
@@ -239,7 +242,7 @@ export function DebtOptionsForm({
                 )}
               />
               <div className="bg-gray-50 p-2 rounded mt-2 text-right">
-                <Text type="secondary">Tong cong: </Text>
+                <Text type="secondary">{tCommon('total')}: </Text>
                 <Text strong>{formatCurrency(amount)}</Text>
               </div>
             </div>

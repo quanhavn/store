@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Input, Empty, Spin, Segmented, Select, Pagination } from 'antd'
 import { SearchOutlined, UserOutlined, WarningOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { DebtCard, transformDebtForDisplay, type DebtDisplayData } from './DebtCard'
 
@@ -15,6 +16,9 @@ interface DebtListProps {
 type DebtStatusFilter = 'all' | 'active' | 'overdue' | 'paid'
 
 export function DebtList({ onSelect, customerId }: DebtListProps) {
+  const t = useTranslations('debts')
+  const tCommon = useTranslations('common')
+  const tCustomers = useTranslations('customers')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<DebtStatusFilter>('all')
   const [page, setPage] = useState(1)
@@ -59,7 +63,7 @@ export function DebtList({ onSelect, customerId }: DebtListProps) {
       {/* Search and customer filter */}
       <div className="flex gap-2">
         <Input
-          placeholder="Tim kiem theo ten, SDT..."
+          placeholder={tCommon('searchPlaceholder')}
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -68,7 +72,7 @@ export function DebtList({ onSelect, customerId }: DebtListProps) {
         />
         {!customerId && (
           <Select
-            placeholder="Khach hang"
+            placeholder={tCustomers('customer')}
             allowClear
             className="w-40"
             value={customerFilter}
@@ -90,10 +94,10 @@ export function DebtList({ onSelect, customerId }: DebtListProps) {
           setPage(1)
         }}
         options={[
-          { value: 'all', icon: <UserOutlined />, label: 'Tat ca' },
-          { value: 'active', icon: <ClockCircleOutlined />, label: 'Dang no' },
-          { value: 'overdue', icon: <WarningOutlined />, label: 'Qua han' },
-          { value: 'paid', icon: <CheckCircleOutlined />, label: 'Da tra' },
+          { value: 'all', icon: <UserOutlined />, label: tCommon('all') },
+          { value: 'active', icon: <ClockCircleOutlined />, label: tCommon('active') },
+          { value: 'overdue', icon: <WarningOutlined />, label: tCommon('overdue') },
+          { value: 'paid', icon: <CheckCircleOutlined />, label: tCommon('paid') },
         ]}
       />
 
@@ -104,7 +108,7 @@ export function DebtList({ onSelect, customerId }: DebtListProps) {
         </div>
       ) : filteredDebts.length === 0 ? (
         <Empty
-          description={search ? 'Khong tim thay cong no' : 'Chua co cong no nao'}
+          description={search ? tCommon('noResults') : tCommon('noData')}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (

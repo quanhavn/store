@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Form, Input, Button, Typography, Select, Switch, Space, Alert } from 'antd'
 import { FileTextOutlined, BankOutlined } from '@ant-design/icons'
 import type { OnboardingData } from '@/app/(onboarding)/setup/page'
@@ -13,15 +14,17 @@ interface TaxInfoStepProps {
   onPrev: () => void
 }
 
-const revenueTierOptions = [
-  { value: 'under_200m', label: 'Dưới 200 triệu/năm' },
-  { value: '200m_1b', label: '200 triệu - 1 tỷ/năm' },
-  { value: '1b_3b', label: '1 - 3 tỷ/năm' },
-  { value: 'over_3b', label: 'Trên 3 tỷ/năm' },
-]
-
 export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepProps) {
+  const tTax = useTranslations('tax')
+  const tCommon = useTranslations('common')
   const [form] = Form.useForm()
+
+  const revenueTierOptions = [
+    { value: 'under_200m', label: tTax('revenueTiers.under_200m') },
+    { value: '200m_1b', label: tTax('revenueTiers.200m_1b') },
+    { value: '1b_3b', label: tTax('revenueTiers.1b_3b') },
+    { value: 'over_3b', label: tTax('revenueTiers.over_3b') },
+  ]
 
   const handleFinish = (values: Partial<OnboardingData>) => {
     updateData(values)
@@ -33,9 +36,9 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepPro
 
   return (
     <div>
-      <Title level={5} className="!mb-1">Thông tin thuế</Title>
+      <Title level={5} className="!mb-1">{tTax('taxInfo')}</Title>
       <Text type="secondary" className="block mb-4">
-        Thông tin này giúp tuân thủ quy định thuế Việt Nam 2026
+        {tTax('taxInfoDescription')}
       </Text>
 
       <Form
@@ -47,18 +50,18 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepPro
       >
         <Form.Item
           name="taxCode"
-          label="Mã số thuế (MST)"
-          extra="Cá nhân: 10 số, Doanh nghiệp: 13 số (không bắt buộc)"
+          label={tTax('taxCodeLabel')}
+          extra={tTax('taxCodeExtra')}
           rules={[
             {
               pattern: /^[0-9]{10}$|^[0-9]{13}$/,
-              message: 'MST phải có 10 số (cá nhân) hoặc 13 số (doanh nghiệp)',
+              message: tTax('validation.taxCodeInvalid'),
             },
           ]}
         >
           <Input
             prefix={<FileTextOutlined className="text-gray-400" />}
-            placeholder="0123456789"
+            placeholder={tTax('taxCodePlaceholder')}
             size="large"
             maxLength={13}
           />
@@ -66,13 +69,13 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepPro
 
         <Form.Item
           name="revenueTier"
-          label="Mức doanh thu dự kiến"
-          rules={[{ required: true, message: 'Vui lòng chọn mức doanh thu' }]}
+          label={tTax('revenueTierLabel')}
+          rules={[{ required: true, message: tTax('validation.revenueTierRequired') }]}
         >
           <Select
             options={revenueTierOptions}
             size="large"
-            placeholder="Chọn mức doanh thu"
+            placeholder={tTax('selectRevenueTier')}
           />
         </Form.Item>
 
@@ -80,27 +83,27 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepPro
           <Alert
             type="info"
             showIcon
-            message="Yêu cầu hóa đơn điện tử"
-            description="Theo quy định, doanh thu trên 1 tỷ/năm cần sử dụng hóa đơn điện tử."
+            message={tTax('eInvoiceRequiredAlert')}
+            description={tTax('eInvoiceRequiredAlertDescription')}
             className="mb-4"
           />
         )}
 
         <Form.Item
           name="eInvoiceRequired"
-          label="Sử dụng hóa đơn điện tử"
+          label={tTax('useEInvoiceLabel')}
           valuePropName="checked"
         >
-          <Switch checkedChildren="Có" unCheckedChildren="Không" />
+          <Switch checkedChildren={tCommon('yes')} unCheckedChildren={tCommon('no')} />
         </Form.Item>
 
         <Form.Item className="!mb-0">
           <Space className="w-full" direction="vertical">
             <Button type="primary" htmlType="submit" block size="large">
-              Tiếp tục
+              {tCommon('continue')}
             </Button>
             <Button onClick={onPrev} block size="large">
-              Quay lại
+              {tCommon('back')}
             </Button>
           </Space>
         </Form.Item>

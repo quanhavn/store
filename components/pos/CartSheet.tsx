@@ -2,6 +2,7 @@
 
 import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm, Space } from 'antd'
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { useCartStore } from '@/lib/stores/cart'
 
 const { Text, Title } = Typography
@@ -14,6 +15,8 @@ interface CartSheetProps {
 
 export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
   const { items, discount, updateQuantity, removeItem, setDiscount, clear, getSubtotal, getVatAmount, getTotal } = useCartStore()
+  const t = useTranslations('pos')
+  const tCommon = useTranslations('common')
 
   const subtotal = getSubtotal()
   const vatAmount = getVatAmount()
@@ -21,22 +24,22 @@ export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
 
   return (
     <Drawer
-      title={`Giỏ hàng (${items.length})`}
+      title={`${t('cart')} (${items.length})`}
       open={open}
       onClose={onClose}
       styles={{ wrapper: { width: 400 } }}
       footer={
         <div className="space-y-3">
           <div className="flex justify-between">
-            <Text>Tạm tính:</Text>
+            <Text>{t('subtotal')}:</Text>
             <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
           </div>
           <div className="flex justify-between">
-            <Text>VAT:</Text>
+            <Text>{t('vat')}:</Text>
             <Text>{vatAmount.toLocaleString('vi-VN')}đ</Text>
           </div>
           <div className="flex justify-between items-center">
-            <Text>Giảm giá:</Text>
+            <Text>{t('discount')}:</Text>
             <Space.Compact className="w-32">
               <InputNumber
                 size="small"
@@ -52,19 +55,19 @@ export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
           </div>
           <Divider className="my-2" />
           <div className="flex justify-between">
-            <Title level={4} className="!m-0">Tổng cộng:</Title>
+            <Title level={4} className="!m-0">{t('total')}:</Title>
             <Title level={4} className="!m-0 text-blue-600">{total.toLocaleString('vi-VN')}đ</Title>
           </div>
           <div className="flex gap-2 pt-2">
             <Popconfirm
-              title="Xóa giỏ hàng?"
-              description="Bạn có chắc muốn xóa tất cả sản phẩm?"
+              title={t('deleteCart')}
+              description={t('deleteCartMessage')}
               onConfirm={clear}
-              okText="Xóa"
-              cancelText="Hủy"
+              okText={tCommon('delete')}
+              cancelText={tCommon('cancel')}
             >
               <Button danger className="flex-1" disabled={items.length === 0}>
-                Xóa tất cả
+                {t('deleteAll')}
               </Button>
             </Popconfirm>
             <Button
@@ -73,14 +76,14 @@ export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
               disabled={items.length === 0}
               onClick={onCheckout}
             >
-              Thanh toán
+              {t('checkout')}
             </Button>
           </div>
         </div>
       }
     >
       {items.length === 0 ? (
-        <Empty description="Giỏ hàng trống" className="py-12" />
+        <Empty description={t('emptyCart')} className="py-12" />
       ) : (
         <List
           dataSource={items}

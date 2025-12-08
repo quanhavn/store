@@ -19,6 +19,7 @@ import {
   MinusCircleOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/utils'
 
 const { Text } = Typography
@@ -55,6 +56,7 @@ export function StockCheckForm({
   onSubmit,
   isUpdating,
 }: StockCheckFormProps) {
+  const t = useTranslations('inventory')
   const [search, setSearch] = useState('')
   // Local state for quantities being edited (productId -> quantity)
   const [localQuantities, setLocalQuantities] = useState<Record<string, number | null>>({})
@@ -247,16 +249,16 @@ export function StockCheckForm({
     const isPending = pendingItems.has(item.product_id) && !isSaving
 
     if (isSaving) {
-      return { icon: <SyncOutlined spin />, color: 'processing', text: 'Đang lưu...' }
+      return { icon: <SyncOutlined spin />, color: 'processing', text: t('saving') }
     }
     if (qty === null) {
-      return { icon: <MinusCircleOutlined />, color: 'default', text: 'Chưa kiểm' }
+      return { icon: <MinusCircleOutlined />, color: 'default', text: t('notChecked') }
     }
     if (diff === 0) {
       return {
         icon: <CheckCircleOutlined />,
         color: isPending ? 'processing' : 'success',
-        text: isPending ? 'Khớp •' : 'Khớp'
+        text: isPending ? `${t('matched')} •` : t('matched')
       }
     }
     if (diff! > 0) {
@@ -301,9 +303,9 @@ export function StockCheckForm({
       {/* Progress Section */}
       <div className="bg-blue-50 p-4 rounded-lg mb-4">
         <div className="flex justify-between items-center mb-2">
-          <Text strong>Tiến độ kiểm kê</Text>
+          <Text strong>{t('checkProgress')}</Text>
           <Text>
-            {countedItems} / {totalItems} sản phẩm
+            {countedItems} / {totalItems} {t('productsLabel')}
           </Text>
         </div>
         <Progress
@@ -314,7 +316,7 @@ export function StockCheckForm({
         <div className="flex justify-between mt-2 text-sm">
           <Text type="secondary">
             <CheckCircleOutlined className="text-green-500 mr-1" />
-            Khớp: {items.filter((i) => {
+            {t('matched')}: {items.filter((i) => {
               const qty = localQuantities[i.product_id] !== undefined
                 ? localQuantities[i.product_id]
                 : i.actual_quantity
@@ -324,14 +326,14 @@ export function StockCheckForm({
           </Text>
           <Text type="secondary">
             <CloseCircleOutlined className="text-red-500 mr-1" />
-            Chênh lệch: {itemsWithDifference}
+            {t('difference')}: {itemsWithDifference}
           </Text>
         </div>
       </div>
 
       {/* Search */}
       <Input
-        placeholder="Tìm sản phẩm theo tên, SKU, barcode..."
+        placeholder={t('searchProductSkuBarcode')}
         prefix={<SearchOutlined className="text-gray-400" />}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -342,7 +344,7 @@ export function StockCheckForm({
       {/* Product List */}
       <div className="flex-1 overflow-auto">
         {filteredItems.length === 0 ? (
-          <Empty description="Không tìm thấy sản phẩm" />
+          <Empty description={t('noProductsFound')} />
         ) : (
           <List
             dataSource={filteredItems}
@@ -380,7 +382,7 @@ export function StockCheckForm({
                     <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg">
                       <div className="flex-1">
                         <Text type="secondary" className="text-xs block">
-                          Hệ thống
+                          {t('systemQuantity')}
                         </Text>
                         <Text strong className="text-lg">
                           {item.system_quantity}{' '}
@@ -391,7 +393,7 @@ export function StockCheckForm({
                       </div>
                       <div className="flex-1">
                         <Text type="secondary" className="text-xs block">
-                          Thực tế
+                          {t('actualQuantity')}
                         </Text>
                         <InputNumber
                           min={0}
@@ -400,14 +402,14 @@ export function StockCheckForm({
                           onBlur={() => handleQuantityBlur(item)}
                           onKeyDown={(e) => handleKeyDown(e, item, index)}
                           className="w-full"
-                          placeholder="Nhập số lượng"
+                          placeholder={t('enterQuantity')}
                           disabled={isSaving}
                         />
                       </div>
                       {displayQty !== null && localDiff !== 0 && (
                         <div className="flex-1">
                           <Text type="secondary" className="text-xs block">
-                            Chênh lệch
+                            {t('difference')}
                           </Text>
                           <Text
                             strong
@@ -426,7 +428,7 @@ export function StockCheckForm({
                     {displayQty !== null && localDiff !== 0 && (
                       <div className="mt-2">
                         <Input
-                          placeholder="Ghi chú (lý do chênh lệch)"
+                          placeholder={t('notePlaceholderDifference')}
                           value={
                             localNotes[item.product_id] !== undefined
                               ? localNotes[item.product_id]
@@ -442,10 +444,10 @@ export function StockCheckForm({
 
                     {/* Cost info */}
                     <div className="text-xs text-gray-400 mt-2">
-                      Giá vốn: {formatCurrency(item.products.cost_price)}
+                      {t('costPrice')}: {formatCurrency(item.products.cost_price)}
                       {displayQty !== null && localDiff !== 0 && (
                         <span className="ml-2">
-                          | Giá trị chênh lệch:{' '}
+                          | {t('adjustmentValue')}:{' '}
                           {formatCurrency(Math.abs(localDiff!) * item.products.cost_price)}
                         </span>
                       )}
@@ -469,8 +471,8 @@ export function StockCheckForm({
           loading={isUpdating}
         >
           {pendingItems.size > 0
-            ? `Đang lưu ${pendingItems.size} thay đổi...`
-            : `Xem tổng hợp & Hoàn tất (${countedItems}/${totalItems} đã kiểm)`
+            ? t('savingChanges', { count: pendingItems.size })
+            : t('viewSummaryAndComplete', { counted: countedItems, total: totalItems })
           }
         </Button>
       </div>

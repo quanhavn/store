@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { List, Tag, Empty, Spin, Typography, Button, Select, DatePicker } from 'antd'
 import { FileTextOutlined, PlusOutlined, InboxOutlined, FilterOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Invoice } from '@/lib/supabase/functions'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import dayjs from 'dayjs'
@@ -16,14 +17,17 @@ interface InvoiceListProps {
   limit?: number
 }
 
-const statusConfig: Record<string, { color: string; label: string }> = {
-  issued: { color: 'green', label: 'Đã phát hành' },
-  cancelled: { color: 'red', label: 'Đã hủy' },
-  pending: { color: 'gold', label: 'Chờ xử lý' },
-  error: { color: 'red', label: 'Lỗi' },
-}
-
 export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListProps) {
+  const t = useTranslations('invoices')
+  const tCommon = useTranslations('common')
+
+  const statusConfig: Record<string, { color: string; label: string }> = {
+    issued: { color: 'green', label: t('invoiceStatus.issued') },
+    cancelled: { color: 'red', label: t('invoiceStatus.cancelled') },
+    pending: { color: 'gold', label: t('invoiceStatus.pending') },
+    error: { color: 'red', label: t('invoiceStatus.error') },
+  }
+
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<string | undefined>()
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
@@ -59,7 +63,7 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
           onClick={() => setShowFilters(!showFilters)}
           type={showFilters ? 'primary' : 'default'}
         >
-          Lọc
+          {tCommon('filter')}
         </Button>
         {onCreateNew && (
           <Button
@@ -67,7 +71,7 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
             icon={<PlusOutlined />}
             onClick={onCreateNew}
           >
-            Tạo hóa đơn
+            {t('createInvoice')}
           </Button>
         )}
       </div>
@@ -75,23 +79,23 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
       {showFilters && (
         <div className="bg-gray-50 p-4 rounded-lg mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Text type="secondary" className="text-sm mb-1 block">Trạng thái</Text>
+            <Text type="secondary" className="text-sm mb-1 block">{t('status')}</Text>
             <Select
               className="w-full"
-              placeholder="Tất cả trạng thái"
+              placeholder={t('allStatuses')}
               allowClear
               value={statusFilter}
               onChange={setStatusFilter}
               options={[
-                { value: 'issued', label: 'Đã phát hành' },
-                { value: 'pending', label: 'Chờ xử lý' },
-                { value: 'cancelled', label: 'Đã hủy' },
-                { value: 'error', label: 'Lỗi' },
+                { value: 'issued', label: t('invoiceStatus.issued') },
+                { value: 'pending', label: t('invoiceStatus.pending') },
+                { value: 'cancelled', label: t('invoiceStatus.cancelled') },
+                { value: 'error', label: t('invoiceStatus.error') },
               ]}
             />
           </div>
           <div>
-            <Text type="secondary" className="text-sm mb-1 block">Thời gian</Text>
+            <Text type="secondary" className="text-sm mb-1 block">{t('period')}</Text>
             <DatePicker.RangePicker
               className="w-full"
               format="DD/MM/YYYY"
@@ -105,11 +109,11 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
       {invoices.length === 0 ? (
         <Empty
           image={<InboxOutlined className="text-5xl text-gray-300" />}
-          description="Chưa có hóa đơn điện tử nào"
+          description={t('noInvoicesYet')}
         >
           {onCreateNew && (
             <Button type="primary" onClick={onCreateNew}>
-              Tạo hóa đơn đầu tiên
+              {t('createFirstInvoice')}
             </Button>
           )}
         </Empty>
@@ -120,7 +124,7 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
             renderItem={(invoice: Invoice) => {
               const status = statusConfig[invoice.status] || { color: 'default', label: invoice.status }
               const sale = invoice.sales as { invoice_no?: string; customer_name?: string; total?: number } | null
-              
+
               return (
                 <List.Item
                   className="!px-0 !py-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
@@ -133,7 +137,7 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
 
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">
-                        {invoice.invoice_no || sale?.invoice_no || 'Chờ cấp số'}
+                        {invoice.invoice_no || sale?.invoice_no || t('awaitingNumber')}
                       </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <Tag color={status.color} className="text-xs m-0">
@@ -167,7 +171,7 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
               >
-                Trước
+                {t('prev')}
               </Button>
               <span className="py-1 px-3 bg-gray-100 rounded">
                 {page} / {pagination.total_pages}
@@ -176,7 +180,7 @@ export function InvoiceList({ onSelect, onCreateNew, limit = 20 }: InvoiceListPr
                 disabled={page >= pagination.total_pages}
                 onClick={() => setPage(p => p + 1)}
               >
-                Sau
+                {t('nextPage')}
               </Button>
             </div>
           )}

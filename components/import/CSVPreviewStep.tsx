@@ -8,6 +8,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { useTranslations } from 'next-intl'
 import { useCSVImportStore } from '@/lib/stores/csv-import'
 import { getFieldsForEntity } from '@/lib/import/types'
 import { validateAndParseRows } from '@/lib/import/validators'
@@ -15,6 +16,8 @@ import { validateAndParseRows } from '@/lib/import/validators'
 const { Text } = Typography
 
 export function CSVPreviewStep() {
+  const tImport = useTranslations('import')
+  const tCommon = useTranslations('common')
   const {
     entityType,
     rawData,
@@ -51,14 +54,14 @@ export function CSVPreviewStep() {
   const tableColumns: ColumnsType<typeof parsedRows[0]> = useMemo(() => {
     const cols: ColumnsType<typeof parsedRows[0]> = [
       {
-        title: 'Dòng',
+        title: tImport('row'),
         dataIndex: 'rowIndex',
         key: 'rowIndex',
         width: 60,
         fixed: 'left',
       },
       {
-        title: 'Trạng thái',
+        title: tCommon('status'),
         key: 'status',
         width: 100,
         fixed: 'left',
@@ -66,14 +69,14 @@ export function CSVPreviewStep() {
           if (record.errors.length > 0) {
             return (
               <Tag icon={<CloseCircleOutlined />} color="error">
-                Lỗi
+                {tCommon('error')}
               </Tag>
             )
           }
           if (record.warnings.length > 0) {
             return (
               <Tag icon={<WarningOutlined />} color="warning">
-                Cảnh báo
+                {tImport('warning')}
               </Tag>
             )
           }
@@ -124,7 +127,7 @@ export function CSVPreviewStep() {
     })
 
     return cols
-  }, [mappedFields])
+  }, [mappedFields, tImport, tCommon])
 
   const validRows = useMemo(
     () => parsedRows.filter((r) => r.isValid),
@@ -144,7 +147,7 @@ export function CSVPreviewStep() {
       key: 'all',
       label: (
         <span>
-          Tất cả <Tag>{parsedRows.length}</Tag>
+          {tCommon('all')} <Tag>{parsedRows.length}</Tag>
         </span>
       ),
       children: (
@@ -162,7 +165,7 @@ export function CSVPreviewStep() {
       key: 'valid',
       label: (
         <span>
-          Hợp lệ <Tag color="green">{validRowCount}</Tag>
+          {tImport('valid')} <Tag color="green">{validRowCount}</Tag>
         </span>
       ),
       children: (
@@ -180,7 +183,7 @@ export function CSVPreviewStep() {
       key: 'errors',
       label: (
         <span>
-          Lỗi <Tag color="red">{errorRowCount}</Tag>
+          {tCommon('error')} <Tag color="red">{errorRowCount}</Tag>
         </span>
       ),
       children: (
@@ -198,7 +201,7 @@ export function CSVPreviewStep() {
       key: 'warnings',
       label: (
         <span>
-          Cảnh báo <Tag color="orange">{warningRowCount}</Tag>
+          {tImport('warning')} <Tag color="orange">{warningRowCount}</Tag>
         </span>
       ),
       children: (
@@ -219,18 +222,18 @@ export function CSVPreviewStep() {
       <Space className="mb-4">
         <Text>
           <CheckCircleOutlined className="text-green-500 mr-1" />
-          {validRowCount} dòng hợp lệ
+          {tImport('validRowsCount', { count: validRowCount })}
         </Text>
         {errorRowCount > 0 && (
           <Text type="danger">
             <CloseCircleOutlined className="mr-1" />
-            {errorRowCount} dòng lỗi (sẽ bỏ qua)
+            {tImport('errorRowsWillSkip', { count: errorRowCount })}
           </Text>
         )}
         {warningRowCount > 0 && (
           <Text type="warning">
             <WarningOutlined className="mr-1" />
-            {warningRowCount} dòng có cảnh báo
+            {tImport('warningRowsCount', { count: warningRowCount })}
           </Text>
         )}
       </Space>

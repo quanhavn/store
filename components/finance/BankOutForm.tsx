@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Drawer, Form, Input, Select, Button, message } from 'antd'
 import { ArrowDownOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type BankAccount } from '@/lib/supabase/functions'
 import { AmountKeypad } from './AmountKeypad'
 import { formatCurrency } from '@/lib/utils'
@@ -14,17 +15,21 @@ interface BankOutFormProps {
   bankAccountId?: string
 }
 
-const REFERENCE_TYPES: { value: 'expense' | 'transfer' | 'other'; label: string }[] = [
-  { value: 'expense', label: 'Chi phi' },
-  { value: 'transfer', label: 'Chuyen khoan di' },
-  { value: 'other', label: 'Khac' },
-]
-
 export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) {
   const [amount, setAmount] = useState(0)
   const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(bankAccountId)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
+
+  // Reference types with translations
+  const referenceTypes = [
+    { value: 'expense', label: t('referenceTypes.expense') },
+    { value: 'transfer', label: t('referenceTypes.transferOut') },
+    { value: 'other', label: t('referenceTypes.other') },
+  ]
 
   const { data: accountsData } = useQuery({
     queryKey: ['bank-accounts'],
@@ -43,13 +48,13 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
       reference_type?: 'expense' | 'transfer' | 'other'
     }) => api.finance.bankOut(data),
     onSuccess: () => {
-      message.success('Rut tien thanh cong')
+      message.success(t('bankOutSuccess'))
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
       queryClient.invalidateQueries({ queryKey: ['bank-transactions'] })
       handleClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -62,12 +67,12 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
 
   const handleSubmit = async () => {
     if (amount <= 0) {
-      message.warning('Vui long nhap so tien')
+      message.warning(t('validation.enterAmount'))
       return
     }
 
     if (selectedAccount && amount > (selectedAccount.balance || 0)) {
-      message.error('So tien rut vuot qua so du tai khoan')
+      message.error(t('validation.insufficientBalance'))
       return
     }
 
@@ -92,7 +97,7 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
           <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
             <ArrowDownOutlined className="text-white" />
           </div>
-          <span>Rut tien tu tai khoan</span>
+          <span>{t('bankOut')}</span>
         </div>
       }
       placement="bottom"
@@ -106,7 +111,7 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
 
         {selectedAccount && (
           <div className="text-center text-sm text-gray-500 mt-2">
-            So du hien tai: <span className="font-medium text-blue-600">{formatCurrency(selectedAccount.balance || 0)}</span>
+            {t('currentBalance')}: <span className="font-medium text-blue-600">{formatCurrency(selectedAccount.balance || 0)}</span>
           </div>
         )}
 
@@ -118,11 +123,11 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
         >
           <Form.Item
             name="bank_account_id"
-            label="Tai khoan ngan hang"
-            rules={[{ required: true, message: 'Vui long chon tai khoan' }]}
+            label={t('bankAccount')}
+            rules={[{ required: true, message: t('validation.selectAccount') }]}
           >
             <Select
-              placeholder="Chon tai khoan"
+              placeholder={t('placeholders.selectAccount')}
               options={accounts.map((acc: BankAccount) => ({
                 value: acc.id,
                 label: `${acc.bank_name} - ${acc.account_number} (${formatCurrency(acc.balance || 0)})`,
@@ -133,23 +138,23 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
 
           <Form.Item
             name="description"
-            label="Mo ta"
-            rules={[{ required: true, message: 'Vui long nhap mo ta' }]}
+            label={tCommon('description')}
+            rules={[{ required: true, message: t('validation.descriptionRequired') }]}
           >
             <Input.TextArea
-              placeholder="VD: Rut tien mat, thanh toan nha cung cap..."
+              placeholder={t('placeholders.bankOutDescription')}
               rows={2}
             />
           </Form.Item>
 
-          <Form.Item name="bank_ref" label="Ma giao dich ngan hang">
-            <Input placeholder="VD: FT123456789" />
+          <Form.Item name="bank_ref" label={t('bankReference')}>
+            <Input placeholder={t('placeholders.bankReference')} />
           </Form.Item>
 
-          <Form.Item name="reference_type" label="Loai giao dich">
+          <Form.Item name="reference_type" label={t('transactionType')}>
             <Select
-              placeholder="Chon loai giao dich"
-              options={REFERENCE_TYPES}
+              placeholder={t('placeholders.selectTransactionType')}
+              options={referenceTypes}
               allowClear
             />
           </Form.Item>
@@ -165,7 +170,7 @@ export function BankOutForm({ open, onClose, bankAccountId }: BankOutFormProps) 
           loading={mutation.isPending}
           disabled={amount <= 0}
         >
-          Xac nhan rut tien
+          {t('confirmBankOut')}
         </Button>
       </div>
     </Drawer>

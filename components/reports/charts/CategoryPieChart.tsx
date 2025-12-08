@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { useTranslations } from 'next-intl'
 
 interface CategoryData {
   category: string
@@ -115,6 +116,9 @@ function renderCustomLabel({
 }
 
 export function CategoryPieChart({ data, isLoading }: CategoryPieChartProps) {
+  const t = useTranslations('reports')
+  const tCommon = useTranslations('common')
+
   const chartData = useMemo(() => {
     return data.map((item, index) => ({
       ...item,
@@ -137,10 +141,10 @@ export function CategoryPieChart({ data, isLoading }: CategoryPieChartProps) {
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm">
         <h3 className="text-base font-semibold text-gray-700 mb-4">
-          Doanh thu theo danh muc
+          {t('revenue')} - {tCommon('category')}
         </h3>
         <div className="h-64 flex items-center justify-center text-gray-400">
-          Khong co du lieu
+          {tCommon('noData')}
         </div>
       </div>
     )
@@ -149,7 +153,7 @@ export function CategoryPieChart({ data, isLoading }: CategoryPieChartProps) {
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm">
       <h3 className="text-base font-semibold text-gray-700 mb-4">
-        Doanh thu theo danh muc
+        {t('revenue')} - {tCommon('category')}
       </h3>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">

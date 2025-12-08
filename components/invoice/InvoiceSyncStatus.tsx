@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button, Badge, Typography, Tooltip } from 'antd'
 import { SyncOutlined, CloudOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatDateTime } from '@/lib/utils'
 
@@ -14,6 +15,8 @@ interface InvoiceSyncStatusProps {
 }
 
 export function InvoiceSyncStatus({ onSyncComplete }: InvoiceSyncStatusProps) {
+  const t = useTranslations('invoices')
+  const tCommon = useTranslations('common')
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   const queryClient = useQueryClient()
 
@@ -75,12 +78,12 @@ export function InvoiceSyncStatus({ onSyncComplete }: InvoiceSyncStatusProps) {
 
   const getStatusText = () => {
     if (syncMutation.isPending) {
-      return 'Đang đồng bộ...'
+      return t('syncing')
     }
     if (pendingCount > 0) {
-      return `${pendingCount} hóa đơn chờ`
+      return t('pendingCount', { count: pendingCount })
     }
-    return 'Đã đồng bộ'
+    return t('synced')
   }
 
   return (
@@ -97,7 +100,7 @@ export function InvoiceSyncStatus({ onSyncComplete }: InvoiceSyncStatusProps) {
             </div>
             {lastSyncTime && (
               <Text type="secondary" className="text-xs">
-                Lần cuối: {formatDateTime(lastSyncTime)}
+                {t('lastSync')}: {formatDateTime(lastSyncTime)}
               </Text>
             )}
           </div>
@@ -107,14 +110,14 @@ export function InvoiceSyncStatus({ onSyncComplete }: InvoiceSyncStatusProps) {
           {pendingCount > 0 && (
             <Badge count={pendingCount} size="small" />
           )}
-          <Tooltip title="Đồng bộ hóa đơn chờ xử lý">
+          <Tooltip title={t('syncTooltip')}>
             <Button
               icon={<SyncOutlined spin={syncMutation.isPending} />}
               onClick={() => syncMutation.mutate()}
               loading={syncMutation.isPending}
               disabled={pendingCount === 0 || isLoading}
             >
-              Đồng bộ
+              {tCommon('sync')}
             </Button>
           </Tooltip>
         </div>
@@ -122,10 +125,10 @@ export function InvoiceSyncStatus({ onSyncComplete }: InvoiceSyncStatusProps) {
 
       {syncMutation.isSuccess && syncMutation.data && (
         <div className="mt-3 bg-green-50 text-green-700 p-2 rounded text-sm">
-          Đã đồng bộ {syncMutation.data.successful}/{syncMutation.data.total} hóa đơn
+          {t('syncComplete', { successful: syncMutation.data.successful, total: syncMutation.data.total })}
           {syncMutation.data.failed > 0 && (
             <span className="text-red-600 ml-2">
-              ({syncMutation.data.failed} lỗi)
+              ({syncMutation.data.failed} {t('invoiceStatus.error').toLowerCase()})
             </span>
           )}
         </div>
@@ -133,7 +136,7 @@ export function InvoiceSyncStatus({ onSyncComplete }: InvoiceSyncStatusProps) {
 
       {syncMutation.isError && (
         <div className="mt-3 bg-red-50 text-red-700 p-2 rounded text-sm">
-          Lỗi đồng bộ: {syncMutation.error instanceof Error ? syncMutation.error.message : 'Có lỗi xảy ra'}
+          {t('syncError')}: {syncMutation.error instanceof Error ? syncMutation.error.message : t('errorOccurred')}
         </div>
       )}
     </div>

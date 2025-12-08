@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Form, Input, Button, Typography } from 'antd'
 import { ShopOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import type { OnboardingData } from '@/app/(onboarding)/setup/page'
@@ -13,6 +14,9 @@ interface StoreInfoStepProps {
 }
 
 export function StoreInfoStep({ data, updateData, onNext }: StoreInfoStepProps) {
+  const tSettings = useTranslations('settings')
+  const tAuth = useTranslations('auth')
+  const tCommon = useTranslations('common')
   const [form] = Form.useForm()
 
   const handleFinish = (values: Partial<OnboardingData>) => {
@@ -22,9 +26,9 @@ export function StoreInfoStep({ data, updateData, onNext }: StoreInfoStepProps) 
 
   return (
     <div>
-      <Title level={5} className="!mb-1">Thông tin cửa hàng</Title>
+      <Title level={5} className="!mb-1">{tSettings('storeInfo')}</Title>
       <Text type="secondary" className="block mb-4">
-        Nhập thông tin cơ bản về cửa hàng của bạn
+        {tSettings('storeInfoDescription')}
       </Text>
 
       <Form
@@ -36,30 +40,30 @@ export function StoreInfoStep({ data, updateData, onNext }: StoreInfoStepProps) 
       >
         <Form.Item
           name="storeName"
-          label="Tên cửa hàng"
-          rules={[{ required: true, message: 'Vui lòng nhập tên cửa hàng' }]}
+          label={tAuth('storeName')}
+          rules={[{ required: true, message: tAuth('validation.storeNameRequired') }]}
         >
           <Input
             prefix={<ShopOutlined className="text-gray-400" />}
-            placeholder="VD: Tạp hóa Minh Tâm"
+            placeholder={tAuth('storeNamePlaceholder')}
             size="large"
           />
         </Form.Item>
 
         <Form.Item
           name="phone"
-          label="Số điện thoại"
+          label={tAuth('phone')}
           rules={[
-            { required: true, message: 'Vui lòng nhập số điện thoại' },
+            { required: true, message: tAuth('validation.phoneRequired') },
             {
               pattern: /^(03|05|07|08|09)[0-9]{8}$/,
-              message: 'Số điện thoại phải có 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09',
+              message: tAuth('validation.phoneInvalid'),
             },
           ]}
         >
           <Input
             prefix={<PhoneOutlined className="text-gray-400" />}
-            placeholder="0912345678"
+            placeholder={tAuth('phonePlaceholder')}
             size="large"
             maxLength={10}
           />
@@ -67,31 +71,31 @@ export function StoreInfoStep({ data, updateData, onNext }: StoreInfoStepProps) 
 
         <Form.Item
           name="email"
-          label="Email (không bắt buộc)"
+          label={tAuth('emailOptional')}
           rules={[
-            { type: 'email', message: 'Email không hợp lệ' },
+            { type: 'email', message: tAuth('validation.emailInvalid') },
           ]}
         >
           <Input
             prefix={<MailOutlined className="text-gray-400" />}
-            placeholder="cuahang@email.com"
+            placeholder={tAuth('emailPlaceholder')}
             size="large"
           />
         </Form.Item>
 
         <Form.Item
           name="address"
-          label="Địa chỉ (không bắt buộc)"
+          label={tAuth('addressOptional')}
         >
           <Input.TextArea
-            placeholder="123 Đường ABC, Phường XYZ, Quận 1, TP.HCM"
+            placeholder={tAuth('addressPlaceholder')}
             rows={2}
           />
         </Form.Item>
 
         <Form.Item className="!mb-0">
           <Button type="primary" htmlType="submit" block size="large">
-            Tiếp tục
+            {tCommon('continue')}
           </Button>
         </Form.Item>
       </Form>

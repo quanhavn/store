@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { Result, Button, Typography, Divider } from 'antd'
 import { PrinterOutlined, ShareAltOutlined, PlusOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { trackSaleCompleted } from '@/lib/analytics'
 
 const { Text, Title } = Typography
@@ -24,6 +25,9 @@ export function CheckoutSuccess({
   onPrint,
   onShare,
 }: CheckoutSuccessProps) {
+  const t = useTranslations('pos')
+  const tCommon = useTranslations('common')
+  
   useEffect(() => {
     trackSaleCompleted(total, itemCount)
   }, [total, itemCount])
@@ -32,15 +36,15 @@ export function CheckoutSuccess({
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
       <Result
         status="success"
-        title="Thanh toán thành công!"
+        title={t('checkoutSuccess')}
         subTitle={
           <div className="space-y-2">
             <div>
-              <Text type="secondary">Số hóa đơn:</Text>
+              <Text type="secondary">{t('invoiceNumber')}:</Text>
               <Title level={4} className="!m-0">{invoiceNo}</Title>
             </div>
             <div>
-              <Text type="secondary">Tổng tiền:</Text>
+              <Text type="secondary">{t('totalAmount')}:</Text>
               <Title level={3} className="!m-0 text-blue-600">
                 {total.toLocaleString('vi-VN')}đ
               </Title>
@@ -56,7 +60,7 @@ export function CheckoutSuccess({
                 block
                 onClick={onPrint}
               >
-                In hóa đơn
+                {t('printInvoice')}
               </Button>
             )}
             {onShare && (
@@ -66,7 +70,7 @@ export function CheckoutSuccess({
                 block
                 onClick={onShare}
               >
-                Chia sẻ
+                {tCommon('share')}
               </Button>
             )}
             <Divider />
@@ -77,7 +81,7 @@ export function CheckoutSuccess({
               block
               onClick={onNewSale}
             >
-              Đơn hàng mới
+              {t('newOrder')}
             </Button>
           </div>
         }

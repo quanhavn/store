@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Card, Button, Typography, Tag, Space } from 'antd'
 import { UserOutlined, PhoneOutlined, CloseOutlined, UserAddOutlined, WarningOutlined } from '@ant-design/icons'
 import { CustomerSearch } from '@/components/customers/CustomerSearch'
@@ -19,6 +20,10 @@ export function CustomerSelector({
   onSelect,
   onCreateNew,
 }: CustomerSelectorProps) {
+  const t = useTranslations('pos')
+  const tCustomers = useTranslations('customers')
+  const tDebts = useTranslations('debts')
+
   if (selectedCustomer) {
     return (
       <Card size="small" className="bg-blue-50 border-blue-200">
@@ -32,7 +37,7 @@ export function CustomerSelector({
                 <Text strong>{selectedCustomer.name}</Text>
                 {selectedCustomer.total_debt > 0 && (
                   <Tag color="red" icon={<WarningOutlined />}>
-                    No {formatCurrency(selectedCustomer.total_debt)}
+                    {tDebts('debt')} {formatCurrency(selectedCustomer.total_debt)}
                   </Tag>
                 )}
               </div>
@@ -59,7 +64,7 @@ export function CustomerSelector({
         value={null}
         onChange={onSelect}
         onCreateNew={onCreateNew}
-        placeholder="Tim khach hang (ten/SDT)..."
+        placeholder={tCustomers('searchPlaceholder')}
         allowClear
       />
       {onCreateNew && (
@@ -70,7 +75,7 @@ export function CustomerSelector({
           block
           size="small"
         >
-          Them khach hang moi
+          {tCustomers('addCustomer')}
         </Button>
       )}
     </div>

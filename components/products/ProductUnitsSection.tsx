@@ -3,6 +3,7 @@
 import { Button, Input, InputNumber, Switch, Table, Space, Popconfirm, message } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { ColumnsType } from 'antd/es/table'
 
 export interface ProductUnitInput {
@@ -33,6 +34,9 @@ export function ProductUnitsSection({
   baseCostPrice = 0,
   disabled = false,
 }: ProductUnitsSectionProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
+
   useEffect(() => {
     if (units.length === 0) {
       onChange([{
@@ -61,7 +65,7 @@ export function ProductUnitsSection({
   const handleDelete = (id: string) => {
     const unit = units.find(u => u.id === id)
     if (unit?.is_base_unit) {
-      message.warning('Không thể xóa đơn vị cơ bản')
+      message.warning(t('units.cannotDeleteBase'))
       return
     }
     onChange(units.filter(u => u.id !== id))
@@ -103,7 +107,7 @@ export function ProductUnitsSection({
 
   const columns: ColumnsType<ProductUnitInput> = [
     {
-      title: 'Tên đơn vị',
+      title: t('units.unitName'),
       dataIndex: 'unit_name',
       key: 'unit_name',
       width: 120,
@@ -111,14 +115,14 @@ export function ProductUnitsSection({
         <Input
           value={value}
           onChange={(e) => handleChange(record.id!, 'unit_name', e.target.value)}
-          placeholder="VD: hộp"
+          placeholder={t('units.unitNamePlaceholder')}
           disabled={disabled}
           size="small"
         />
       ),
     },
     {
-      title: 'Quy đổi',
+      title: t('units.conversionRate'),
       dataIndex: 'conversion_rate',
       key: 'conversion_rate',
       width: 100,
@@ -135,7 +139,7 @@ export function ProductUnitsSection({
       ),
     },
     {
-      title: 'Giá bán',
+      title: t('sellPrice'),
       dataIndex: 'sell_price',
       key: 'sell_price',
       width: 130,
@@ -154,7 +158,7 @@ export function ProductUnitsSection({
       ),
     },
     {
-      title: 'Mã vạch',
+      title: t('barcode'),
       dataIndex: 'barcode',
       key: 'barcode',
       width: 120,
@@ -169,7 +173,7 @@ export function ProductUnitsSection({
       ),
     },
     {
-      title: 'Cơ bản',
+      title: t('units.baseUnit'),
       dataIndex: 'is_base_unit',
       key: 'is_base_unit',
       width: 70,
@@ -184,7 +188,7 @@ export function ProductUnitsSection({
       ),
     },
     {
-      title: 'Mặc định',
+      title: t('units.default'),
       dataIndex: 'is_default',
       key: 'is_default',
       width: 80,
@@ -204,7 +208,7 @@ export function ProductUnitsSection({
       width: 50,
       render: (_, record) => (
         <Popconfirm
-          title="Xóa đơn vị này?"
+          title={t('units.deleteConfirm')}
           onConfirm={() => handleDelete(record.id!)}
           disabled={disabled || record.is_base_unit}
         >
@@ -223,7 +227,7 @@ export function ProductUnitsSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">Đơn vị tính</span>
+        <span className="text-sm font-medium text-gray-700">{t('unit')}</span>
         <Button
           type="dashed"
           size="small"
@@ -231,7 +235,7 @@ export function ProductUnitsSection({
           onClick={handleAdd}
           disabled={disabled}
         >
-          Thêm đơn vị
+          {t('units.addUnit')}
         </Button>
       </div>
 
@@ -242,11 +246,11 @@ export function ProductUnitsSection({
         pagination={false}
         size="small"
         scroll={{ x: 600 }}
-        locale={{ emptyText: 'Chưa có đơn vị' }}
+        locale={{ emptyText: t('units.noUnits') }}
       />
 
       <p className="text-xs text-gray-500">
-        Quy đổi: Số lượng đơn vị cơ bản trong 1 đơn vị này (VD: 1 hộp = 12 cái → quy đổi = 12)
+        {t('units.conversionHelp')}
       </p>
     </div>
   )

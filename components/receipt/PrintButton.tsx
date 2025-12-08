@@ -3,6 +3,7 @@
 import React, { useRef, useState, useCallback } from 'react'
 import { Button, Modal, message, Radio, Space } from 'antd'
 import { PrinterOutlined } from '@ant-design/icons'
+import { useTranslations } from 'next-intl'
 import { ReceiptTemplate, type ReceiptProps } from './ReceiptTemplate'
 import type { PaperWidth } from '@/lib/receipt/thermal-commands'
 
@@ -25,13 +26,14 @@ interface PrintButtonProps {
  */
 export function PrintButton({
   receiptData,
-  buttonText = 'In hoa don',
+  buttonText,
   buttonSize = 'middle',
   buttonType = 'default',
   showIcon = true,
   block = false,
   className,
 }: PrintButtonProps) {
+  const t = useTranslations('pos')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [paperWidth, setPaperWidth] = useState<PaperWidth>('MM_58')
   const [isPrinting, setIsPrinting] = useState(false)
@@ -52,7 +54,7 @@ export function PrintButton({
     const printWindow = window.open('', '_blank', 'width=400,height=600')
 
     if (!printWindow) {
-      message.error('Khong the mo cua so in. Vui long cho phep popup.')
+      message.error(t('cannotOpenPrintWindow'))
       setIsPrinting(false)
       return
     }
@@ -66,7 +68,7 @@ export function PrintButton({
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Hoa don - ${receiptData.sale.invoice_no || ''}</title>
+          <title>${t('invoice')} - ${receiptData.sale.invoice_no || ''}</title>
           <style>
             * {
               margin: 0;
@@ -115,8 +117,8 @@ export function PrintButton({
     printWindow.document.close()
 
     setIsPrinting(false)
-    message.success('Da gui lenh in')
-  }, [paperWidth, receiptData.sale.invoice_no])
+    message.success(t('printCommandSent'))
+  }, [paperWidth, receiptData.sale.invoice_no, t])
 
   // Inline print using window.print() with CSS media queries
   const handleDirectPrint = useCallback(() => {
@@ -171,11 +173,11 @@ export function PrintButton({
         block={block}
         className={className}
       >
-        {buttonText}
+        {buttonText || t('printInvoice')}
       </Button>
 
       <Modal
-        title="Xem truoc hoa don"
+        title={t('previewInvoice')}
         open={isModalOpen}
         onCancel={handleCloseModal}
         width={paperWidth === 'MM_58' ? 320 : 400}
@@ -191,7 +193,7 @@ export function PrintButton({
             </Radio.Group>
           </div>,
           <Button key="close" onClick={handleCloseModal}>
-            Dong
+            {t('close')}
           </Button>,
           <Button
             key="print"
@@ -200,7 +202,7 @@ export function PrintButton({
             onClick={handlePrint}
             loading={isPrinting}
           >
-            In hoa don
+            {t('printInvoice')}
           </Button>,
         ]}
         styles={{
@@ -225,7 +227,7 @@ export function PrintButton({
  */
 export function QuickPrintButton({
   receiptData,
-  buttonText = 'In nhanh',
+  buttonText,
   buttonSize = 'small',
   paperWidth = 'MM_58',
 }: {
@@ -234,6 +236,7 @@ export function QuickPrintButton({
   buttonSize?: 'small' | 'middle' | 'large'
   paperWidth?: PaperWidth
 }) {
+  const t = useTranslations('pos')
   const [isPrinting, setIsPrinting] = useState(false)
 
   const handleQuickPrint = useCallback(() => {
@@ -250,7 +253,7 @@ export function QuickPrintButton({
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
 
     if (!iframeDoc) {
-      message.error('Khong the tao khung in')
+      message.error(t('cannotCreatePrintFrame'))
       setIsPrinting(false)
       return
     }
@@ -269,11 +272,11 @@ export function QuickPrintButton({
         setTimeout(() => {
           document.body.removeChild(iframe)
           setIsPrinting(false)
-          message.success('Da gui lenh in')
+          message.success(t('printCommandSent'))
         }, 100)
       }, 100)
     }
-  }, [receiptData, paperWidth])
+  }, [receiptData, paperWidth, t])
 
   return (
     <Button
@@ -283,7 +286,7 @@ export function QuickPrintButton({
       onClick={handleQuickPrint}
       loading={isPrinting}
     >
-      {buttonText}
+      {buttonText || t('quickPrint')}
     </Button>
   )
 }

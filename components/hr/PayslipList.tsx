@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, type PayrollWithEmployee } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
 
@@ -15,6 +16,7 @@ interface PayslipListProps {
 }
 
 export function PayslipList({ onSelect }: PayslipListProps) {
+  const t = useTranslations('hr')
   const currentDate = dayjs()
   const [month, setMonth] = useState(currentDate.month() + 1)
   const [year, setYear] = useState(currentDate.year())
@@ -26,22 +28,22 @@ export function PayslipList({ onSelect }: PayslipListProps) {
 
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
-    label: `Thang ${i + 1}`,
+    label: t('monthLabel', { month: i + 1 }),
   }))
 
   const years = Array.from({ length: 5 }, (_, i) => ({
     value: currentDate.year() - i,
-    label: `Nam ${currentDate.year() - i}`,
+    label: t('yearLabel', { year: currentDate.year() - i }),
   }))
 
   const getStatusTag = (status: string) => {
     switch (status) {
       case 'calculated':
-        return <Tag color="blue">Da tinh</Tag>
+        return <Tag color="blue">{t('payrollStatus.calculated')}</Tag>
       case 'approved':
-        return <Tag color="orange">Da duyet</Tag>
+        return <Tag color="orange">{t('payrollStatus.approved')}</Tag>
       case 'paid':
-        return <Tag color="green">Da tra</Tag>
+        return <Tag color="green">{t('payrollStatus.paid')}</Tag>
       default:
         return <Tag>{status}</Tag>
     }
@@ -74,7 +76,7 @@ export function PayslipList({ onSelect }: PayslipListProps) {
 
       {!data?.payrolls.length ? (
         <Empty
-          description="Chua co phieu luong"
+          description={t('noPayslips')}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (

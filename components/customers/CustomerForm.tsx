@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Drawer, Form, Input, Button, message } from 'antd'
 import { SaveOutlined, UserAddOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Customer, type CreateCustomerData } from '@/lib/supabase/functions'
 
 interface CustomerFormProps {
@@ -15,16 +16,19 @@ interface CustomerFormProps {
 export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const t = useTranslations('customers')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCustomerData) => api.customers.create(data),
     onSuccess: () => {
-      message.success('Them khach hang thanh cong')
+      message.success(t('createSuccess'))
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -32,13 +36,13 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
     mutationFn: (data: Partial<CreateCustomerData>) =>
       api.customers.update(customer!.id, data),
     onSuccess: () => {
-      message.success('Cap nhat khach hang thanh cong')
+      message.success(t('updateSuccess'))
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       queryClient.invalidateQueries({ queryKey: ['customer', customer!.id] })
       onClose()
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
     },
   })
 
@@ -85,7 +89,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
     <Drawer
       open={open}
       onClose={onClose}
-      title={customer ? 'Sua khach hang' : 'Them khach hang'}
+      title={customer ? t('editCustomer') : t('addCustomer')}
       placement="bottom"
       height="90%"
       extra={
@@ -95,7 +99,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
           onClick={handleSubmit}
           loading={isPending}
         >
-          {customer ? 'Luu' : 'Them'}
+          {customer ? tCommon('save') : tCommon('add')}
         </Button>
       }
     >
@@ -106,18 +110,18 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
       >
         <Form.Item
           name="name"
-          label="Ho va ten"
-          rules={[{ required: true, message: 'Nhap ten khach hang' }]}
+          label={t('customerName')}
+          rules={[{ required: true, message: t('validation.nameRequired') }]}
         >
           <Input placeholder="Nguyen Van A" />
         </Form.Item>
 
         <Form.Item
           name="phone"
-          label="So dien thoai"
+          label={t('phoneNumber')}
           rules={[
-            { required: true, message: 'Nhap so dien thoai' },
-            { pattern: /^0\d{9}$/, message: 'So dien thoai phai co 10 chu so va bat dau bang 0' },
+            { required: true, message: t('validation.phoneRequired') },
+            { pattern: /^0\d{9}$/, message: t('validation.phoneInvalid') },
           ]}
         >
           <Input placeholder="0901234567" />
@@ -125,7 +129,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
 
         <Form.Item
           name="address"
-          label="Dia chi"
+          label={t('address')}
         >
           <Input.TextArea
             placeholder="123 Nguyen Van Linh, Q7, TP.HCM"
@@ -135,11 +139,11 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
 
         <Form.Item
           name="tax_code"
-          label="Ma so thue"
+          label={t('taxCode')}
           rules={[
             {
               pattern: /^\d{10}(\d{3})?$/,
-              message: 'Ma so thue phai co 10 hoac 13 chu so'
+              message: t('validation.taxCodeInvalid')
             },
           ]}
         >
@@ -148,7 +152,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
 
         <Form.Item
           name="notes"
-          label="Ghi chu"
+          label={tCommon('note')}
         >
           <Input.TextArea
             placeholder="Ghi chu ve khach hang..."

@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { AutoComplete, Input, Tag, Typography, Button } from 'antd'
 import { SearchOutlined, UserAddOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api, type Customer } from '@/lib/supabase/functions'
 import { formatCurrency, formatPhone } from '@/lib/utils'
 import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue'
@@ -22,11 +23,14 @@ export function CustomerSearch({
   value,
   onChange,
   onCreateNew,
-  placeholder = 'Tim khach hang (ten/SDT)...',
+  placeholder,
   allowClear = true,
 }: CustomerSearchProps) {
   const [searchText, setSearchText] = useState('')
   const debouncedSearch = useDebouncedValue(searchText, 300)
+  const t = useTranslations('customers')
+  const tCommon = useTranslations('common')
+  const tDebts = useTranslations('debts')
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers-search', debouncedSearch],
@@ -51,7 +55,7 @@ export function CustomerSearch({
           </div>
           {customer.total_debt > 0 && (
             <Tag color="red" className="ml-2">
-              No {formatCurrency(customer.total_debt)}
+              {tDebts('debt')} {formatCurrency(customer.total_debt)}
             </Tag>
           )}
         </div>
@@ -66,7 +70,7 @@ export function CustomerSearch({
         label: (
           <div className="flex items-center gap-2 py-1 text-blue-600">
             <UserAddOutlined />
-            <span>Them khach hang moi: &quot;{debouncedSearch}&quot;</span>
+            <span>{t('addNewWithName', { name: debouncedSearch })}</span>
           </div>
         ),
         customer: null as unknown as Customer,
@@ -74,7 +78,7 @@ export function CustomerSearch({
     }
 
     return customerOptions
-  }, [data?.customers, debouncedSearch, onCreateNew])
+  }, [data?.customers, debouncedSearch, onCreateNew, t, tDebts])
 
   const handleSelect = useCallback((selectedValue: string, option: { customer: Customer | null }) => {
     if (selectedValue === '__create_new__') {
@@ -103,17 +107,17 @@ export function CustomerSearch({
       notFoundContent={
         debouncedSearch.length >= 2 ? (
           isLoading ? (
-            <div className="text-center py-2 text-gray-500">Dang tim...</div>
+            <div className="text-center py-2 text-gray-500">{tCommon('loading')}...</div>
           ) : (
             <div className="text-center py-2">
-              <div className="text-gray-500 mb-2">Khong tim thay khach hang</div>
+              <div className="text-gray-500 mb-2">{t('notFound')}</div>
               {onCreateNew && (
                 <Button
                   type="link"
                   icon={<UserAddOutlined />}
                   onClick={onCreateNew}
                 >
-                  Them khach hang moi
+                  {t('addCustomer')}
                 </Button>
               )}
             </div>
@@ -123,7 +127,7 @@ export function CustomerSearch({
     >
       <Input
         prefix={<SearchOutlined className="text-gray-400" />}
-        placeholder={placeholder}
+        placeholder={placeholder || t('searchPlaceholder')}
         allowClear={allowClear}
         onClear={handleClear}
       />

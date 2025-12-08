@@ -34,6 +34,7 @@ import {
   exportSalaryBookPDF,
 } from '@/lib/reports/pdf-templates'
 import { trackReportExported } from '@/lib/analytics'
+import { useTranslations } from 'next-intl'
 
 const { Title, Text } = Typography
 
@@ -46,6 +47,13 @@ interface ReportPreviewProps {
 }
 
 export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: ReportPreviewProps) {
+  const t = useTranslations('reports')
+  const tCommon = useTranslations('common')
+  const tFinance = useTranslations('finance')
+  const tHr = useTranslations('hr')
+  const tInventory = useTranslations('inventory')
+  const tInvoices = useTranslations('invoices')
+
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const { data, isLoading } = useQuery({
     queryKey: ['report', reportType, dateFrom, dateTo],
@@ -78,14 +86,14 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
 
   const getReportTitle = () => {
     switch (reportType) {
-      case 'revenue': return 'SO DOANH THU'
-      case 'cash': return 'SO TIEN MAT'
-      case 'bank': return 'SO TIEN GUI NGAN HANG'
-      case 'expense': return 'SO CHI PHI'
-      case 'inventory': return 'SO TON KHO'
-      case 'tax': return 'SO NGHIA VU THUE'
-      case 'salary': return 'BANG LUONG NHAN VIEN'
-      default: return 'BAO CAO'
+      case 'revenue': return t('revenueReport').toUpperCase()
+      case 'cash': return t('cashReport').toUpperCase()
+      case 'bank': return t('bankReport').toUpperCase()
+      case 'expense': return t('expenseReport').toUpperCase()
+      case 'inventory': return t('inventoryReport').toUpperCase()
+      case 'tax': return t('taxReport').toUpperCase()
+      case 'salary': return t('salaryReport').toUpperCase()
+      default: return t('title').toUpperCase()
     }
   }
 
@@ -93,12 +101,12 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
     switch (reportType) {
       case 'revenue':
         return [
-          { title: 'STT', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: 'Ngay', dataIndex: 'date', key: 'date', width: 100 },
-          { title: 'So HD', dataIndex: 'invoice_no', key: 'invoice_no', width: 100 },
-          { title: 'Khach hang', dataIndex: 'customer_name', key: 'customer_name', ellipsis: true },
+          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
+          { title: tCommon('date'), dataIndex: 'date', key: 'date', width: 100 },
+          { title: tInvoices('invoiceNumber'), dataIndex: 'invoice_no', key: 'invoice_no', width: 100 },
+          { title: tCommon('name'), dataIndex: 'customer_name', key: 'customer_name', ellipsis: true },
           {
-            title: 'Tong tien',
+            title: tCommon('total'),
             dataIndex: 'total',
             key: 'total',
             width: 120,
@@ -108,11 +116,11 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         ]
       case 'cash':
         return [
-          { title: 'STT', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: 'Ngay', dataIndex: 'date', key: 'date', width: 100 },
-          { title: 'Dien giai', dataIndex: 'description', key: 'description', ellipsis: true },
+          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
+          { title: tCommon('date'), dataIndex: 'date', key: 'date', width: 100 },
+          { title: tCommon('description'), dataIndex: 'description', key: 'description', ellipsis: true },
           {
-            title: 'Thu',
+            title: tFinance('income'),
             dataIndex: 'debit',
             key: 'debit',
             width: 100,
@@ -120,7 +128,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
             render: (v: number) => v > 0 ? formatCurrency(v) : '-',
           },
           {
-            title: 'Chi',
+            title: tFinance('expense'),
             dataIndex: 'credit',
             key: 'credit',
             width: 100,
@@ -128,7 +136,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
             render: (v: number) => v > 0 ? formatCurrency(v) : '-',
           },
           {
-            title: 'Ton',
+            title: tFinance('balance'),
             dataIndex: 'balance',
             key: 'balance',
             width: 110,
@@ -138,12 +146,12 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         ]
       case 'expense':
         return [
-          { title: 'STT', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: 'Ngay', dataIndex: 'date', key: 'date', width: 100 },
-          { title: 'Loai', dataIndex: 'category', key: 'category', width: 100 },
-          { title: 'Dien giai', dataIndex: 'description', key: 'description', ellipsis: true },
+          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
+          { title: tCommon('date'), dataIndex: 'date', key: 'date', width: 100 },
+          { title: tCommon('type'), dataIndex: 'category', key: 'category', width: 100 },
+          { title: tCommon('description'), dataIndex: 'description', key: 'description', ellipsis: true },
           {
-            title: 'So tien',
+            title: tCommon('amount'),
             dataIndex: 'amount',
             key: 'amount',
             width: 120,
@@ -153,34 +161,34 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         ]
       case 'inventory':
         return [
-          { title: 'STT', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: 'Ngay', dataIndex: 'date', key: 'date', width: 100 },
-          { title: 'San pham', dataIndex: 'product_name', key: 'product_name', ellipsis: true },
-          { title: 'Loai', dataIndex: 'movement_type', key: 'movement_type', width: 80 },
-          { title: 'SL', dataIndex: 'quantity', key: 'quantity', width: 60, align: 'right' as const },
-          { title: 'Ton', dataIndex: 'after_quantity', key: 'after_quantity', width: 60, align: 'right' as const },
+          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
+          { title: tCommon('date'), dataIndex: 'date', key: 'date', width: 100 },
+          { title: tCommon('name'), dataIndex: 'product_name', key: 'product_name', ellipsis: true },
+          { title: tCommon('type'), dataIndex: 'movement_type', key: 'movement_type', width: 80 },
+          { title: tCommon('quantity'), dataIndex: 'quantity', key: 'quantity', width: 60, align: 'right' as const },
+          { title: tInventory('stock'), dataIndex: 'after_quantity', key: 'after_quantity', width: 60, align: 'right' as const },
         ]
       case 'tax':
         return [
-          { title: 'Quy', dataIndex: 'quarter', key: 'quarter', width: 60, render: (v: number) => `Q${v}` },
-          { title: 'Doanh thu', dataIndex: 'total_revenue', key: 'total_revenue', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'VAT thu', dataIndex: 'vat_collected', key: 'vat_collected', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'VAT khau tru', dataIndex: 'vat_deductible', key: 'vat_deductible', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'VAT phai nop', dataIndex: 'vat_payable', key: 'vat_payable', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'TNCN', dataIndex: 'pit_payable', key: 'pit_payable', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'Tong thue', dataIndex: 'total_tax', key: 'total_tax', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'Trang thai', dataIndex: 'status', key: 'status', width: 100 },
+          { title: t('quarter'), dataIndex: 'quarter', key: 'quarter', width: 60, render: (v: number) => `Q${v}` },
+          { title: t('revenue'), dataIndex: 'total_revenue', key: 'total_revenue', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: 'VAT', dataIndex: 'vat_collected', key: 'vat_collected', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: 'VAT', dataIndex: 'vat_deductible', key: 'vat_deductible', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: 'VAT', dataIndex: 'vat_payable', key: 'vat_payable', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: 'PIT', dataIndex: 'pit_payable', key: 'pit_payable', width: 100, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: tCommon('total'), dataIndex: 'total_tax', key: 'total_tax', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: tCommon('status'), dataIndex: 'status', key: 'status', width: 100 },
         ]
       case 'salary':
         return [
-          { title: 'STT', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: 'Ho ten', dataIndex: 'name', key: 'name', ellipsis: true },
-          { title: 'Chuc vu', dataIndex: 'position', key: 'position', width: 100 },
-          { title: 'Ngay cong', dataIndex: 'working_days', key: 'working_days', width: 80 },
-          { title: 'Luong co ban', dataIndex: 'base_salary', key: 'base_salary', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'Tong luong', dataIndex: 'gross_salary', key: 'gross_salary', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'Thuc nhan', dataIndex: 'net_salary', key: 'net_salary', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
-          { title: 'Trang thai', dataIndex: 'status', key: 'status', width: 80 },
+          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
+          { title: tCommon('name'), dataIndex: 'name', key: 'name', ellipsis: true },
+          { title: tHr('position'), dataIndex: 'position', key: 'position', width: 100 },
+          { title: tCommon('date'), dataIndex: 'working_days', key: 'working_days', width: 80 },
+          { title: tHr('salary'), dataIndex: 'base_salary', key: 'base_salary', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: tCommon('total'), dataIndex: 'gross_salary', key: 'gross_salary', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: tCommon('amount'), dataIndex: 'net_salary', key: 'net_salary', width: 120, align: 'right' as const, render: (v: number) => formatCurrency(v) },
+          { title: tCommon('status'), dataIndex: 'status', key: 'status', width: 80 },
         ]
       default:
         return []
@@ -215,7 +223,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
 
   const handleExportExcel = () => {
     if (!data) {
-      message.warning('Khong co du lieu de xuat')
+      message.warning(tCommon('noData'))
       return
     }
 
@@ -249,20 +257,20 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           exportSalaryBook(data as unknown as SalaryBookReport, storeName, period)
           break
         default:
-          message.warning('Loai bao cao chua duoc ho tro')
+          message.warning(tCommon('noData'))
           return
       }
-      message.success('Xuat file Excel thanh cong')
+      message.success(tCommon('success'))
       trackReportExported(reportType, 'excel')
     } catch (error) {
       console.error('Export error:', error)
-      message.error('Loi khi xuat file Excel')
+      message.error(tCommon('error'))
     }
   }
 
   const handleExportPDF = async () => {
     if (!data) {
-      message.warning('Khong co du lieu de xuat')
+      message.warning(tCommon('noData'))
       return
     }
 
@@ -301,14 +309,14 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           exportSalaryBookPDF(data as SalaryBookReport, storeInfo)
           break
         default:
-          message.warning('Loai bao cao chua duoc ho tro')
+          message.warning(tCommon('noData'))
           return
       }
-      message.success('Xuat file PDF thanh cong')
+      message.success(tCommon('success'))
       trackReportExported(reportType, 'pdf')
     } catch (error) {
       console.error('PDF export error:', error)
-      message.error('Loi khi xuat file PDF')
+      message.error(tCommon('error'))
     } finally {
       setIsExportingPDF(false)
     }
@@ -354,7 +362,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           <Spin size="large" />
         </div>
       ) : !data ? (
-        <Empty description="Khong co du lieu" />
+        <Empty description={tCommon('noData')} />
       ) : (
         <>
           <Table
@@ -368,7 +376,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
 
           {getTotals() && (
             <Card size="small" className="mt-4 bg-gray-50">
-              <Title level={5} className="!mb-2">Tong cong</Title>
+              <Title level={5} className="!mb-2">{tCommon('total')}</Title>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {Object.entries(getTotals() || {}).map(([key, value]) => (
                   <div key={key} className="flex justify-between">

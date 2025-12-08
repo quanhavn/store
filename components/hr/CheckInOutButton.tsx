@@ -5,6 +5,7 @@ import { LoginOutlined, LogoutOutlined, ClockCircleOutlined } from '@ant-design/
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type Employee } from '@/lib/supabase/functions'
 import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Text, Title } = Typography
 
@@ -13,6 +14,8 @@ interface CheckInOutButtonProps {
 }
 
 export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
+  const t = useTranslations('hr')
+  const tCommon = useTranslations('common')
   const queryClient = useQueryClient()
   const today = dayjs().format('YYYY-MM-DD')
 
@@ -32,24 +35,24 @@ export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
   const checkInMutation = useMutation({
     mutationFn: () => api.hr.checkIn(employee.id),
     onSuccess: () => {
-      message.success('Check-in thanh cong!')
+      message.success(t('checkInSuccess'))
       queryClient.invalidateQueries({ queryKey: ['attendance-today', employee.id] })
       queryClient.invalidateQueries({ queryKey: ['attendance'] })
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
   const checkOutMutation = useMutation({
     mutationFn: () => api.hr.checkOut(employee.id),
     onSuccess: () => {
-      message.success('Check-out thanh cong!')
+      message.success(t('checkOutSuccess'))
       queryClient.invalidateQueries({ queryKey: ['attendance-today', employee.id] })
       queryClient.invalidateQueries({ queryKey: ['attendance'] })
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : tCommon('error'))
     },
   })
 
@@ -60,7 +63,7 @@ export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
   return (
     <Card className="text-center">
       <Title level={4} className="!mb-2">
-        Xin chao, {employee.name}
+        {t('greeting', { name: employee.name })}
       </Title>
       <Text type="secondary" className="block mb-4">
         {dayjs().format('dddd, DD/MM/YYYY')}
@@ -69,11 +72,11 @@ export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
       {hasCheckedIn && (
         <div className="mb-4">
           <Tag color="green" icon={<LoginOutlined />} className="text-sm py-1 px-3">
-            Check-in: {formatTime(todayAttendance.check_in!)}
+            {t('checkIn')}: {formatTime(todayAttendance.check_in!)}
           </Tag>
           {hasCheckedOut && (
             <Tag color="blue" icon={<LogoutOutlined />} className="text-sm py-1 px-3 ml-2">
-              Check-out: {formatTime(todayAttendance.check_out!)}
+              {t('checkOut')}: {formatTime(todayAttendance.check_out!)}
             </Tag>
           )}
         </div>
@@ -83,12 +86,12 @@ export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
         <div className="py-4">
           <div className="text-5xl mb-2">🎉</div>
           <Text type="success" className="text-lg">
-            Da hoan thanh ngay lam viec!
+            {t('workdayComplete')}
           </Text>
           {todayAttendance?.working_hours && (
             <div className="mt-2">
               <Tag icon={<ClockCircleOutlined />} color="blue">
-                {todayAttendance.working_hours} gio
+                {todayAttendance.working_hours} {t('hours')}
               </Tag>
             </div>
           )}
@@ -104,7 +107,7 @@ export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
               loading={checkInMutation.isPending || isLoading}
               className="w-full h-20 text-xl bg-green-500 hover:bg-green-600"
             >
-              CHECK-IN
+              {t('checkIn').toUpperCase()}
             </Button>
           ) : (
             <Button
@@ -115,7 +118,7 @@ export function CheckInOutButton({ employee }: CheckInOutButtonProps) {
               loading={checkOutMutation.isPending || isLoading}
               className="w-full h-20 text-xl bg-blue-500 hover:bg-blue-600"
             >
-              CHECK-OUT
+              {t('checkOut').toUpperCase()}
             </Button>
           )}
         </Space>

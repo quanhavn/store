@@ -3,6 +3,7 @@
 import { Card, Typography, Tag, Image } from 'antd'
 import { ShoppingCartOutlined } from '@ant-design/icons'
 import { useCartStore } from '@/lib/stores/cart'
+import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
 

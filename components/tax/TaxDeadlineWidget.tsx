@@ -3,12 +3,16 @@
 import { Card, Typography, Tag, Progress } from 'antd'
 import { ClockCircleOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 
 const { Text } = Typography
 
 export function TaxDeadlineWidget() {
+  const t = useTranslations('tax')
+  const tCommon = useTranslations('common')
+
   const now = new Date()
   const currentQuarter = Math.ceil((now.getMonth() + 1) / 3)
   const currentYear = now.getFullYear()
@@ -53,6 +57,12 @@ export function TaxDeadlineWidget() {
 
   const progressPercent = Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100))
 
+  const getDaysRemainingText = () => {
+    if (daysRemaining <= 0) return t('overdue')
+    if (daysRemaining === 1) return t('daysRemaining', { count: 1 })
+    return t('daysRemainingPlural', { count: daysRemaining })
+  }
+
   return (
     <Card
       className={`mb-4 border-l-4 ${
@@ -64,17 +74,15 @@ export function TaxDeadlineWidget() {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {getStatusIcon()}
-          <Text strong>Thue {quarterlyTax.period}</Text>
+          <Text strong>{t('taxPeriod', { period: quarterlyTax.period })}</Text>
         </div>
         <Tag color={getStatusColor()}>
-          {daysRemaining <= 0 ? 'Qua han!' :
-           daysRemaining === 1 ? 'Con 1 ngay' :
-           `Con ${daysRemaining} ngay`}
+          {getDaysRemainingText()}
         </Tag>
       </div>
 
       <div className="text-sm text-gray-600 mb-2">
-        Han nop: <strong>{formatDeadline(deadline)}</strong>
+        {t('deadline')}: <strong>{formatDeadline(deadline)}</strong>
       </div>
 
       <Progress
@@ -87,15 +95,15 @@ export function TaxDeadlineWidget() {
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="bg-white rounded p-2">
-          <Text type="secondary" className="text-xs">VAT</Text>
+          <Text type="secondary" className="text-xs">{t('columns.vat')}</Text>
           <div className="font-semibold text-sm">{formatCurrency(quarterlyTax.vat_payable)}</div>
         </div>
         <div className="bg-white rounded p-2">
-          <Text type="secondary" className="text-xs">TNCN</Text>
+          <Text type="secondary" className="text-xs">{t('columns.pit')}</Text>
           <div className="font-semibold text-sm">{formatCurrency(quarterlyTax.pit_payable)}</div>
         </div>
         <div className="bg-white rounded p-2">
-          <Text type="secondary" className="text-xs">Tong</Text>
+          <Text type="secondary" className="text-xs">{tCommon('total')}</Text>
           <div className="font-semibold text-sm text-red-600">{formatCurrency(quarterlyTax.total_tax_payable)}</div>
         </div>
       </div>

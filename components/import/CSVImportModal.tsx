@@ -10,6 +10,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { useCSVImportStore } from '@/lib/stores/csv-import'
 import { getEntityLabel } from '@/lib/import/types'
 import { CSVUploadStep } from './CSVUploadStep'
@@ -17,14 +18,9 @@ import { CSVMappingStep } from './CSVMappingStep'
 import { CSVPreviewStep } from './CSVPreviewStep'
 import { CSVProgressStep } from './CSVProgressStep'
 
-const STEP_ITEMS = [
-  { title: 'Tải file', icon: <UploadOutlined /> },
-  { title: 'Ghép cột', icon: <LinkOutlined /> },
-  { title: 'Xem trước', icon: <EyeOutlined /> },
-  { title: 'Import', icon: <LoadingOutlined /> },
-]
-
 export function CSVImportModal() {
+  const tCommon = useTranslations('common')
+  const tImport = useTranslations('import')
   const queryClient = useQueryClient()
   const {
     isOpen,
@@ -58,6 +54,12 @@ export function CSVImportModal() {
   }, [step])
 
   const stepItems = useMemo(() => {
+    const STEP_ITEMS = [
+      { title: tImport('steps.upload'), icon: <UploadOutlined /> },
+      { title: tImport('steps.mapping'), icon: <LinkOutlined /> },
+      { title: tImport('steps.preview'), icon: <EyeOutlined /> },
+      { title: tCommon('import'), icon: <LoadingOutlined /> },
+    ]
     return STEP_ITEMS.map((item, index) => {
       if (index === 3) {
         if (step === 'complete') {
@@ -69,7 +71,7 @@ export function CSVImportModal() {
       }
       return item
     })
-  }, [step])
+  }, [step, tImport, tCommon])
 
   useEffect(() => {
     // Invalidate queries on successful import
@@ -97,7 +99,7 @@ export function CSVImportModal() {
 
   const handleClose = () => {
     if (progress.status === 'importing') {
-      message.warning('Đang import, vui lòng đợi hoàn tất')
+      message.warning(tImport('importingPleaseWait'))
       return
     }
     closeImport()
@@ -118,21 +120,21 @@ export function CSVImportModal() {
     switch (step) {
       case 'upload':
         if (csvColumns.length === 0) {
-          message.error('Vui lòng tải file CSV')
+          message.error(tImport('pleaseUploadCSV'))
           return
         }
         setStep('mapping')
         break
       case 'mapping':
         if (columnMappings.filter((m) => m.targetField).length === 0) {
-          message.error('Vui lòng ghép ít nhất một cột')
+          message.error(tImport('pleaseMapAtLeastOneColumn'))
           return
         }
         setStep('preview')
         break
       case 'preview':
         if (validRowCount === 0) {
-          message.error('Không có dữ liệu hợp lệ để import')
+          message.error(tImport('noValidDataToImport'))
           return
         }
         setStep('progress')
@@ -177,9 +179,9 @@ export function CSVImportModal() {
     if (step === 'complete') {
       return (
         <Space>
-          <Button onClick={reset}>Import thêm</Button>
+          <Button onClick={reset}>{tImport('importMore')}</Button>
           <Button type="primary" onClick={handleClose}>
-            Đóng
+            {tCommon('close')}
           </Button>
         </Space>
       )
@@ -187,10 +189,10 @@ export function CSVImportModal() {
 
     return (
       <Space>
-        <Button onClick={handleClose}>Hủy</Button>
-        {canGoBack() && <Button onClick={handleBack}>Quay lại</Button>}
+        <Button onClick={handleClose}>{tCommon('cancel')}</Button>
+        {canGoBack() && <Button onClick={handleBack}>{tCommon('back')}</Button>}
         <Button type="primary" onClick={handleNext} disabled={!canGoNext()}>
-          {step === 'preview' ? `Import ${validRowCount} dòng` : 'Tiếp tục'}
+          {step === 'preview' ? tImport('importRows', { count: validRowCount }) : tCommon('continue')}
         </Button>
       </Space>
     )
@@ -200,7 +202,7 @@ export function CSVImportModal() {
     <Modal
       open={isOpen}
       onCancel={handleClose}
-      title={`Import ${getEntityLabel(entityType)}`}
+      title={tImport('importEntity', { entity: getEntityLabel(entityType) })}
       width={800}
       footer={renderFooter()}
       destroyOnHidden

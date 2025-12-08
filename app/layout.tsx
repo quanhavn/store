@@ -4,6 +4,8 @@ import './globals.css'
 import { AntdProvider } from '@/components/providers/antd-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 
 /**
  * Font Optimization
@@ -50,19 +52,24 @@ export const viewport: Viewport = {
   themeColor: '#3b82f6',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <html lang="vi" suppressHydrationWarning className={inter.variable}>
+    <html lang={locale} suppressHydrationWarning className={inter.variable}>
       <body className={inter.className}>
         <GoogleAnalytics />
         <QueryProvider>
-          <AntdProvider>
-            {children}
-          </AntdProvider>
+          <NextIntlClientProvider messages={messages}>
+            <AntdProvider>
+              {children}
+            </AntdProvider>
+          </NextIntlClientProvider>
         </QueryProvider>
       </body>
     </html>

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, type Employee } from '@/lib/supabase/functions'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
 
@@ -14,6 +15,8 @@ interface AttendanceCalendarProps {
 }
 
 export function AttendanceCalendar({ employee }: AttendanceCalendarProps) {
+  const t = useTranslations('hr')
+  const tCommon = useTranslations('common')
   const [selectedMonth, setSelectedMonth] = useState(dayjs())
 
   const { data, isLoading } = useQuery({
@@ -52,19 +55,19 @@ export function AttendanceCalendar({ employee }: AttendanceCalendarProps) {
     switch (attendance.status) {
       case 'present':
         status = 'success'
-        text = 'Co mat'
+        text = t('status.present')
         break
       case 'half_day':
         status = 'warning'
-        text = 'Nua ngay'
+        text = t('status.halfDay')
         break
       case 'absent':
         status = 'error'
-        text = 'Vang'
+        text = t('status.absent')
         break
       case 'leave':
         status = 'default'
-        text = 'Phep'
+        text = t('status.leave')
         break
     }
 
@@ -82,7 +85,7 @@ export function AttendanceCalendar({ employee }: AttendanceCalendarProps) {
   if (!employee) {
     return (
       <Empty
-        description="Chon nhan vien de xem cham cong"
+        description={t('selectEmployeeToViewAttendance')}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
       />
     )
@@ -105,19 +108,19 @@ export function AttendanceCalendar({ employee }: AttendanceCalendarProps) {
           <div className="grid grid-cols-4 gap-2 text-center">
             <div>
               <div className="text-lg font-bold text-green-600">{summary.present}</div>
-              <Text type="secondary" className="text-xs">Co mat</Text>
+              <Text type="secondary" className="text-xs">{t('status.present')}</Text>
             </div>
             <div>
               <div className="text-lg font-bold text-yellow-600">{summary.half_day}</div>
-              <Text type="secondary" className="text-xs">Nua ngay</Text>
+              <Text type="secondary" className="text-xs">{t('status.halfDay')}</Text>
             </div>
             <div>
               <div className="text-lg font-bold text-red-600">{summary.absent}</div>
-              <Text type="secondary" className="text-xs">Vang</Text>
+              <Text type="secondary" className="text-xs">{t('status.absent')}</Text>
             </div>
             <div>
               <div className="text-lg font-bold text-blue-600">{summary.total_working_days}</div>
-              <Text type="secondary" className="text-xs">Tong ngay</Text>
+              <Text type="secondary" className="text-xs">{t('totalDays')}</Text>
             </div>
           </div>
         </Card>
