@@ -74,9 +74,9 @@ export interface MultiOrderStore {
     variant_id: string
     variant_name: string
   }) => void
-  removeItem: (productId: string, variantId?: string) => void
-  updateQuantity: (productId: string, quantity: number, variantId?: string) => void
-  updateItemUnit: (productId: string, unit: { unit_id: string; unit_name: string; conversion_rate: number; unit_price: number }, variantId?: string) => void
+  removeItem: (productId: string, variantId?: string, unitId?: string) => void
+  updateQuantity: (productId: string, quantity: number, variantId?: string, unitId?: string) => void
+  updateItemUnit: (productId: string, unit: { unit_id: string; unit_name: string; conversion_rate: number; unit_price: number }, variantId?: string, unitId?: string) => void
   updateItemDiscount: (productId: string, discount: number) => void
   setDiscount: (amount: number) => void
   setCustomerInfo: (name: string, phone: string, taxCode: string) => void
@@ -166,21 +166,24 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
           const activeOrder = state.orders.find((o) => o.id === state.activeOrderId)
           if (!activeOrder) return state
 
-          const itemKey = product.variant_id 
-            ? `${product.id}-${product.variant_id}` 
-            : product.id
+          // Build item key: product_id + variant_id (if any) + unit_id (if any)
+          // Different variant or unit = new row, same = update quantity
+          const buildItemKey = (productId: string, variantId?: string, unitId?: string) => {
+            let key = productId
+            if (variantId) key += `-${variantId}`
+            if (unitId) key += `-${unitId}`
+            return key
+          }
+
+          const itemKey = buildItemKey(product.id, product.variant_id, product.unit_id)
           const existingItem = activeOrder.items.find((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
             return existingKey === itemKey
           })
 
           const updatedItems = existingItem
             ? activeOrder.items.map((item) => {
-                const existingKey = item.variant_id 
-                  ? `${item.product_id}-${item.variant_id}` 
-                  : item.product_id
+                const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
                 return existingKey === itemKey
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
@@ -216,19 +219,23 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
           const activeOrder = state.orders.find((o) => o.id === state.activeOrderId)
           if (!activeOrder) return state
 
-          const itemKey = `${product.id}-${product.variant_id}`
+          // Build item key: product_id + variant_id + unit_id (if any)
+          const buildItemKey = (productId: string, variantId?: string, unitId?: string) => {
+            let key = productId
+            if (variantId) key += `-${variantId}`
+            if (unitId) key += `-${unitId}`
+            return key
+          }
+
+          const itemKey = buildItemKey(product.id, product.variant_id)
           const existingItem = activeOrder.items.find((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
             return existingKey === itemKey
           })
 
           const updatedItems = existingItem
             ? activeOrder.items.map((item) => {
-                const existingKey = item.variant_id 
-                  ? `${item.product_id}-${item.variant_id}` 
-                  : item.product_id
+                const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
                 return existingKey === itemKey
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
@@ -256,22 +263,28 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
         })
       },
 
-      removeItem: (productId, variantId) => {
+      removeItem: (productId, variantId, unitId) => {
         set((state) => {
           const activeOrder = state.orders.find((o) => o.id === state.activeOrderId)
           if (!activeOrder) return state
 
-          const itemKey = variantId ? `${productId}-${variantId}` : productId
+          // Build item key: product_id + variant_id (if any) + unit_id (if any)
+          const buildItemKey = (pId: string, vId?: string, uId?: string) => {
+            let key = pId
+            if (vId) key += `-${vId}`
+            if (uId) key += `-${uId}`
+            return key
+          }
+
+          const itemKey = buildItemKey(productId, variantId, unitId)
 
           return {
             orders: state.orders.map((o) =>
               o.id === state.activeOrderId
-                ? { 
-                    ...o, 
+                ? {
+                    ...o,
                     items: o.items.filter((item) => {
-                      const existingKey = item.variant_id 
-                        ? `${item.product_id}-${item.variant_id}` 
-                        : item.product_id
+                      const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
                       return existingKey !== itemKey
                     })
                   }
@@ -281,13 +294,21 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
         })
       },
 
-      updateQuantity: (productId, quantity, variantId) => {
+      updateQuantity: (productId, quantity, variantId, unitId) => {
         if (quantity <= 0) {
-          get().removeItem(productId, variantId)
+          get().removeItem(productId, variantId, unitId)
           return
         }
 
-        const itemKey = variantId ? `${productId}-${variantId}` : productId
+        // Build item key: product_id + variant_id (if any) + unit_id (if any)
+        const buildItemKey = (pId: string, vId?: string, uId?: string) => {
+          let key = pId
+          if (vId) key += `-${vId}`
+          if (uId) key += `-${uId}`
+          return key
+        }
+
+        const itemKey = buildItemKey(productId, variantId, unitId)
 
         set((state) => ({
           orders: state.orders.map((o) =>
@@ -295,9 +316,7 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
               ? {
                   ...o,
                   items: o.items.map((item) => {
-                    const existingKey = item.variant_id 
-                      ? `${item.product_id}-${item.variant_id}` 
-                      : item.product_id
+                    const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
                     return existingKey === itemKey ? { ...item, quantity } : item
                   }),
                 }
@@ -306,8 +325,16 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
         }))
       },
 
-      updateItemUnit: (productId, unit, variantId) => {
-        const itemKey = variantId ? `${productId}-${variantId}` : productId
+      updateItemUnit: (productId, unit, variantId, unitId) => {
+        // Build item key: product_id + variant_id (if any) + unit_id (if any)
+        const buildItemKey = (pId: string, vId?: string, uId?: string) => {
+          let key = pId
+          if (vId) key += `-${vId}`
+          if (uId) key += `-${uId}`
+          return key
+        }
+
+        const itemKey = buildItemKey(productId, variantId, unitId)
 
         set((state) => ({
           orders: state.orders.map((o) =>
@@ -315,17 +342,15 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
               ? {
                   ...o,
                   items: o.items.map((item) => {
-                    const existingKey = item.variant_id 
-                      ? `${item.product_id}-${item.variant_id}` 
-                      : item.product_id
-                    return existingKey === itemKey 
-                      ? { 
-                          ...item, 
+                    const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
+                    return existingKey === itemKey
+                      ? {
+                          ...item,
                           unit_id: unit.unit_id,
                           unit_name: unit.unit_name,
                           conversion_rate: unit.conversion_rate,
                           unit_price: unit.unit_price,
-                        } 
+                        }
                       : item
                   }),
                 }

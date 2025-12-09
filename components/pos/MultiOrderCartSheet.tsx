@@ -108,7 +108,7 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
                   type="text"
                   danger
                   icon={<DeleteOutlined />}
-                  onClick={() => removeItem(item.product_id, item.variant_id)}
+                  onClick={() => removeItem(item.product_id, item.variant_id, item.unit_id)}
                 />,
               ]}
             >
@@ -127,19 +127,19 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
                       <Button
                         size="small"
                         icon={<MinusOutlined />}
-                        onClick={() => updateQuantity(item.product_id, item.quantity - 1, item.variant_id)}
+                        onClick={() => updateQuantity(item.product_id, item.quantity - 1, item.variant_id, item.unit_id)}
                       />
                       <InputNumber
                         size="small"
                         min={1}
                         value={item.quantity}
-                        onChange={(v) => updateQuantity(item.product_id, v || 1, item.variant_id)}
+                        onChange={(v) => updateQuantity(item.product_id, v || 1, item.variant_id, item.unit_id)}
                         className="w-16"
                       />
                       <Button
                         size="small"
                         icon={<PlusOutlined />}
-                        onClick={() => updateQuantity(item.product_id, item.quantity + 1, item.variant_id)}
+                        onClick={() => updateQuantity(item.product_id, item.quantity + 1, item.variant_id, item.unit_id)}
                       />
                       {item.unit_name && (
                         <Text type="secondary" className="text-xs">/{item.unit_name}</Text>
