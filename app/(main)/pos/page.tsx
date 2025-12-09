@@ -5,7 +5,7 @@ import { FloatButton, Badge, message } from 'antd'
 import { ShoppingCartOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { callFunction } from '@/lib/supabase/functions'
+import { callFunction, api } from '@/lib/supabase/functions'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { ProductSearch } from '@/components/products/ProductSearch'
 import { CategoryFilter } from '@/components/products/CategoryFilter'
@@ -13,9 +13,10 @@ import { OrderTabs } from '@/components/pos/OrderTabs'
 import { MultiOrderCartSheet } from '@/components/pos/MultiOrderCartSheet'
 import { PaymentMethods, type PaymentInfo, type DebtInfo, type DebtPaymentInfo } from '@/components/pos/PaymentMethods'
 import { CustomerQuickAdd } from '@/components/customers'
-import { CheckoutSuccess } from '@/components/pos/CheckoutSuccess'
+import { CheckoutSuccess, type InvoiceData } from '@/components/pos/CheckoutSuccess'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
-import { useMultiOrderStore } from '@/lib/stores/multiOrder'
+import { VariantSelectorModal, type ProductWithVariants, type ProductVariant } from '@/components/pos/VariantSelectorModal'
+import { useMultiOrderStore, type CartItem } from '@/lib/stores/multiOrder'
 import { useOnlineStatus, useAutoSync } from '@/lib/offline/hooks'
 import {
   getCachedProducts,
@@ -25,6 +26,17 @@ import {
   syncCategories,
 } from '@/lib/offline/sync'
 import type { CachedProduct } from '@/lib/offline/db'
+
+interface ProductUnit {
+  id: string
+  unit_name: string
+  conversion_rate: number
+  barcode?: string
+  sell_price?: number
+  cost_price?: number
+  is_base_unit: boolean
+  is_default: boolean
+}
 
 interface Product {
   id: string
@@ -39,6 +51,10 @@ interface Product {
   barcode?: string
   sku?: string
   categories?: { id: string; name: string }
+  has_variants?: boolean
+  has_units?: boolean
+  variants?: ProductVariant[]
+  units?: ProductUnit[]
 }
 
 interface Category {
@@ -53,8 +69,10 @@ export default function POSPage() {
   const [categoryId, setCategoryId] = useState<string>()
   const [step, setStep] = useState<CheckoutStep>('pos')
   const [cartOpen, setCartOpen] = useState(false)
-  const [completedSale, setCompletedSale] = useState<{ invoice_no: string; total: number; debt_amount?: number; debt_paid?: number }>()
+  const [completedSale, setCompletedSale] = useState<InvoiceData>()
   const [showCustomerQuickAdd, setShowCustomerQuickAdd] = useState(false)
+  const [variantModalOpen, setVariantModalOpen] = useState(false)
+  const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null)
 
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -99,7 +117,7 @@ export default function POSPage() {
         try {
           let query = supabase
             .from('products')
-            .select('*, categories(id, name)')
+            .select('*, categories(id, name), product_variants(*), product_units(*)')
             .eq('active', true)
             .order('name')
 
@@ -113,7 +131,31 @@ export default function POSPage() {
 
           const { data, error } = await query.limit(100)
           if (error) throw error
-          return data as Product[]
+          
+          interface ProductRow {
+            id: string
+            name: string
+            sell_price: number
+            cost_price: number
+            vat_rate: number
+            quantity: number
+            min_stock: number
+            unit: string
+            image_url?: string
+            barcode?: string
+            sku?: string
+            has_variants?: boolean
+            has_units?: boolean
+            categories?: { id: string; name: string }
+            product_variants?: (ProductVariant & { active?: boolean })[]
+            product_units?: (ProductUnit & { active?: boolean })[]
+          }
+          
+          return (data as ProductRow[] || []).map((p) => ({
+            ...p,
+            variants: p.product_variants?.filter((v) => v.active !== false) || [],
+            units: p.product_units?.filter((u) => u.active !== false) || [],
+          })) as Product[]
         } catch (error) {
           console.error('Online products fetch failed, using cache:', error)
         }
@@ -174,8 +216,29 @@ export default function POSPage() {
     enabled: isOnline,
   })
 
+  // Fetch store info for invoice display
+  const { data: storeData } = useQuery({
+    queryKey: ['user-store'],
+    queryFn: () => api.store.getUserStore(),
+    enabled: isOnline,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+
   const createSaleMutation = useMutation({
-    mutationFn: async ({ payments, debtInfo, debtPayment }: { payments: PaymentInfo[]; debtInfo?: DebtInfo; debtPayment?: DebtPaymentInfo }) => {
+    mutationFn: async ({ payments, debtInfo, debtPayment, orderSnapshot }: {
+      payments: PaymentInfo[]
+      debtInfo?: DebtInfo
+      debtPayment?: DebtPaymentInfo
+      orderSnapshot: {
+        items: CartItem[]
+        customerName?: string
+        customerPhone?: string
+        discount: number
+        subtotal: number
+        vatAmount: number
+        total: number
+      }
+    }) => {
       if (!activeOrder) throw new Error('Không có đơn hàng')
 
       if (!isOnline) {
@@ -195,10 +258,9 @@ export default function POSPage() {
           invoice_no: `OFFLINE-${pendingSale.id.substring(8, 16).toUpperCase()}`,
           total: pendingSale.total,
           offline: true,
+          orderSnapshot,
         }
       }
-
-      const saleTotal = multiOrder.getTotal()
 
       const result = await callFunction<{ sale: { id: string }; invoice_no: string; debt?: { debt: { id: string } }; debt_payment?: { amount: number } }>('pos', {
         action: 'create',
@@ -209,6 +271,11 @@ export default function POSPage() {
           unit_price: item.unit_price,
           vat_rate: item.vat_rate,
           discount: item.discount,
+          variant_id: item.variant_id,
+          variant_name: item.variant_name,
+          unit_id: item.unit_id,
+          unit_name: item.unit_name,
+          conversion_rate: item.conversion_rate,
         })),
         payments: payments.map(p => ({
           method: p.method,
@@ -237,14 +304,39 @@ export default function POSPage() {
 
       return {
         invoice_no: result.invoice_no,
-        total: saleTotal,
+        total: orderSnapshot.total,
         offline: false,
         debt_amount: debtInfo?.amount,
         debt_paid: result.debt_payment?.amount,
+        orderSnapshot,
       }
     },
     onSuccess: (data) => {
-      setCompletedSale({ invoice_no: data.invoice_no, total: data.total, debt_amount: data.debt_amount, debt_paid: data.debt_paid })
+      const store = storeData?.store
+      const invoiceData: InvoiceData = {
+        invoiceNo: data.invoice_no,
+        total: data.orderSnapshot.total,
+        subtotal: data.orderSnapshot.subtotal,
+        vatAmount: data.orderSnapshot.vatAmount,
+        discount: data.orderSnapshot.discount,
+        items: data.orderSnapshot.items.map(item => ({
+          product_id: item.product_id,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          vat_rate: item.vat_rate,
+          discount: item.discount,
+          variant_name: item.variant_name,
+          unit_name: item.unit_name,
+        })),
+        customerName: data.orderSnapshot.customerName,
+        customerPhone: data.orderSnapshot.customerPhone,
+        storeName: store?.name || undefined,
+        storeAddress: store?.address || undefined,
+        storePhone: store?.phone || undefined,
+        completedAt: new Date(),
+      }
+      setCompletedSale(invoiceData)
       setStep('success')
       multiOrder.clearActiveOrder()
 
@@ -289,18 +381,43 @@ export default function POSPage() {
   }, [productsData, multiOrder])
 
   const handleProductClick = (product: Product) => {
+    if (product.has_variants && product.variants && product.variants.length > 0) {
+      setSelectedProductForVariant(product)
+      setVariantModalOpen(true)
+      return
+    }
+
     if (product.quantity <= 0) {
       message.warning('San pham da het hang')
       return
     }
+
+    const defaultUnit = product.units?.find(u => u.is_default) || product.units?.[0]
+    
     multiOrder.addItem({
       id: product.id,
       name: product.name,
-      sell_price: product.sell_price,
+      sell_price: defaultUnit?.sell_price ?? product.sell_price,
       vat_rate: product.vat_rate,
       image_url: product.image_url,
+      unit_id: defaultUnit?.id,
+      unit_name: defaultUnit?.unit_name || product.unit,
+      conversion_rate: defaultUnit?.conversion_rate || 1,
     })
     message.success(`Da them ${product.name}`)
+  }
+
+  const handleVariantSelect = (product: ProductWithVariants, variant: ProductVariant) => {
+    multiOrder.addItemWithVariant({
+      id: product.id,
+      name: product.name,
+      sell_price: variant.sell_price,
+      vat_rate: product.vat_rate,
+      image_url: product.image_url,
+      variant_id: variant.id,
+      variant_name: variant.name,
+    })
+    message.success(`Da them ${product.name} - ${variant.name}`)
   }
 
   const handleCheckout = () => {
@@ -309,7 +426,20 @@ export default function POSPage() {
   }
 
   const handlePaymentConfirm = (payments: PaymentInfo[], debtInfo?: DebtInfo, debtPayment?: DebtPaymentInfo) => {
-    createSaleMutation.mutate({ payments, debtInfo, debtPayment })
+    if (!activeOrder) return
+
+    // Capture order snapshot before mutation clears the order
+    const orderSnapshot = {
+      items: [...activeOrder.items],
+      customerName: activeOrder.customer_name || undefined,
+      customerPhone: activeOrder.customer_phone || undefined,
+      discount: activeOrder.discount,
+      subtotal: multiOrder.getSubtotal(),
+      vatAmount: multiOrder.getVatAmount(),
+      total: multiOrder.getTotal(),
+    }
+
+    createSaleMutation.mutate({ payments, debtInfo, debtPayment, orderSnapshot })
   }
 
   const handleCustomerSelect = (customer: import('@/lib/supabase/functions').Customer | null) => {
@@ -345,8 +475,7 @@ export default function POSPage() {
   if (step === 'success' && completedSale) {
     return (
       <CheckoutSuccess
-        invoiceNo={completedSale.invoice_no}
-        total={completedSale.total}
+        invoiceData={completedSale}
         onNewSale={handleNewSale}
         onPrint={() => window.print()}
       />
@@ -440,6 +569,16 @@ export default function POSPage() {
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         onCheckout={handleCheckout}
+      />
+
+      <VariantSelectorModal
+        open={variantModalOpen}
+        onClose={() => {
+          setVariantModalOpen(false)
+          setSelectedProductForVariant(null)
+        }}
+        product={selectedProductForVariant}
+        onSelectVariant={handleVariantSelect}
       />
     </div>
   )

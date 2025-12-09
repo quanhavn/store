@@ -17,7 +17,7 @@ interface Category {
   name: string
 }
 
-interface ProductFormData {
+export interface ProductFormData {
   name: string
   sku?: string
   barcode?: string

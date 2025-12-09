@@ -12,9 +12,10 @@ interface TaxInfoStepProps {
   updateData: (updates: Partial<OnboardingData>) => void
   onNext: () => void
   onPrev: () => void
+  onSkip?: () => void
 }
 
-export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepProps) {
+export function TaxInfoStep({ data, updateData, onNext, onPrev, onSkip }: TaxInfoStepProps) {
   const tTax = useTranslations('tax')
   const tCommon = useTranslations('common')
   const [form] = Form.useForm()
@@ -102,6 +103,11 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev }: TaxInfoStepPro
             <Button type="primary" htmlType="submit" block size="large">
               {tCommon('continue')}
             </Button>
+            {onSkip && (
+              <Button type="link" onClick={onSkip} block size="large">
+                {tTax('skipForNow')}
+              </Button>
+            )}
             <Button onClick={onPrev} block size="large">
               {tCommon('back')}
             </Button>

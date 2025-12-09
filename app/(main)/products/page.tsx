@@ -9,7 +9,7 @@ import { api } from '@/lib/supabase/functions'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { ProductSearch } from '@/components/products/ProductSearch'
 import { CategoryFilter } from '@/components/products/CategoryFilter'
-import { ProductForm } from '@/components/products/ProductForm'
+import { ProductForm, type ProductFormData } from '@/components/products/ProductForm'
 import { CSVImportModal } from '@/components/import'
 import { useCSVImportStore } from '@/lib/stores/csv-import'
 
@@ -26,6 +26,23 @@ interface Product {
   barcode?: string
   sku?: string
   categories?: { id: string; name: string }
+  has_variants?: boolean
+  has_units?: boolean
+  variants?: Array<{
+    id: string
+    name: string
+    quantity: number
+    sell_price: number
+    cost_price?: number
+  }>
+  units?: Array<{
+    id: string
+    unit_name: string
+    conversion_rate: number
+    sell_price?: number
+    is_base_unit: boolean
+    is_default: boolean
+  }>
 }
 
 interface Category {
@@ -50,6 +67,8 @@ export default function ProductsPage() {
         search: search || undefined,
         category_id: categoryId,
         limit: 50,
+        include_variants: true,
+        include_units: true,
       })
       return result.products as Product[]
     },
@@ -66,7 +85,7 @@ export default function ProductsPage() {
 
   // Create product mutation
   const createMutation = useMutation({
-    mutationFn: async (data: Omit<Product, 'id'>) => {
+    mutationFn: async (data: ProductFormData) => {
       const result = await api.products.create(data)
       return result.product
     },
@@ -77,7 +96,7 @@ export default function ProductsPage() {
 
   // Update product mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: Partial<Product> & { id: string }) => {
+    mutationFn: async ({ id, ...data }: ProductFormData & { id: string }) => {
       const result = await api.products.update(id, data)
       return result.product
     },
@@ -90,12 +109,24 @@ export default function ProductsPage() {
     setSearch(value)
   }, [])
 
-  const handleProductClick = (product: Product) => {
-    setEditProduct(product)
+  const handleProductClick = async (product: Product) => {
+    if (product.has_variants || product.has_units) {
+      try {
+        const result = await api.products.get(product.id, {
+          include_variants: true,
+          include_units: true,
+        })
+        setEditProduct(result.product as Product)
+      } catch {
+        setEditProduct(product)
+      }
+    } else {
+      setEditProduct(product)
+    }
     setFormOpen(true)
   }
 
-  const handleFormSubmit = async (data: Omit<Product, 'id'>) => {
+  const handleFormSubmit = async (data: ProductFormData) => {
     if (editProduct) {
       await updateMutation.mutateAsync({ id: editProduct.id, ...data })
     } else {

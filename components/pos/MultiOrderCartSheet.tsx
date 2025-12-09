@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm, Space } from 'antd'
+import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm, Space, Tag } from 'antd'
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMultiOrderStore } from '@/lib/stores/multiOrder'
 
@@ -108,31 +108,43 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
                   type="text"
                   danger
                   icon={<DeleteOutlined />}
-                  onClick={() => removeItem(item.product_id)}
+                  onClick={() => removeItem(item.product_id, item.variant_id)}
                 />,
               ]}
             >
               <List.Item.Meta
-                title={item.product_name}
+                title={
+                  <div className="flex flex-col">
+                    <span>{item.product_name}</span>
+                    {item.variant_name && (
+                      <Tag color="blue" className="w-fit mt-1">{item.variant_name}</Tag>
+                    )}
+                  </div>
+                }
                 description={
-                  <div className="flex items-center gap-2 mt-2">
-                    <Button
-                      size="small"
-                      icon={<MinusOutlined />}
-                      onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                    />
-                    <InputNumber
-                      size="small"
-                      min={1}
-                      value={item.quantity}
-                      onChange={(v) => updateQuantity(item.product_id, v || 1)}
-                      className="w-16"
-                    />
-                    <Button
-                      size="small"
-                      icon={<PlusOutlined />}
-                      onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                    />
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="small"
+                        icon={<MinusOutlined />}
+                        onClick={() => updateQuantity(item.product_id, item.quantity - 1, item.variant_id)}
+                      />
+                      <InputNumber
+                        size="small"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(v) => updateQuantity(item.product_id, v || 1, item.variant_id)}
+                        className="w-16"
+                      />
+                      <Button
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => updateQuantity(item.product_id, item.quantity + 1, item.variant_id)}
+                      />
+                      {item.unit_name && (
+                        <Text type="secondary" className="text-xs">/{item.unit_name}</Text>
+                      )}
+                    </div>
                   </div>
                 }
               />

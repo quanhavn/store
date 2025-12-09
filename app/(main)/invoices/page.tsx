@@ -1,18 +1,50 @@
 'use client'
 
 import { useState } from 'react'
-import { Typography, Button } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Typography, Button, Tabs } from 'antd'
+import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import {
   InvoiceList,
   InvoiceSyncStatus,
-  CreateInvoiceSheet
+  CreateInvoiceSheet,
+  EInvoiceSettingsForm
 } from '@/components/invoice'
 
 const { Title } = Typography
 
 export default function InvoicesPage() {
   const [createOpen, setCreateOpen] = useState(false)
+
+  const tabItems = [
+    {
+      key: 'list',
+      label: (
+        <span className="flex items-center gap-2">
+          {/* <FileTextOutlined /> */}
+          Hóa đơn
+        </span>
+      ),
+      children: (
+        <>
+          <InvoiceSyncStatus />
+
+          <div className="mt-4">
+            <InvoiceList />
+          </div>
+        </>
+      ),
+    },
+    {
+      key: 'settings',
+      label: (
+        <span className="flex items-center gap-2">
+          <SettingOutlined />
+          Cài đặt
+        </span>
+      ),
+      children: <EInvoiceSettingsForm />,
+    },
+  ]
 
   return (
     <div className="p-4 pb-20">
@@ -27,11 +59,7 @@ export default function InvoicesPage() {
         </Button>
       </div>
 
-      <InvoiceSyncStatus />
-
-      <div className="mt-4">
-        <InvoiceList />
-      </div>
+      <Tabs items={tabItems} />
 
       <CreateInvoiceSheet
         saleId={null}

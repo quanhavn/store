@@ -11,6 +11,7 @@ import {
 interface ImportStockRequest {
   action: 'import'
   product_id: string
+  variant_id?: string
   quantity: number
   unit_cost?: number
   note?: string
@@ -23,6 +24,7 @@ interface ImportStockRequest {
 interface ExportStockRequest {
   action: 'export'
   product_id: string
+  variant_id?: string
   quantity: number
   note?: string
 }
@@ -30,6 +32,7 @@ interface ExportStockRequest {
 interface AdjustStockRequest {
   action: 'adjust'
   product_id: string
+  variant_id?: string
   new_quantity: number
   note?: string
 }
@@ -122,7 +125,8 @@ serve(async (req: Request) => {
     switch (body.action) {
       case 'import': {
         const { 
-          product_id, 
+          product_id,
+          variant_id,
           quantity, 
           unit_cost, 
           note, 
@@ -133,10 +137,11 @@ serve(async (req: Request) => {
         } = body
 
         // Use RPC for atomic transaction with finance integration
-        const { data: result, error: rpcError } = await supabase.rpc('import_stock_with_expense', {
+        const { data: result, error: rpcError } = await supabase.rpc('import_stock_with_variant', {
           p_store_id: store_id,
           p_user_id: user.id,
           p_product_id: product_id,
+          p_variant_id: variant_id || null,
           p_quantity: quantity,
           p_unit_cost: unit_cost || null,
           p_note: note || null,
@@ -152,106 +157,65 @@ serve(async (req: Request) => {
         }
 
         return successResponse({ 
-          log: { id: result.log_id },
+          log: { id: result.inventory_log_id },
           new_quantity: result.new_quantity,
-          expense_recorded: result.expense_recorded,
-          total_value: result.total_value,
-          new_balance: result.new_balance
+          success: result.success
         })
       }
 
       case 'export': {
-        const { product_id, quantity, note } = body
+        const { product_id, variant_id, quantity, note } = body
 
-        // Get current product
-        const { data: product, error: productError } = await supabase
-          .from('products')
-          .select('id, name, quantity, cost_price')
-          .eq('id', product_id)
-          .eq('store_id', store_id)
-          .single()
+        // Use RPC for atomic transaction with variant support
+        const { data: result, error: rpcError } = await supabase.rpc('export_stock_with_variant', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_product_id: product_id,
+          p_variant_id: variant_id || null,
+          p_quantity: quantity,
+          p_note: note || null,
+        })
 
-        if (productError || !product) {
-          return errorResponse('Sản phẩm không tồn tại', 404)
+        if (rpcError) {
+          console.error('RPC error:', rpcError)
+          if (rpcError.message.includes('Insufficient stock')) {
+            return errorResponse(rpcError.message.replace('Insufficient stock:', 'Không đủ tồn kho:'), 400)
+          }
+          return errorResponse(rpcError.message || 'Lỗi xuất kho', 400)
         }
 
-        if (product.quantity < quantity) {
-          return errorResponse(`Không đủ tồn kho (còn ${product.quantity})`, 400)
-        }
-
-        const newQuantity = product.quantity - quantity
-
-        // Update product quantity
-        const { error: updateError } = await supabase
-          .from('products')
-          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
-          .eq('id', product_id)
-
-        if (updateError) throw updateError
-
-        // Create inventory log
-        const { data: log, error: logError } = await supabase
-          .from('inventory_logs')
-          .insert({
-            store_id,
-            product_id,
-            type: 'export',
-            quantity: -quantity,
-            unit_cost: product.cost_price,
-            total_value: quantity * product.cost_price,
-            note,
-            created_by: user.id,
-          })
-          .select()
-          .single()
-
-        if (logError) throw logError
-
-        return successResponse({ log, new_quantity: newQuantity })
+        return successResponse({ 
+          log: { id: result.inventory_log_id },
+          new_quantity: result.new_quantity,
+          success: result.success
+        })
       }
 
       case 'adjust': {
-        const { product_id, new_quantity, note } = body
+        const { product_id, variant_id, new_quantity, note } = body
 
-        // Get current product
-        const { data: product, error: productError } = await supabase
-          .from('products')
-          .select('id, name, quantity')
-          .eq('id', product_id)
-          .eq('store_id', store_id)
-          .single()
+        // Use RPC for atomic transaction with variant support
+        const { data: result, error: rpcError } = await supabase.rpc('adjust_stock_with_variant', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_product_id: product_id,
+          p_variant_id: variant_id || null,
+          p_new_quantity: new_quantity,
+          p_note: note || null,
+        })
 
-        if (productError || !product) {
-          return errorResponse('Sản phẩm không tồn tại', 404)
+        if (rpcError) {
+          console.error('RPC error:', rpcError)
+          return errorResponse(rpcError.message || 'Lỗi điều chỉnh tồn kho', 400)
         }
 
-        const difference = new_quantity - product.quantity
-
-        // Update product quantity
-        const { error: updateError } = await supabase
-          .from('products')
-          .update({ quantity: new_quantity, updated_at: new Date().toISOString() })
-          .eq('id', product_id)
-
-        if (updateError) throw updateError
-
-        // Create inventory log
-        const { data: log, error: logError } = await supabase
-          .from('inventory_logs')
-          .insert({
-            store_id,
-            product_id,
-            type: 'adjustment',
-            quantity: difference,
-            note: note || `Điều chỉnh từ ${product.quantity} thành ${new_quantity}`,
-            created_by: user.id,
-          })
-          .select()
-          .single()
-
-        if (logError) throw logError
-
-        return successResponse({ log, new_quantity })
+        return successResponse({ 
+          log: { id: result.inventory_log_id },
+          previous_quantity: result.previous_quantity,
+          new_quantity: result.new_quantity,
+          difference: result.difference,
+          success: result.success
+        })
       }
 
       case 'logs': {

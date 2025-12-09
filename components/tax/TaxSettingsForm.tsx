@@ -14,18 +14,25 @@ export function TaxSettingsForm() {
   const BUSINESS_TYPES = [
     { value: 'retail', label: t('businessTypes.retail') },
     { value: 'food_service', label: t('businessTypes.food_service') },
+    { value: 'manufacturing', label: t('businessTypes.manufacturing') },
+    { value: 'transport', label: t('businessTypes.transport') },
     { value: 'other_service', label: t('businessTypes.other_service') },
+    { value: 'property_lease', label: t('businessTypes.property_lease') },
   ]
 
   const VAT_RATES = [
-    { value: 8, label: t('vatRates.reduced') },
-    { value: 10, label: t('vatRates.standard') },
+    { value: 1, label: t('vatRates.goods') },
+    { value: 2, label: t('vatRates.manufacturing') },
+    { value: 3, label: t('vatRates.services') },
+    { value: 5, label: t('vatRates.propertyLease') },
   ]
 
   const PIT_RATES = [
-    { value: 1, label: t('pitRates.retail') },
-    { value: 1.5, label: t('pitRates.food') },
-    { value: 2, label: t('pitRates.service') },
+    { value: 0.5, label: t('pitRates.goods') },
+    { value: 1, label: t('pitRates.services') },
+    { value: 1.5, label: t('pitRates.manufacturing') },
+    { value: 2, label: t('pitRates.otherServices') },
+    { value: 5, label: t('pitRates.propertyLease') },
   ]
 
   const [form] = Form.useForm()

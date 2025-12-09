@@ -119,9 +119,8 @@
     "paid": "Paid",
     "collectedThisMonth": "Collected this month",
     "searchPlaceholder": "Search...",
-    "noResults": "No results found",
-    "active": "Active"
-    },
+    "noResults": "No results found"
+  },
   "nav": {
     "home": "Home",
     "pos": "POS",
@@ -233,6 +232,20 @@
   },
   "settings": {
     "title": "Settings",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "storeName": "Store name",
+    "storeNameRequired": "Please enter store name",
+    "storeNamePlaceholder": "e.g. Minh Tam Grocery",
+    "phone": "Phone number",
+    "phoneInvalid": "Invalid phone number",
+    "email": "Email",
+    "emailInvalid": "Invalid email",
+    "address": "Address",
+    "addressPlaceholder": "123 ABC Street, XYZ Ward, District 1, HCMC",
+    "taxCode": "Tax code",
+    "taxCodeInvalid": "Tax code must be 10 or 13 digits",
     "language": "Language",
     "selectLanguage": "Select language",
     "vietnamese": "Vietnamese",
@@ -240,7 +253,40 @@
     "storeInfo": "Store information",
     "storeInfoDescription": "Enter basic information about your store",
     "account": "Account",
-    "tax": "Tax"
+    "tax": "Tax",
+    "updateSuccess": "Updated successfully",
+    "updateError": "Update failed",
+    "eInvoice": {
+      "title": "E-Invoice",
+      "enableEInvoice": "Enable e-invoice",
+      "provider": "Service provider: Viettel",
+      "username": "Username",
+      "usernamePlaceholder": "Enter Viettel username",
+      "usernameRequired": "Please enter username",
+      "password": "Password",
+      "passwordPlaceholder": "Enter Viettel password",
+      "passwordRequired": "Please enter password",
+      "taxCode": "Tax code",
+      "taxCodePlaceholder": "e.g. 0102345678",
+      "taxCodeRequired": "Please enter tax code",
+      "taxCodeInvalid": "Tax code must be 10-13 digits",
+      "templateCode": "Invoice template code",
+      "templateCodePlaceholder": "e.g. 1/001",
+      "templateCodeRequired": "Please enter template code",
+      "invoiceSeries": "Invoice series",
+      "invoiceSeriesPlaceholder": "e.g. AA/22E",
+      "invoiceSeriesRequired": "Please enter invoice series",
+      "viettelSettings": "Viettel S-Invoice Settings",
+      "testConnection": "Test connection",
+      "testing": "Testing connection...",
+      "testSuccess": "Successfully connected to Viettel API",
+      "testFailed": "Connection failed",
+      "info": "Configure Viettel API to automatically issue e-invoices",
+      "configured": "E-invoice configured",
+      "notConfigured": "E-invoice not configured",
+      "configureNow": "Click Edit to configure now",
+      "updateSuccess": "E-invoice configuration updated successfully"
+    }
   },
   "inventory": {
     "title": "Inventory Management",
@@ -919,16 +965,23 @@
     "businessTypes": {
       "retail": "Retail / Distribution",
       "food_service": "Food service",
-      "other_service": "Other services"
+      "manufacturing": "Manufacturing",
+      "transport": "Transport",
+      "other_service": "Other services",
+      "property_lease": "Property lease"
     },
     "vatRates": {
-      "reduced": "8% (Reduced rate)",
-      "standard": "10% (Standard rate)"
+      "goods": "1% - Distribution, goods supply",
+      "manufacturing": "2% - Manufacturing, transport",
+      "services": "3% - Services, construction without materials",
+      "propertyLease": "5% - Property lease"
     },
     "pitRates": {
-      "retail": "1% (Retail)",
-      "food": "1.5% (Food service)",
-      "service": "2% (Other services)"
+      "goods": "0.5% - Distribution, goods supply",
+      "services": "1% - Services",
+      "manufacturing": "1.5% - Manufacturing, transport, food",
+      "otherServices": "2% - Other services",
+      "propertyLease": "5% - Property lease"
     },
     "revenueClassification": "Automatic revenue classification",
     "annualRevenue": "Annual revenue (last 12 months)",
@@ -971,7 +1024,8 @@
     "deadline": "Deadline",
     "overdue": "Overdue!",
     "daysRemaining": "{count} day remaining",
-    "daysRemainingPlural": "{count} days remaining"
+    "daysRemainingPlural": "{count} days remaining",
+    "skipForNow": "Skip for now"
   },
   "hr": {
     "title": "Human Resources",

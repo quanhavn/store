@@ -55,6 +55,10 @@ export const api = {
     getUserStore: () => callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('get-user-store'),
     updateStore: (data: { name?: string; phone?: string; email?: string; address?: string; tax_code?: string }) =>
       callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('get-user-store', { action: 'update', ...data }),
+    updateEInvoiceConfig: (data: Record<string, unknown>) =>
+      callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('store/einvoice-config', { action: 'update', ...data }),
+    testViettelConnection: (config: Record<string, unknown>) =>
+      callFunction<{ success: boolean; message: string }>('store/einvoice-config', { action: 'test_connection', ...config }),
   },
 
   products: {
@@ -109,6 +113,7 @@ export const api = {
   inventory: {
     import: (data: { 
       product_id: string
+      variant_id?: string
       quantity: number
       unit_cost?: number
       note?: string
@@ -120,14 +125,12 @@ export const api = {
       callFunction<{ 
         log: InventoryLog
         new_quantity: number
-        expense_recorded?: boolean
-        total_value?: number
-        new_balance?: number
+        success?: boolean
       }>('inventory', { action: 'import', ...data }),
-    export: (data: { product_id: string; quantity: number; note?: string }) =>
-      callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'export', ...data }),
-    adjust: (data: { product_id: string; new_quantity: number; note?: string }) =>
-      callFunction<{ log: InventoryLog; new_quantity: number }>('inventory', { action: 'adjust', ...data }),
+    export: (data: { product_id: string; variant_id?: string; quantity: number; note?: string }) =>
+      callFunction<{ log: InventoryLog; new_quantity: number; success?: boolean }>('inventory', { action: 'export', ...data }),
+    adjust: (data: { product_id: string; variant_id?: string; new_quantity: number; note?: string }) =>
+      callFunction<{ log: InventoryLog; new_quantity: number; previous_quantity?: number; difference?: number; success?: boolean }>('inventory', { action: 'adjust', ...data }),
     logs: (params?: { product_id?: string; type?: string; date_from?: string; date_to?: string; page?: number; limit?: number }) =>
       callFunction<{ logs: InventoryLog[]; pagination: Pagination }>('inventory', { action: 'logs', ...params }),
     summary: () =>
@@ -140,10 +143,16 @@ export const api = {
     createSale: (data: {
       items: Array<{
         product_id: string
+        product_name?: string
         quantity: number
         unit_price: number
         vat_rate: number
         discount?: number
+        variant_id?: string
+        variant_name?: string
+        unit_id?: string
+        unit_name?: string
+        conversion_rate?: number
       }>
       customer_name?: string
       customer_phone?: string

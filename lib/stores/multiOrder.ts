@@ -12,6 +12,11 @@ export interface CartItem {
   vat_rate: number
   discount: number
   image_url?: string
+  variant_id?: string
+  variant_name?: string
+  unit_id?: string
+  unit_name?: string
+  conversion_rate?: number
 }
 
 export interface Order {
@@ -54,9 +59,24 @@ export interface MultiOrderStore {
     sell_price: number
     vat_rate: number
     image_url?: string
+    variant_id?: string
+    variant_name?: string
+    unit_id?: string
+    unit_name?: string
+    conversion_rate?: number
   }) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  addItemWithVariant: (product: {
+    id: string
+    name: string
+    sell_price: number
+    vat_rate: number
+    image_url?: string
+    variant_id: string
+    variant_name: string
+  }) => void
+  removeItem: (productId: string, variantId?: string) => void
+  updateQuantity: (productId: string, quantity: number, variantId?: string) => void
+  updateItemUnit: (productId: string, unit: { unit_id: string; unit_name: string; conversion_rate: number; unit_price: number }, variantId?: string) => void
   updateItemDiscount: (productId: string, discount: number) => void
   setDiscount: (amount: number) => void
   setCustomerInfo: (name: string, phone: string, taxCode: string) => void
@@ -146,14 +166,25 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
           const activeOrder = state.orders.find((o) => o.id === state.activeOrderId)
           if (!activeOrder) return state
 
-          const existingItem = activeOrder.items.find((item) => item.product_id === product.id)
+          const itemKey = product.variant_id 
+            ? `${product.id}-${product.variant_id}` 
+            : product.id
+          const existingItem = activeOrder.items.find((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey
+          })
 
           const updatedItems = existingItem
-            ? activeOrder.items.map((item) =>
-                item.product_id === product.id
+            ? activeOrder.items.map((item) => {
+                const existingKey = item.variant_id 
+                  ? `${item.product_id}-${item.variant_id}` 
+                  : item.product_id
+                return existingKey === itemKey
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
-              )
+              })
             : [
                 ...activeOrder.items,
                 {
@@ -164,6 +195,11 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
                   vat_rate: product.vat_rate,
                   discount: 0,
                   image_url: product.image_url,
+                  variant_id: product.variant_id,
+                  variant_name: product.variant_name,
+                  unit_id: product.unit_id,
+                  unit_name: product.unit_name,
+                  conversion_rate: product.conversion_rate,
                 },
               ]
 
@@ -175,35 +211,123 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
         })
       },
 
-      removeItem: (productId) => {
+      addItemWithVariant: (product) => {
         set((state) => {
           const activeOrder = state.orders.find((o) => o.id === state.activeOrderId)
           if (!activeOrder) return state
 
+          const itemKey = `${product.id}-${product.variant_id}`
+          const existingItem = activeOrder.items.find((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey
+          })
+
+          const updatedItems = existingItem
+            ? activeOrder.items.map((item) => {
+                const existingKey = item.variant_id 
+                  ? `${item.product_id}-${item.variant_id}` 
+                  : item.product_id
+                return existingKey === itemKey
+                  ? { ...item, quantity: item.quantity + 1 }
+                  : item
+              })
+            : [
+                ...activeOrder.items,
+                {
+                  product_id: product.id,
+                  product_name: product.name,
+                  quantity: 1,
+                  unit_price: product.sell_price,
+                  vat_rate: product.vat_rate,
+                  discount: 0,
+                  image_url: product.image_url,
+                  variant_id: product.variant_id,
+                  variant_name: product.variant_name,
+                },
+              ]
+
+          return {
+            orders: state.orders.map((o) =>
+              o.id === state.activeOrderId ? { ...o, items: updatedItems } : o
+            ),
+          }
+        })
+      },
+
+      removeItem: (productId, variantId) => {
+        set((state) => {
+          const activeOrder = state.orders.find((o) => o.id === state.activeOrderId)
+          if (!activeOrder) return state
+
+          const itemKey = variantId ? `${productId}-${variantId}` : productId
+
           return {
             orders: state.orders.map((o) =>
               o.id === state.activeOrderId
-                ? { ...o, items: o.items.filter((item) => item.product_id !== productId) }
+                ? { 
+                    ...o, 
+                    items: o.items.filter((item) => {
+                      const existingKey = item.variant_id 
+                        ? `${item.product_id}-${item.variant_id}` 
+                        : item.product_id
+                      return existingKey !== itemKey
+                    })
+                  }
                 : o
             ),
           }
         })
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, variantId) => {
         if (quantity <= 0) {
-          get().removeItem(productId)
+          get().removeItem(productId, variantId)
           return
         }
+
+        const itemKey = variantId ? `${productId}-${variantId}` : productId
 
         set((state) => ({
           orders: state.orders.map((o) =>
             o.id === state.activeOrderId
               ? {
                   ...o,
-                  items: o.items.map((item) =>
-                    item.product_id === productId ? { ...item, quantity } : item
-                  ),
+                  items: o.items.map((item) => {
+                    const existingKey = item.variant_id 
+                      ? `${item.product_id}-${item.variant_id}` 
+                      : item.product_id
+                    return existingKey === itemKey ? { ...item, quantity } : item
+                  }),
+                }
+              : o
+          ),
+        }))
+      },
+
+      updateItemUnit: (productId, unit, variantId) => {
+        const itemKey = variantId ? `${productId}-${variantId}` : productId
+
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === state.activeOrderId
+              ? {
+                  ...o,
+                  items: o.items.map((item) => {
+                    const existingKey = item.variant_id 
+                      ? `${item.product_id}-${item.variant_id}` 
+                      : item.product_id
+                    return existingKey === itemKey 
+                      ? { 
+                          ...item, 
+                          unit_id: unit.unit_id,
+                          unit_name: unit.unit_name,
+                          conversion_rate: unit.conversion_rate,
+                          unit_price: unit.unit_price,
+                        } 
+                      : item
+                  }),
                 }
               : o
           ),

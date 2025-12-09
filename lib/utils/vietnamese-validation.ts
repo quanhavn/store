@@ -49,13 +49,13 @@ export function toInternationalPhone(phone: string): string {
 
 /**
  * Validates Vietnamese tax code (Mã số thuế - MST)
- * - Individual: 10 digits
+ * - Individual: 10 digits (legacy) or 12 digits (CCCD-based, per Circular 86/2024/TT-BTC)
  * - Business: 13 digits (10 digits + 3-digit branch code)
  */
 export function isValidTaxCode(taxCode: string): boolean {
   if (!taxCode) return true // Optional field
   const cleanCode = taxCode.replace(/[^0-9]/g, '')
-  return cleanCode.length === 10 || cleanCode.length === 13
+  return cleanCode.length === 10 || cleanCode.length === 12 || cleanCode.length === 13
 }
 
 /**
@@ -73,11 +73,14 @@ export function formatTaxCode(taxCode: string): string {
 
 /**
  * Determines tax code type
+ * - 10 digits: Legacy individual tax code
+ * - 12 digits: CCCD-based individual tax code (per Circular 86/2024/TT-BTC)
+ * - 13 digits: Business with branch code
  */
 export function getTaxCodeType(taxCode: string): 'individual' | 'business' | null {
   if (!taxCode) return null
   const cleanCode = taxCode.replace(/[^0-9]/g, '')
-  if (cleanCode.length === 10) return 'individual'
+  if (cleanCode.length === 10 || cleanCode.length === 12) return 'individual'
   if (cleanCode.length === 13) return 'business'
   return null
 }

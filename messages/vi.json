@@ -102,9 +102,8 @@
     "paid": "Đã thanh toán",
     "collectedThisMonth": "Thu được trong tháng này",
     "searchPlaceholder": "Tìm kiếm...",
-    "noResults": "Không tìm thấy kết quả",
-    "active": "Hoạt động"
-    },
+    "noResults": "Không tìm thấy kết quả"
+  },
   "nav": {
     "home": "Trang chủ",
     "pos": "Bán hàng",
@@ -216,6 +215,20 @@
   },
   "settings": {
     "title": "Cài đặt",
+    "edit": "Sửa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "storeName": "Tên cửa hàng",
+    "storeNameRequired": "Vui lòng nhập tên cửa hàng",
+    "storeNamePlaceholder": "VD: Tạp hóa Minh Tâm",
+    "phone": "Số điện thoại",
+    "phoneInvalid": "Số điện thoại không hợp lệ",
+    "email": "Email",
+    "emailInvalid": "Email không hợp lệ",
+    "address": "Địa chỉ",
+    "addressPlaceholder": "123 Đường ABC, Phường XYZ, Quận 1, TP.HCM",
+    "taxCode": "Mã số thuế",
+    "taxCodeInvalid": "Mã số thuế phải có 10 hoặc 13 chữ số",
     "language": "Ngôn ngữ",
     "selectLanguage": "Chọn ngôn ngữ",
     "vietnamese": "Tiếng Việt",
@@ -223,7 +236,40 @@
     "storeInfo": "Thông tin cửa hàng",
     "storeInfoDescription": "Nhập thông tin cơ bản về cửa hàng của bạn",
     "account": "Tài khoản",
-    "tax": "Thuế"
+    "tax": "Thuế",
+    "updateSuccess": "Cập nhật thành công",
+    "updateError": "Cập nhật thất bại",
+    "eInvoice": {
+      "title": "Hóa đơn điện tử",
+      "enableEInvoice": "Bật hóa đơn điện tử",
+      "provider": "Nhà cung cấp dịch vụ: Viettel",
+      "username": "Tên đăng nhập",
+      "usernamePlaceholder": "Nhập tên đăng nhập Viettel",
+      "usernameRequired": "Vui lòng nhập tên đăng nhập",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu Viettel",
+      "passwordRequired": "Vui lòng nhập mật khẩu",
+      "taxCode": "Mã số thuế",
+      "taxCodePlaceholder": "VD: 0102345678",
+      "taxCodeRequired": "Vui lòng nhập mã số thuế",
+      "taxCodeInvalid": "Mã số thuế phải từ 10-13 chữ số",
+      "templateCode": "Mã mẫu hóa đơn",
+      "templateCodePlaceholder": "VD: 1/001",
+      "templateCodeRequired": "Vui lòng nhập mã mẫu",
+      "invoiceSeries": "Ký hiệu hóa đơn",
+      "invoiceSeriesPlaceholder": "VD: AA/22E",
+      "invoiceSeriesRequired": "Vui lòng nhập ký hiệu hóa đơn",
+      "viettelSettings": "Cài đặt Viettel S-Invoice",
+      "testConnection": "Kiểm tra kết nối",
+      "testing": "Đang kiểm tra kết nối...",
+      "testSuccess": "Kết nối thành công với API Viettel",
+      "testFailed": "Kết nối thất bại",
+      "info": "Cấu hình API Viettel để phát hành hóa đơn điện tử tự động",
+      "configured": "Đã cấu hình hóa đơn điện tử",
+      "notConfigured": "Hóa đơn điện tử chưa được cấu hình",
+      "configureNow": "Nhấp Sửa để cấu hình ngay bây giờ",
+      "updateSuccess": "Cập nhật cấu hình hóa đơn điện tử thành công"
+    }
   },
   "inventory": {
     "title": "Quản lý kho",
@@ -916,16 +962,23 @@
     "businessTypes": {
       "retail": "Bán lẻ / Phân phối",
       "food_service": "Dịch vụ ăn uống",
-      "other_service": "Dịch vụ khác"
+      "manufacturing": "Sản xuất, gia công",
+      "transport": "Vận tải",
+      "other_service": "Dịch vụ khác",
+      "property_lease": "Cho thuê tài sản"
     },
     "vatRates": {
-      "reduced": "8% (Giảm thuế)",
-      "standard": "10% (Thuế suất chuẩn)"
+      "goods": "1% - Phân phối, cung cấp hàng hóa",
+      "manufacturing": "2% - Sản xuất, vận tải",
+      "services": "3% - Dịch vụ, xây dựng không bao thầu NVL",
+      "propertyLease": "5% - Cho thuê tài sản"
     },
     "pitRates": {
-      "retail": "1% (Bán lẻ)",
-      "food": "1.5% (Ăn uống)",
-      "service": "2% (Dịch vụ khác)"
+      "goods": "0.5% - Phân phối, cung cấp hàng hóa",
+      "services": "1% - Dịch vụ",
+      "manufacturing": "1.5% - Sản xuất, vận tải, ăn uống",
+      "otherServices": "2% - Dịch vụ khác",
+      "propertyLease": "5% - Cho thuê tài sản"
     },
     "revenueClassification": "Phân loại doanh thu tự động",
     "annualRevenue": "Doanh thu 12 tháng qua",
@@ -968,7 +1021,8 @@
     "deadline": "Hạn nộp",
     "overdue": "Quá hạn!",
     "daysRemaining": "Còn {count} ngày",
-    "daysRemainingPlural": "Còn {count} ngày"
+    "daysRemainingPlural": "Còn {count} ngày",
+    "skipForNow": "Bỏ qua"
   },
   "hr": {
     "title": "Quản lý nhân sự",

@@ -159,7 +159,7 @@ serve(async (req: Request) => {
 
     switch (body.action) {
       case 'list': {
-        const { page = 1, limit = 20, search, category_id, low_stock, active_only = true } = body
+        const { page = 1, limit = 20, search, category_id, low_stock, active_only = true, include_variants = false, include_units = false } = body
 
         let query = supabase
           .from('products')
@@ -193,6 +193,53 @@ serve(async (req: Request) => {
         let products = data || []
         if (low_stock) {
           products = products.filter((p: { quantity: number; min_stock: number }) => p.quantity < p.min_stock)
+        }
+
+        // Fetch variants and units for each product if requested
+        if (include_variants || include_units) {
+          const productIds = products.map((p: { id: string }) => p.id)
+          
+          let variantsMap: Record<string, unknown[]> = {}
+          let unitsMap: Record<string, unknown[]> = {}
+          
+          if (include_variants && productIds.length > 0) {
+            const { data: variantData } = await supabase
+              .from('product_variants')
+              .select('*')
+              .in('product_id', productIds)
+              .eq('active', true)
+              .order('name')
+            
+            if (variantData) {
+              variantData.forEach((v: { product_id: string }) => {
+                if (!variantsMap[v.product_id]) variantsMap[v.product_id] = []
+                variantsMap[v.product_id].push(v)
+              })
+            }
+          }
+          
+          if (include_units && productIds.length > 0) {
+            const { data: unitData } = await supabase
+              .from('product_units')
+              .select('*')
+              .in('product_id', productIds)
+              .eq('active', true)
+              .order('is_base_unit', { ascending: false })
+              .order('conversion_rate')
+            
+            if (unitData) {
+              unitData.forEach((u: { product_id: string }) => {
+                if (!unitsMap[u.product_id]) unitsMap[u.product_id] = []
+                unitsMap[u.product_id].push(u)
+              })
+            }
+          }
+          
+          products = products.map((p: { id: string; has_variants?: boolean; has_units?: boolean }) => ({
+            ...p,
+            variants: p.has_variants ? (variantsMap[p.id] || []) : undefined,
+            units: p.has_units ? (unitsMap[p.id] || []) : undefined,
+          }))
         }
 
         return successResponse({

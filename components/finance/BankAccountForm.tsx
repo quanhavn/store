@@ -158,7 +158,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
           {!isEdit && (
             <Form.Item name="initial_balance" label={t('initialBalance')}>
               <InputNumber
-                className="w-full"
+                className="!w-full"
                 placeholder="0"
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => value?.replace(/,/g, '') as unknown as 0}

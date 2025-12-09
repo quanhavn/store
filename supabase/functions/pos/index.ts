@@ -19,6 +19,11 @@ interface CartItem {
   unit_price: number
   vat_rate: number
   discount: number
+  variant_id?: string
+  variant_name?: string
+  unit_id?: string
+  unit_name?: string
+  conversion_rate?: number
 }
 
 interface PaymentInfo {

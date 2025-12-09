@@ -15,9 +15,11 @@ interface GetTaxSettingsRequest {
 
 interface UpdateTaxSettingsRequest {
   action: 'update_settings'
-  business_type?: 'retail' | 'food_service' | 'other_service'
-  default_vat_rate?: 8 | 10
-  pit_rate?: 1 | 1.5 | 2
+  business_type?: 'retail' | 'food_service' | 'manufacturing' | 'transport' | 'other_service' | 'property_lease'
+  // Household business VAT rates (direct method - calculated on revenue, not added to invoice)
+  default_vat_rate?: 1 | 2 | 3 | 5
+  // Household business PIT rates
+  pit_rate?: 0.5 | 1 | 1.5 | 2 | 5
   e_invoice_required?: boolean
   e_invoice_provider?: string
   e_invoice_credentials?: Record<string, string>
@@ -76,8 +78,9 @@ serve(async (req: Request) => {
         return successResponse({
           settings: {
             business_type: store.business_type || 'retail',
-            default_vat_rate: store.default_vat_rate || 8,
-            pit_rate: store.pit_rate || 1.5,
+            // Household business rates (direct method on revenue)
+            default_vat_rate: store.default_vat_rate || 1,
+            pit_rate: store.pit_rate || 0.5,
             e_invoice_required: store.e_invoice_required || false,
             e_invoice_provider: store.e_invoice_provider,
           },
@@ -131,25 +134,27 @@ serve(async (req: Request) => {
         let pitRate: number
         let eInvoiceRequired: boolean
 
+        // Household business tax thresholds (Vietnam Tax 2026)
+        // VAT and PIT are calculated on revenue using direct method, not added to invoices
         if (annualRevenue < 200_000_000) {
           tier = 'under_200m'
-          vatRate = 0
+          vatRate = 0  // Exempt from tax
           pitRate = 0
           eInvoiceRequired = false
         } else if (annualRevenue < 1_000_000_000) {
           tier = '200m_1b'
-          vatRate = 8
-          pitRate = 1.5
+          vatRate = 1   // Recommended for retail/goods
+          pitRate = 0.5 // Recommended for retail/goods
           eInvoiceRequired = false
         } else if (annualRevenue < 3_000_000_000) {
           tier = '1b_3b'
-          vatRate = 8
-          pitRate = 1.5
-          eInvoiceRequired = true
+          vatRate = 1   // Recommended for retail/goods
+          pitRate = 0.5 // Recommended for retail/goods
+          eInvoiceRequired = true  // E-invoice mandatory from 1B revenue
         } else {
           tier = 'over_3b'
-          vatRate = 10
-          pitRate = 2
+          vatRate = 1   // Consider enterprise model
+          pitRate = 0.5
           eInvoiceRequired = true
         }
 
@@ -202,8 +207,8 @@ serve(async (req: Request) => {
         const vatDeductible = expenses?.reduce((sum, e) => sum + (e.vat_amount || 0), 0) || 0
         const vatPayable = Math.max(0, vatCollected - vatDeductible)
 
-        // Calculate PIT
-        const pitRate = store?.pit_rate || 1.5
+        // Calculate PIT (household business - on revenue, not profit)
+        const pitRate = store?.pit_rate || 0.5
         const pitPayable = Math.round(totalSubtotal * (pitRate / 100))
 
         // Get deadline
@@ -343,7 +348,7 @@ serve(async (req: Request) => {
             .eq('id', store_id)
             .single()
 
-          const pitRate = store?.pit_rate || 1.5
+          const pitRate = store?.pit_rate || 0.5
           const pitPayable = Math.round(totalSubtotal * (pitRate / 100))
 
           // Determine status

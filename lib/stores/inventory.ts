@@ -10,6 +10,11 @@ export interface StockAdjustmentItem {
   adjustment_quantity: number
   unit_cost: number | null
   note: string
+  variant_id?: string
+  variant_name?: string
+  unit_id?: string
+  unit_name?: string
+  conversion_rate?: number
 }
 
 export interface InventoryStore {
@@ -26,10 +31,24 @@ export interface InventoryStore {
     name: string
     quantity: number
     cost_price: number
+    variant_id?: string
+    variant_name?: string
+    unit_id?: string
+    unit_name?: string
+    conversion_rate?: number
   }) => void
-  removeAdjustmentItem: (productId: string) => void
-  updateAdjustmentQuantity: (productId: string, quantity: number) => void
-  updateAdjustmentCost: (productId: string, cost: number | null) => void
+  addAdjustmentItemWithVariant: (product: {
+    id: string
+    name: string
+    quantity: number
+    cost_price: number
+    variant_id: string
+    variant_name: string
+  }) => void
+  removeAdjustmentItem: (productId: string, variantId?: string) => void
+  updateAdjustmentQuantity: (productId: string, quantity: number, variantId?: string) => void
+  updateAdjustmentCost: (productId: string, cost: number | null, variantId?: string) => void
+  updateAdjustmentUnit: (productId: string, unit: { unit_id: string; unit_name: string; conversion_rate: number }, variantId?: string) => void
   updateItemNote: (productId: string, note: string) => void
   setAdjustmentNote: (note: string) => void
   setRecordExpense: (record: boolean) => void
@@ -56,17 +75,26 @@ export const useInventoryStore = create<InventoryStore>()(
 
       addAdjustmentItem: (product) => {
         set((state) => {
-          const existingItem = state.adjustmentItems.find(
-            (item) => item.product_id === product.id
-          )
+          const itemKey = product.variant_id 
+            ? `${product.id}-${product.variant_id}` 
+            : product.id
+          const existingItem = state.adjustmentItems.find((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey
+          })
 
           if (existingItem) {
             return {
-              adjustmentItems: state.adjustmentItems.map((item) =>
-                item.product_id === product.id
+              adjustmentItems: state.adjustmentItems.map((item) => {
+                const existingKey = item.variant_id 
+                  ? `${item.product_id}-${item.variant_id}` 
+                  : item.product_id
+                return existingKey === itemKey
                   ? { ...item, adjustment_quantity: item.adjustment_quantity + 1 }
                   : item
-              ),
+              }),
             }
           }
 
@@ -80,40 +108,118 @@ export const useInventoryStore = create<InventoryStore>()(
                 adjustment_quantity: 1,
                 unit_cost: product.cost_price,
                 note: '',
+                variant_id: product.variant_id,
+                variant_name: product.variant_name,
+                unit_id: product.unit_id,
+                unit_name: product.unit_name,
+                conversion_rate: product.conversion_rate,
               },
             ],
           }
         })
       },
 
-      removeAdjustmentItem: (productId) => {
+      addAdjustmentItemWithVariant: (product) => {
+        set((state) => {
+          const itemKey = `${product.id}-${product.variant_id}`
+          const existingItem = state.adjustmentItems.find((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey
+          })
+
+          if (existingItem) {
+            return {
+              adjustmentItems: state.adjustmentItems.map((item) => {
+                const existingKey = item.variant_id 
+                  ? `${item.product_id}-${item.variant_id}` 
+                  : item.product_id
+                return existingKey === itemKey
+                  ? { ...item, adjustment_quantity: item.adjustment_quantity + 1 }
+                  : item
+              }),
+            }
+          }
+
+          return {
+            adjustmentItems: [
+              ...state.adjustmentItems,
+              {
+                product_id: product.id,
+                product_name: product.name,
+                current_quantity: product.quantity,
+                adjustment_quantity: 1,
+                unit_cost: product.cost_price,
+                note: '',
+                variant_id: product.variant_id,
+                variant_name: product.variant_name,
+              },
+            ],
+          }
+        })
+      },
+
+      removeAdjustmentItem: (productId, variantId) => {
+        const itemKey = variantId ? `${productId}-${variantId}` : productId
         set((state) => ({
-          adjustmentItems: state.adjustmentItems.filter(
-            (item) => item.product_id !== productId
-          ),
+          adjustmentItems: state.adjustmentItems.filter((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey !== itemKey
+          }),
         }))
       },
 
-      updateAdjustmentQuantity: (productId, quantity) => {
+      updateAdjustmentQuantity: (productId, quantity, variantId) => {
         if (quantity <= 0) {
-          get().removeAdjustmentItem(productId)
+          get().removeAdjustmentItem(productId, variantId)
           return
         }
 
+        const itemKey = variantId ? `${productId}-${variantId}` : productId
+
         set((state) => ({
-          adjustmentItems: state.adjustmentItems.map((item) =>
-            item.product_id === productId
+          adjustmentItems: state.adjustmentItems.map((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey
               ? { ...item, adjustment_quantity: quantity }
               : item
-          ),
+          }),
         }))
       },
 
-      updateAdjustmentCost: (productId, cost) => {
+      updateAdjustmentCost: (productId, cost, variantId) => {
+        const itemKey = variantId ? `${productId}-${variantId}` : productId
         set((state) => ({
-          adjustmentItems: state.adjustmentItems.map((item) =>
-            item.product_id === productId ? { ...item, unit_cost: cost } : item
-          ),
+          adjustmentItems: state.adjustmentItems.map((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey ? { ...item, unit_cost: cost } : item
+          }),
+        }))
+      },
+
+      updateAdjustmentUnit: (productId, unit, variantId) => {
+        const itemKey = variantId ? `${productId}-${variantId}` : productId
+        set((state) => ({
+          adjustmentItems: state.adjustmentItems.map((item) => {
+            const existingKey = item.variant_id 
+              ? `${item.product_id}-${item.variant_id}` 
+              : item.product_id
+            return existingKey === itemKey 
+              ? { 
+                  ...item, 
+                  unit_id: unit.unit_id, 
+                  unit_name: unit.unit_name, 
+                  conversion_rate: unit.conversion_rate 
+                } 
+              : item
+          }),
         }))
       },
 

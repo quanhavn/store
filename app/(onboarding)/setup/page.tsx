@@ -165,7 +165,7 @@ export default function SetupPage() {
             <StoreInfoStep data={data} updateData={updateData} onNext={next} />
           )}
           {current === 1 && (
-            <TaxInfoStep data={data} updateData={updateData} onNext={next} onPrev={prev} />
+            <TaxInfoStep data={data} updateData={updateData} onNext={next} onPrev={prev} onSkip={next} />
           )}
           {current === 2 && (
             <OnboardingSummary

@@ -12,9 +12,17 @@
   }
 }
 
-/* Prevent pull-to-refresh on mobile */
+/* Prevent pull-to-refresh on mobile but allow normal scrolling */
 html, body {
   overscroll-behavior-y: contain;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Fix Ant Design drawer/modal body lock issue */
+body.ant-scrolling-effect {
+  overflow: hidden !important;
+  width: 100% !important;
 }
 
 /* Hide scrollbar but allow scrolling */

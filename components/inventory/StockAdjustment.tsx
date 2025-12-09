@@ -12,7 +12,9 @@ import {
   message,
   Spin,
   Typography,
-  Switch
+  Switch,
+  Tag,
+  Select
 } from 'antd'
 import {
   PlusOutlined,
@@ -27,9 +29,34 @@ import { useTranslations } from 'next-intl'
 import { api } from '@/lib/supabase/functions'
 import { useInventoryStore, AdjustmentType } from '@/lib/stores/inventory'
 import { formatCurrency } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 const { Text } = Typography
 const { TextArea } = Input
+
+interface ProductVariant {
+  id: string
+  name: string
+  sku?: string
+  barcode?: string
+  sell_price: number
+  cost_price?: number
+  quantity: number
+  min_stock?: number
+  active?: boolean
+}
+
+interface ProductUnit {
+  id: string
+  unit_name: string
+  conversion_rate: number
+  barcode?: string
+  sell_price?: number
+  cost_price?: number
+  is_base_unit: boolean
+  is_default: boolean
+  active?: boolean
+}
 
 interface Product {
   id: string
@@ -38,15 +65,22 @@ interface Product {
   quantity: number
   cost_price: number
   unit: string
+  has_variants?: boolean
+  has_units?: boolean
+  variants?: ProductVariant[]
+  units?: ProductUnit[]
 }
 
 export function StockAdjustment() {
   const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [variantSelectProduct, setVariantSelectProduct] = useState<Product | null>(null)
   const queryClient = useQueryClient()
+  const supabase = createClient()
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
+  const tProducts = useTranslations('products')
 
   const {
     adjustmentType,
@@ -56,9 +90,11 @@ export function StockAdjustment() {
     supplierName,
     setAdjustmentType,
     addAdjustmentItem,
+    addAdjustmentItemWithVariant,
     removeAdjustmentItem,
     updateAdjustmentQuantity,
     updateAdjustmentCost,
+    updateAdjustmentUnit,
     setAdjustmentNote,
     setRecordExpense,
     setSupplierName,
@@ -68,11 +104,37 @@ export function StockAdjustment() {
   } = useInventoryStore()
 
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
-    queryKey: ['products-search', searchTerm],
+    queryKey: ['products-search-with-variants', searchTerm],
     queryFn: async () => {
       if (!searchTerm) return []
-      const result = await api.products.list({ search: searchTerm, limit: 20 })
-      return result.products as Product[]
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, product_variants(*), product_units(*)')
+        .eq('active', true)
+        .or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%`)
+        .limit(20)
+      
+      if (error) throw error
+      
+      interface ProductRow {
+        id: string
+        name: string
+        sku: string | null
+        quantity: number
+        cost_price: number
+        unit: string
+        has_variants?: boolean
+        has_units?: boolean
+        product_variants?: ProductVariant[]
+        product_units?: ProductUnit[]
+      }
+      
+      return (data as ProductRow[] || []).map((p) => ({
+        ...p,
+        variants: p.product_variants?.filter((v) => v.active !== false) || [],
+        units: p.product_units?.filter((u) => u.active !== false) || [],
+      })) as Product[]
     },
     enabled: searchTerm.length > 0,
   })
@@ -80,10 +142,15 @@ export function StockAdjustment() {
   const submitMutation = useMutation({
     mutationFn: async () => {
       for (const item of adjustmentItems) {
+        const baseQuantity = item.conversion_rate 
+          ? Math.round(item.adjustment_quantity * item.conversion_rate) 
+          : item.adjustment_quantity
+        
         if (adjustmentType === 'import') {
           await api.inventory.import({
             product_id: item.product_id,
-            quantity: item.adjustment_quantity,
+            variant_id: item.variant_id,
+            quantity: baseQuantity,
             unit_cost: item.unit_cost ?? undefined,
             note: item.note || adjustmentNote,
             record_expense: recordExpense,
@@ -93,13 +160,15 @@ export function StockAdjustment() {
         } else if (adjustmentType === 'export') {
           await api.inventory.export({
             product_id: item.product_id,
-            quantity: item.adjustment_quantity,
+            variant_id: item.variant_id,
+            quantity: baseQuantity,
             note: item.note || adjustmentNote,
           })
         } else {
           await api.inventory.adjust({
             product_id: item.product_id,
-            new_quantity: item.current_quantity + item.adjustment_quantity,
+            variant_id: item.variant_id,
+            new_quantity: item.current_quantity + baseQuantity,
             note: item.note || adjustmentNote,
           })
         }
@@ -127,13 +196,37 @@ export function StockAdjustment() {
   })
 
   const handleAddProduct = (product: Product) => {
+    if (product.has_variants && product.variants && product.variants.length > 0) {
+      setVariantSelectProduct(product)
+      setProductSearchOpen(false)
+      return
+    }
+
+    const defaultUnit = product.units?.find(u => u.is_default) || product.units?.[0]
+
     addAdjustmentItem({
       id: product.id,
       name: product.name,
       quantity: product.quantity,
-      cost_price: product.cost_price,
+      cost_price: defaultUnit?.cost_price ?? product.cost_price,
+      unit_id: defaultUnit?.id,
+      unit_name: defaultUnit?.unit_name || product.unit,
+      conversion_rate: defaultUnit?.conversion_rate || 1,
     })
     setProductSearchOpen(false)
+    setSearchTerm('')
+  }
+
+  const handleSelectVariant = (product: Product, variant: ProductVariant) => {
+    addAdjustmentItemWithVariant({
+      id: product.id,
+      name: product.name,
+      quantity: variant.quantity,
+      cost_price: variant.cost_price ?? product.cost_price,
+      variant_id: variant.id,
+      variant_name: variant.name,
+    })
+    setVariantSelectProduct(null)
     setSearchTerm('')
   }
 
@@ -187,15 +280,19 @@ export function StockAdjustment() {
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{item.product_name}</div>
-                      <div className="text-xs text-gray-500">
+                      {item.variant_name && (
+                        <Tag color="blue" className="mt-1">{item.variant_name}</Tag>
+                      )}
+                      <div className="text-xs text-gray-500 mt-1">
                         {t('currentStock')}: {item.current_quantity}
+                        {item.unit_name && ` ${item.unit_name}`}
                       </div>
                     </div>
                     <Button
                       type="text"
                       danger
                       icon={<DeleteOutlined />}
-                      onClick={() => removeAdjustmentItem(item.product_id)}
+                      onClick={() => removeAdjustmentItem(item.product_id, item.variant_id)}
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -206,7 +303,8 @@ export function StockAdjustment() {
                         onClick={() =>
                           updateAdjustmentQuantity(
                             item.product_id,
-                            item.adjustment_quantity - 1
+                            item.adjustment_quantity - 1,
+                            item.variant_id
                           )
                         }
                       />
@@ -214,7 +312,7 @@ export function StockAdjustment() {
                         min={1}
                         value={item.adjustment_quantity}
                         onChange={(value) =>
-                          updateAdjustmentQuantity(item.product_id, value || 1)
+                          updateAdjustmentQuantity(item.product_id, value || 1, item.variant_id)
                         }
                         controls={false}
                         className="w-16 text-center border-0"
@@ -225,17 +323,21 @@ export function StockAdjustment() {
                         onClick={() =>
                           updateAdjustmentQuantity(
                             item.product_id,
-                            item.adjustment_quantity + 1
+                            item.adjustment_quantity + 1,
+                            item.variant_id
                           )
                         }
                       />
                     </div>
+                    {item.unit_name && (
+                      <Text type="secondary" className="text-sm">/{item.unit_name}</Text>
+                    )}
                     {adjustmentType === 'import' && (
                       <InputNumber
                         placeholder={t('costPrice')}
                         value={item.unit_cost}
                         onChange={(value) =>
-                          updateAdjustmentCost(item.product_id, value)
+                          updateAdjustmentCost(item.product_id, value, item.variant_id)
                         }
                         formatter={(value) =>
                           `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -350,8 +452,9 @@ export function StockAdjustment() {
             dataSource={searchResults}
             renderItem={(product) => {
               const isAdded = adjustmentItems.some(
-                (item) => item.product_id === product.id
+                (item) => item.product_id === product.id && !item.variant_id
               )
+              const hasVariants = product.has_variants && product.variants && product.variants.length > 0
               return (
                 <List.Item
                   className="cursor-pointer hover:bg-gray-50"
@@ -359,7 +462,12 @@ export function StockAdjustment() {
                 >
                   <div className="flex justify-between w-full">
                     <div>
-                      <div className="font-medium">{product.name}</div>
+                      <div className="font-medium">
+                        {product.name}
+                        {hasVariants && (
+                          <Tag color="purple" className="ml-2">{tProducts('hasVariants')}</Tag>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500">
                         {product.sku && `SKU: ${product.sku} | `}
                         {t('stock')}: {product.quantity} {product.unit}
@@ -369,6 +477,50 @@ export function StockAdjustment() {
                       <Text type="secondary">{t('added')}</Text>
                     ) : (
                       <PlusOutlined className="text-blue-500" />
+                    )}
+                  </div>
+                </List.Item>
+              )
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        title={`${tProducts('variants.selectVariant')} - ${variantSelectProduct?.name}`}
+        open={!!variantSelectProduct}
+        onCancel={() => setVariantSelectProduct(null)}
+        footer={null}
+      >
+        {variantSelectProduct && variantSelectProduct.variants && (
+          <List
+            dataSource={variantSelectProduct.variants}
+            renderItem={(variant) => {
+              const isAdded = adjustmentItems.some(
+                (item) => item.product_id === variantSelectProduct.id && item.variant_id === variant.id
+              )
+              const isOutOfStock = adjustmentType !== 'import' && variant.quantity <= 0
+              return (
+                <List.Item
+                  className={`cursor-pointer hover:bg-gray-50 ${isOutOfStock ? 'opacity-50' : ''}`}
+                  onClick={() => !isAdded && !isOutOfStock && handleSelectVariant(variantSelectProduct, variant)}
+                >
+                  <div className="flex justify-between w-full">
+                    <div>
+                      <div className="font-medium">{variant.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {variant.sku && `SKU: ${variant.sku} | `}
+                        {t('stock')}: {variant.quantity}
+                      </div>
+                    </div>
+                    {isAdded ? (
+                      <Text type="secondary">{t('added')}</Text>
+                    ) : isOutOfStock ? (
+                      <Tag color="red">Hết hàng</Tag>
+                    ) : (
+                      <Text strong className="text-blue-600">
+                        {formatCurrency(variant.cost_price || variantSelectProduct.cost_price)}
+                      </Text>
                     )}
                   </div>
                 </List.Item>

@@ -40,9 +40,15 @@ export function validateVietnamesePhone(phone: string): boolean {
   return /^0(3|5|7|8|9)\d{8}$/.test(cleaned)
 }
 
+/**
+ * Validates Vietnamese tax code (MST)
+ * - 10 digits: Legacy individual tax code
+ * - 12 digits: CCCD-based individual tax code (per Circular 86/2024/TT-BTC)
+ * - 13 digits: Business with branch code
+ */
 export function validateTaxCode(taxCode: string): boolean {
   const cleaned = taxCode.replace(/\D/g, '')
-  return cleaned.length === 10 || cleaned.length === 13
+  return cleaned.length === 10 || cleaned.length === 12 || cleaned.length === 13
 }
 
 export function formatDate(date: Date | string): string {
@@ -71,7 +77,9 @@ export function generateInvoiceNo(prefix: string = 'HD'): string {
   return `${prefix}${year}${month}${random}`
 }
 
-export function calculateVAT(amount: number, vatRate: number = 8): { 
+// Calculate VAT - default rate for household business is 1% (goods)
+// Note: For household business, VAT is calculated on revenue using direct method
+export function calculateVAT(amount: number, vatRate: number = 1): { 
   subtotal: number
   vatAmount: number
   total: number

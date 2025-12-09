@@ -20,6 +20,14 @@ interface Product {
   barcode?: string
   sku?: string
   categories?: { id: string; name: string }
+  has_variants?: boolean
+  has_units?: boolean
+  variants?: Array<{
+    id: string
+    name: string
+    quantity: number
+    sell_price: number
+  }>
 }
 
 interface ProductCardProps {
@@ -42,8 +50,14 @@ export function ProductCard({ product, onClick, showAddToCart = false }: Product
     })
   }
 
-  const isLowStock = product.quantity <= product.min_stock
-  const isOutOfStock = product.quantity === 0
+  const hasVariants = product.has_variants && product.variants && product.variants.length > 0
+  const totalVariantStock = hasVariants 
+    ? product.variants!.reduce((sum, v) => sum + v.quantity, 0)
+    : product.quantity
+  const displayQuantity = hasVariants ? totalVariantStock : product.quantity
+  
+  const isLowStock = displayQuantity <= product.min_stock
+  const isOutOfStock = displayQuantity === 0
 
   return (
     <Card
@@ -95,13 +109,16 @@ export function ProductCard({ product, onClick, showAddToCart = false }: Product
                 /{product.unit}
               </Text>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              {hasVariants && (
+                <Tag color="purple">{product.variants!.length} biến thể</Tag>
+              )}
               {isOutOfStock ? (
                 <Tag color="red">Hết hàng</Tag>
               ) : isLowStock ? (
-                <Tag color="orange">Sắp hết ({product.quantity})</Tag>
+                <Tag color="orange">Sắp hết ({displayQuantity})</Tag>
               ) : (
-                <Tag color="green">Còn {product.quantity}</Tag>
+                <Tag color="green">Còn {displayQuantity}</Tag>
               )}
             </div>
             {product.categories && (
