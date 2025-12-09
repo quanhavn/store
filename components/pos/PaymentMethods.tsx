@@ -5,11 +5,10 @@ import { Card, Radio, InputNumber, Button, Typography, Input, Space, QRCode, Div
 import {
   DollarOutlined,
   BankOutlined,
-  WalletOutlined,
   QrcodeOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CustomerSelector } from './CustomerSelector'
 import { DebtOptionsForm } from './DebtOptionsForm'
 import { type Customer } from '@/lib/supabase/functions'
@@ -43,6 +42,7 @@ interface BankAccount {
   id: string
   bank_name: string
   account_number: string
+  is_default?: boolean
 }
 
 interface PaymentMethodsProps {
@@ -74,14 +74,20 @@ export function PaymentMethods({
   const PAYMENT_OPTIONS = [
     { value: 'cash', label: t('cash'), icon: <DollarOutlined /> },
     { value: 'bank_transfer', label: t('bankTransfer'), icon: <BankOutlined /> },
-    { value: 'momo', label: 'MoMo', icon: <WalletOutlined /> },
-    { value: 'zalopay', label: 'ZaloPay', icon: <WalletOutlined /> },
   ]
 
   const [method, setMethod] = useState<PaymentInfo['method']>('cash')
   const [cashReceived, setCashReceived] = useState(total)
   const [bankRef, setBankRef] = useState('')
   const [selectedBankId, setSelectedBankId] = useState<string>()
+
+  // Auto-select default bank account when bank_transfer is selected
+  useEffect(() => {
+    if (method === 'bank_transfer' && bankAccounts.length > 0 && !selectedBankId) {
+      const defaultAccount = bankAccounts.find(acc => acc.is_default) || bankAccounts[0]
+      setSelectedBankId(defaultAccount.id)
+    }
+  }, [method, bankAccounts, selectedBankId])
 
   // Partial payment states
   const [isPartialPayment, setIsPartialPayment] = useState(false)
@@ -269,7 +275,7 @@ export function PaymentMethods({
           <Space.Compact className="w-full">
             <InputNumber
               size="large"
-              className="w-full"
+              className="!w-full"
               min={1}
               max={total - 1}
               value={partialAmount}
@@ -327,7 +333,7 @@ export function PaymentMethods({
             <Space.Compact className="w-full">
               <InputNumber
                 size="large"
-                className="w-full"
+                className="!w-full"
                 min={0}
                 value={cashReceived}
                 onChange={(v) => setCashReceived(v || 0)}

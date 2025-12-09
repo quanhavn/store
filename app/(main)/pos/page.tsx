@@ -207,7 +207,7 @@ export default function POSPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, bank_name, account_number')
+        .select('id, bank_name, account_number, is_default')
         .order('is_default', { ascending: false })
 
       if (error) throw error
