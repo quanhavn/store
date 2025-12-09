@@ -747,6 +747,7 @@
     "cashReceived": "Cash received",
     "change": "Change",
     "confirmPayment": "Confirm payment",
+    "back": "Back",
     "checkoutSuccess": "Payment successful!",
     "invoiceNumber": "Invoice number",
     "totalAmount": "Total amount",

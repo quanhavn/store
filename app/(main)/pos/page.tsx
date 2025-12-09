@@ -528,6 +528,10 @@ export default function POSPage() {
           <PaymentMethods
             total={total}
             onConfirm={handlePaymentConfirm}
+            onBack={() => {
+              setStep('pos')
+              setCartOpen(true)
+            }}
             loading={createSaleMutation.isPending}
             bankAccounts={isOnline ? bankAccounts : []}
             customer={activeOrder?.customer || null}

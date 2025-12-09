@@ -48,6 +48,7 @@ interface BankAccount {
 interface PaymentMethodsProps {
   total: number
   onConfirm: (payments: PaymentInfo[], debtInfo?: DebtInfo, debtPayment?: DebtPaymentInfo) => void
+  onBack?: () => void
   loading?: boolean
   bankAccounts?: BankAccount[]
   // NEW props for partial payment
@@ -60,6 +61,7 @@ interface PaymentMethodsProps {
 export function PaymentMethods({
   total,
   onConfirm,
+  onBack,
   loading = false,
   bankAccounts = [],
   customer,
@@ -500,21 +502,32 @@ export function PaymentMethods({
         </>
       )}
 
-      <Button
-        type="primary"
-        size="large"
-        block
-        onClick={handleConfirm}
-        loading={loading}
-        disabled={!isValid}
-      >
-        {isPartialPayment && debtAmount > 0
-          ? t('confirmPartialPayment', { payAmount: formatCurrency(partialAmount), debtAmount: formatCurrency(debtAmount) })
-          : applyExtraToDebt && debtPaymentAmount > 0
-            ? t('confirmAndDeductDebt', { amount: formatCurrency(debtPaymentAmount) })
-            : t('confirmPayment')
-        }
-      </Button>
+      <div className="flex gap-2 mt-4">
+        {onBack && (
+          <Button
+            size="large"
+            onClick={onBack}
+            disabled={loading}
+          >
+            {t('back')}
+          </Button>
+        )}
+        <Button
+          type="primary"
+          size="large"
+          block
+          onClick={handleConfirm}
+          loading={loading}
+          disabled={!isValid}
+        >
+          {isPartialPayment && debtAmount > 0
+            ? t('confirmPartialPayment', { payAmount: formatCurrency(partialAmount), debtAmount: formatCurrency(debtAmount) })
+            : applyExtraToDebt && debtPaymentAmount > 0
+              ? t('confirmAndDeductDebt', { amount: formatCurrency(debtPaymentAmount) })
+              : t('confirmPayment')
+          }
+        </Button>
+      </div>
     </div>
   )
 }
