@@ -339,6 +339,7 @@
     "needToOrder": "Need to order",
     "quickImport": "Quick import",
     "lowStockInfo": "List updates automatically every minute. Products are shown when stock quantity is at or below the minimum stock level set.",
+    "variantCount": "{count} variants",
     "checkProgress": "Check progress",
     "productsLabel": "products",
     "matched": "Matched",

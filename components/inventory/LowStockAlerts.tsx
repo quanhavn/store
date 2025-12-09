@@ -18,6 +18,8 @@ interface LowStockProduct {
   min_stock: number
   cost_price?: number
   categories?: { name: string } | null
+  has_variants?: boolean
+  variant_count?: number
 }
 
 export function LowStockAlerts() {
@@ -95,11 +97,16 @@ export function LowStockAlerts() {
                       />
                       <span className="font-medium truncate">{product.name}</span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1 ml-4">
+                    <div className="text-xs text-gray-500 mt-1 ml-4 flex gap-1 flex-wrap">
                       {product.sku && <span>SKU: {product.sku}</span>}
                       {product.categories && (
-                        <Tag color="blue" className="ml-2 text-xs">
+                        <Tag color="blue" className="text-xs">
                           {product.categories.name}
+                        </Tag>
+                      )}
+                      {product.has_variants && product.variant_count && product.variant_count > 0 && (
+                        <Tag color="purple" className="text-xs">
+                          {t('variantCount', { count: product.variant_count })}
                         </Tag>
                       )}
                     </div>

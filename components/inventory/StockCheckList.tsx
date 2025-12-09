@@ -21,6 +21,15 @@ interface Product {
   cost_price: number
   sell_price: number
   categories?: { id: string; name: string } | null
+  has_variants?: boolean
+  has_units?: boolean
+  variants?: Array<{
+    id: string
+    name: string
+    quantity: number
+    sell_price: number
+    cost_price?: number
+  }>
 }
 
 export function StockCheckList() {
@@ -30,7 +39,12 @@ export function StockCheckList() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products-stock', search],
     queryFn: async () => {
-      const result = await api.products.list({ search: search || undefined, limit: 100 })
+      const result = await api.products.list({
+        search: search || undefined,
+        limit: 100,
+        include_variants: true,
+        include_units: true,
+      })
       return result.products as Product[]
     },
   })
@@ -39,18 +53,32 @@ export function StockCheckList() {
     setSearch(value)
   }, [])
 
+  const getDisplayQuantity = (product: Product) => {
+    const hasVariants = product.has_variants && product.variants && product.variants.length > 0
+    return hasVariants
+      ? product.variants!.reduce((sum, v) => sum + v.quantity, 0)
+      : product.quantity
+  }
+
   const getStockStatus = (product: Product) => {
-    if (product.quantity <= 0) {
+    const displayQuantity = getDisplayQuantity(product)
+    if (displayQuantity <= 0) {
       return { color: 'red', text: t('outOfStock') }
     }
-    if (product.quantity <= product.min_stock) {
+    if (displayQuantity <= product.min_stock) {
       return { color: 'orange', text: t('runningLow') }
     }
     return { color: 'green', text: t('inStock') }
   }
 
   const getTotalValue = () => {
-    return products.reduce((sum, p) => sum + p.quantity * p.cost_price, 0)
+    return products.reduce((sum, p) => {
+      const hasVariants = p.has_variants && p.variants && p.variants.length > 0
+      if (hasVariants) {
+        return sum + p.variants!.reduce((vSum, v) => vSum + v.quantity * (v.cost_price ?? p.cost_price), 0)
+      }
+      return sum + p.quantity * p.cost_price
+    }, 0)
   }
 
   if (isLoading) {
@@ -92,6 +120,8 @@ export function StockCheckList() {
           dataSource={products}
           renderItem={(product) => {
             const status = getStockStatus(product)
+            const displayQuantity = getDisplayQuantity(product)
+            const hasVariants = product.has_variants && product.variants && product.variants.length > 0
             return (
               <List.Item className="!px-0">
                 <div className="w-full">
@@ -102,13 +132,18 @@ export function StockCheckList() {
                         {product.sku && <span>SKU: {product.sku}</span>}
                         {product.barcode && <span className="ml-2">| {product.barcode}</span>}
                       </div>
-                      {product.categories && (
-                        <Tag color="blue" className="mt-1 text-xs">{product.categories.name}</Tag>
-                      )}
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {product.categories && (
+                          <Tag color="blue" className="text-xs">{product.categories.name}</Tag>
+                        )}
+                        {hasVariants && (
+                          <Tag color="purple" className="text-xs">{t('variantCount', { count: product.variants!.length })}</Tag>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right ml-4">
                       <div className="font-semibold text-lg">
-                        {product.quantity} <span className="text-sm font-normal text-gray-500">{product.unit}</span>
+                        {displayQuantity} <span className="text-sm font-normal text-gray-500">{product.unit}</span>
                       </div>
                       <Tag color={status.color} className="mt-1">{status.text}</Tag>
                     </div>

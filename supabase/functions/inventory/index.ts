@@ -262,23 +262,41 @@ serve(async (req: Request) => {
       }
 
       case 'summary': {
-        // Get inventory summary
+        // Get inventory summary with variant support
         const { data: products, error } = await supabase
           .from('products')
-          .select('id, name, quantity, cost_price, min_stock, active')
+          .select('id, name, quantity, cost_price, min_stock, active, has_variants, product_variants(id, quantity, cost_price)')
           .eq('store_id', store_id)
           .eq('active', true)
 
         if (error) throw error
 
-        const totalProducts = products?.length || 0
-        const totalValue = products?.reduce((sum, p) => sum + p.quantity * p.cost_price, 0) || 0
-        const lowStockCount = products?.filter((p) => p.quantity <= p.min_stock).length || 0
-        const outOfStockCount = products?.filter((p) => p.quantity === 0).length || 0
+        let totalValue = 0
+        let lowStockCount = 0
+        let outOfStockCount = 0
+
+        for (const p of products || []) {
+          const hasVariants = p.has_variants && p.product_variants && p.product_variants.length > 0
+
+          if (hasVariants) {
+            const totalVariantQty = p.product_variants.reduce((sum: number, v: { quantity: number }) => sum + v.quantity, 0)
+            const variantValue = p.product_variants.reduce(
+              (sum: number, v: { quantity: number; cost_price?: number }) => sum + v.quantity * (v.cost_price ?? p.cost_price),
+              0
+            )
+            totalValue += variantValue
+            if (totalVariantQty <= 0) outOfStockCount++
+            else if (totalVariantQty <= p.min_stock) lowStockCount++
+          } else {
+            totalValue += p.quantity * p.cost_price
+            if (p.quantity <= 0) outOfStockCount++
+            else if (p.quantity <= p.min_stock) lowStockCount++
+          }
+        }
 
         return successResponse({
           summary: {
-            total_products: totalProducts,
+            total_products: products?.length || 0,
             total_value: totalValue,
             low_stock_count: lowStockCount,
             out_of_stock_count: outOfStockCount,
@@ -287,16 +305,39 @@ serve(async (req: Request) => {
       }
 
       case 'low_stock': {
+        // Fetch products with their variants
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, quantity, min_stock, unit, image_url')
+          .select('id, name, quantity, min_stock, unit, image_url, sku, cost_price, has_variants, categories(name), product_variants(id, name, quantity)')
           .eq('store_id', store_id)
           .eq('active', true)
           .order('quantity', { ascending: true })
 
         if (error) throw error
 
-        const lowStockProducts = data?.filter((p) => p.quantity <= p.min_stock) || []
+        // Calculate effective quantity and filter low stock products
+        const lowStockProducts = (data || [])
+          .map((p) => {
+            const hasVariants = p.has_variants && p.product_variants && p.product_variants.length > 0
+            const effectiveQuantity = hasVariants
+              ? p.product_variants.reduce((sum: number, v: { quantity: number }) => sum + v.quantity, 0)
+              : p.quantity
+            return {
+              id: p.id,
+              name: p.name,
+              quantity: effectiveQuantity,
+              min_stock: p.min_stock,
+              unit: p.unit,
+              image_url: p.image_url,
+              sku: p.sku,
+              cost_price: p.cost_price,
+              categories: p.categories,
+              has_variants: p.has_variants,
+              variant_count: hasVariants ? p.product_variants.length : 0,
+            }
+          })
+          .filter((p) => p.quantity <= p.min_stock)
+          .sort((a, b) => a.quantity - b.quantity)
 
         return successResponse({ products: lowStockProducts })
       }

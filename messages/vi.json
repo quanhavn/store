@@ -325,6 +325,7 @@
     "needToOrder": "Cần nhập",
     "quickImport": "Nhập kho",
     "lowStockInfo": "Danh sách cập nhật tự động mỗi phút. Sản phẩm được hiển thị khi số lượng tồn bằng hoặc thấp hơn mức tồn kho tối thiểu đã thiết lập.",
+    "variantCount": "{count} biến thể",
     "checkProgress": "Tiến độ kiểm kê",
     "productsLabel": "sản phẩm",
     "matched": "Khớp",
