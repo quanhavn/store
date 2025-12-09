@@ -440,7 +440,8 @@
       "editUnit": "Sửa đơn vị",
       "deleteConfirm": "Xóa đơn vị này?",
       "noUnits": "Chưa có đơn vị",
-      "cannotDeleteBase": "Không thể xóa đơn vị cơ bản"
+      "cannotDeleteBase": "Không thể xóa đơn vị cơ bản",
+      "selectUnit": "Chọn đơn vị"
     },
     "variants": {
       "title": "Biến thể",

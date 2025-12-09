@@ -75,6 +75,7 @@ export function StockAdjustment() {
   const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [variantSelectProduct, setVariantSelectProduct] = useState<Product | null>(null)
+  const [unitSelectProduct, setUnitSelectProduct] = useState<Product | null>(null)
   const queryClient = useQueryClient()
   const supabase = createClient()
   const t = useTranslations('inventory')
@@ -202,6 +203,12 @@ export function StockAdjustment() {
       return
     }
 
+    if (product.has_units && product.units && product.units.length > 1) {
+      setUnitSelectProduct(product)
+      setProductSearchOpen(false)
+      return
+    }
+
     const defaultUnit = product.units?.find(u => u.is_default) || product.units?.[0]
 
     addAdjustmentItem({
@@ -227,6 +234,20 @@ export function StockAdjustment() {
       variant_name: variant.name,
     })
     setVariantSelectProduct(null)
+    setSearchTerm('')
+  }
+
+  const handleSelectUnit = (product: Product, unit: ProductUnit) => {
+    addAdjustmentItem({
+      id: product.id,
+      name: product.name,
+      quantity: product.quantity,
+      cost_price: unit.cost_price ?? product.cost_price,
+      unit_id: unit.id,
+      unit_name: unit.unit_name,
+      conversion_rate: unit.conversion_rate,
+    })
+    setUnitSelectProduct(null)
     setSearchTerm('')
   }
 
@@ -520,6 +541,55 @@ export function StockAdjustment() {
                     ) : (
                       <Text strong className="text-blue-600">
                         {formatCurrency(variant.cost_price || variantSelectProduct.cost_price)}
+                      </Text>
+                    )}
+                  </div>
+                </List.Item>
+              )
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        title={`${tProducts('units.selectUnit')} - ${unitSelectProduct?.name}`}
+        open={!!unitSelectProduct}
+        onCancel={() => setUnitSelectProduct(null)}
+        footer={null}
+      >
+        {unitSelectProduct && unitSelectProduct.units && (
+          <List
+            dataSource={unitSelectProduct.units}
+            renderItem={(unit) => {
+              const isAdded = adjustmentItems.some(
+                (item) => item.product_id === unitSelectProduct.id && item.unit_id === unit.id
+              )
+              const price = unit.cost_price ?? unitSelectProduct.cost_price
+              return (
+                <List.Item
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => !isAdded && handleSelectUnit(unitSelectProduct, unit)}
+                >
+                  <div className="flex justify-between w-full">
+                    <div>
+                      <div className="font-medium flex items-center gap-2">
+                        {unit.unit_name}
+                        {unit.is_base_unit && (
+                          <Tag color="blue">{tProducts('units.baseUnit')}</Tag>
+                        )}
+                        {unit.is_default && (
+                          <Tag color="green">{tProducts('units.default')}</Tag>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {unit.conversion_rate > 1 && `x${unit.conversion_rate} ${tProducts('units.baseUnit').toLowerCase()}`}
+                      </div>
+                    </div>
+                    {isAdded ? (
+                      <Text type="secondary">{t('added')}</Text>
+                    ) : (
+                      <Text strong className="text-blue-600">
+                        {formatCurrency(price)}
                       </Text>
                     )}
                   </div>

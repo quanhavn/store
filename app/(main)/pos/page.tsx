@@ -16,6 +16,7 @@ import { CustomerQuickAdd } from '@/components/customers'
 import { CheckoutSuccess, type InvoiceData } from '@/components/pos/CheckoutSuccess'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 import { VariantSelectorModal, type ProductWithVariants, type ProductVariant } from '@/components/pos/VariantSelectorModal'
+import { UnitSelectorModal, type ProductWithUnits, type ProductUnit as ModalProductUnit } from '@/components/pos/UnitSelectorModal'
 import { useMultiOrderStore, type CartItem } from '@/lib/stores/multiOrder'
 import { useOnlineStatus, useAutoSync } from '@/lib/offline/hooks'
 import {
@@ -73,6 +74,8 @@ export default function POSPage() {
   const [showCustomerQuickAdd, setShowCustomerQuickAdd] = useState(false)
   const [variantModalOpen, setVariantModalOpen] = useState(false)
   const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null)
+  const [unitModalOpen, setUnitModalOpen] = useState(false)
+  const [selectedProductForUnit, setSelectedProductForUnit] = useState<Product | null>(null)
 
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -387,6 +390,12 @@ export default function POSPage() {
       return
     }
 
+    if (product.has_units && product.units && product.units.length > 1) {
+      setSelectedProductForUnit(product)
+      setUnitModalOpen(true)
+      return
+    }
+
     if (product.quantity <= 0) {
       message.warning('San pham da het hang')
       return
@@ -418,6 +427,25 @@ export default function POSPage() {
       variant_name: variant.name,
     })
     message.success(`Da them ${product.name} - ${variant.name}`)
+  }
+
+  const handleUnitSelect = (product: ProductWithUnits, unit: ModalProductUnit, calculatedPrice: number) => {
+    if (product.quantity <= 0) {
+      message.warning('San pham da het hang')
+      return
+    }
+
+    multiOrder.addItem({
+      id: product.id,
+      name: product.name,
+      sell_price: calculatedPrice,
+      vat_rate: product.vat_rate,
+      image_url: product.image_url,
+      unit_id: unit.id,
+      unit_name: unit.unit_name,
+      conversion_rate: unit.conversion_rate,
+    })
+    message.success(`Da them ${product.name} (${unit.unit_name})`)
   }
 
   const handleCheckout = () => {
@@ -579,6 +607,16 @@ export default function POSPage() {
         }}
         product={selectedProductForVariant}
         onSelectVariant={handleVariantSelect}
+      />
+
+      <UnitSelectorModal
+        open={unitModalOpen}
+        onClose={() => {
+          setUnitModalOpen(false)
+          setSelectedProductForUnit(null)
+        }}
+        product={selectedProductForUnit}
+        onSelectUnit={handleUnitSelect}
       />
     </div>
   )
