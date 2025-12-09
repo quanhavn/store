@@ -120,8 +120,26 @@ export function ProductFormAdvanced({
   // Initialize from props
   useEffect(() => {
     if (initialValues) {
+      form.setFieldsValue({
+        vat_rate: 8,
+        quantity: 0,
+        min_stock: 10,
+        unit: 'cái',
+        cost_price: 0,
+        ...initialValues,
+      })
       setHasUnits(initialValues.has_units || false)
       setHasVariants(initialValues.has_variants || false)
+      if (initialValues.image_url) {
+        setFileList([{ uid: '-1', name: 'image', url: initialValues.image_url, status: 'done' }])
+      } else {
+        setFileList([])
+      }
+    } else {
+      form.resetFields()
+      setHasUnits(false)
+      setHasVariants(false)
+      setFileList([])
     }
     if (initialUnits.length > 0) {
       setUnits(initialUnits.map(u => ({
@@ -134,6 +152,8 @@ export function ProductFormAdvanced({
         is_base_unit: u.is_base_unit,
         is_default: u.is_default,
       })))
+    } else {
+      setUnits([])
     }
     if (initialVariants.length > 0) {
       setVariants(initialVariants.map(v => ({
@@ -150,8 +170,10 @@ export function ProductFormAdvanced({
           value_id: a.attribute_value_id,
         })) || [],
       })))
+    } else {
+      setVariants([])
     }
-  }, [initialValues, initialUnits, initialVariants])
+  }, [initialValues, initialUnits, initialVariants, form])
 
   const handleCreateCategory = async (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
     e.preventDefault()
@@ -427,34 +449,36 @@ export function ProductFormAdvanced({
             />
           </Form.Item>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="cost_price"
-              label={t('costPrice')}
-              rules={[{ required: true, message: t('validation.costPriceRequired') }]}
-            >
-              <InputNumber<number>
-                className="!w-full"
-                min={0}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                addonAfter="d"
-              />
-            </Form.Item>
-            <Form.Item
-              name="sell_price"
-              label={t('sellPrice')}
-              rules={[{ required: true, message: t('validation.sellPriceRequired') }]}
-            >
-              <InputNumber<number>
-                className="!w-full"
-                min={0}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                addonAfter="d"
-              />
-            </Form.Item>
-          </div>
+          {!hasVariants && (
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="cost_price"
+                label={t('costPrice')}
+                rules={[{ required: !hasVariants, message: t('validation.costPriceRequired') }]}
+              >
+                <InputNumber<number>
+                  className="!w-full"
+                  min={0}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
+                  addonAfter="đ"
+                />
+              </Form.Item>
+              <Form.Item
+                name="sell_price"
+                label={t('sellPrice')}
+                rules={[{ required: !hasVariants, message: t('validation.sellPriceRequired') }]}
+              >
+                <InputNumber<number>
+                  className="!w-full"
+                  min={0}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
+                  addonAfter="đ"
+                />
+              </Form.Item>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="vat_rate" label={t('vatRate')}>

@@ -95,24 +95,46 @@ export function ProductForm({
   const [attributes, setAttributes] = useState<ProductAttribute[]>([])
   const [attributeModalOpen, setAttributeModalOpen] = useState(false)
   const [loadingAttributes, setLoadingAttributes] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState<string[]>([])
 
   useEffect(() => {
     if (open) {
       loadAttributes()
       
       if (initialValues) {
+        form.setFieldsValue({
+          vat_rate: 8,
+          quantity: 0,
+          min_stock: 10,
+          unit: 'cái',
+          cost_price: 0,
+          ...initialValues,
+        })
         setHasUnits(initialValues.has_units || false)
         setHasVariants(initialValues.has_variants || false)
         setUnits(initialValues.units || [])
         setVariants(initialValues.variants || [])
+        if (initialValues.image_url) {
+          setFileList([{ uid: '-1', name: 'image', url: initialValues.image_url, status: 'done' }])
+        } else {
+          setFileList([])
+        }
+        if (initialValues.has_units || initialValues.has_variants) {
+          setAdvancedOpen(['advanced'])
+        } else {
+          setAdvancedOpen([])
+        }
       } else {
+        form.resetFields()
         setHasUnits(false)
         setHasVariants(false)
         setUnits([])
         setVariants([])
+        setFileList([])
+        setAdvancedOpen([])
       }
     }
-  }, [open, initialValues])
+  }, [open, initialValues, form])
 
   const loadAttributes = async () => {
     setLoadingAttributes(true)
@@ -285,34 +307,36 @@ export function ProductForm({
             />
           </Form.Item>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="cost_price"
-              label={t('costPrice')}
-              rules={[{ required: true, message: t('validation.costPriceRequired') }]}
-            >
-              <InputNumber<number>
-                className="!w-full"
-                min={0}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                addonAfter="đ"
-              />
-            </Form.Item>
-            <Form.Item
-              name="sell_price"
-              label={t('sellPrice')}
-              rules={[{ required: true, message: t('validation.sellPriceRequired') }]}
-            >
-              <InputNumber<number>
-                className="!w-full"
-                min={0}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
-                addonAfter="đ"
-              />
-            </Form.Item>
-          </div>
+          {!hasVariants && (
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="cost_price"
+                label={t('costPrice')}
+                rules={[{ required: !hasVariants, message: t('validation.costPriceRequired') }]}
+              >
+                <InputNumber<number>
+                  className="!w-full"
+                  min={0}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
+                  addonAfter="đ"
+                />
+              </Form.Item>
+              <Form.Item
+                name="sell_price"
+                label={t('sellPrice')}
+                rules={[{ required: !hasVariants, message: t('validation.sellPriceRequired') }]}
+              >
+                <InputNumber<number>
+                  className="!w-full"
+                  min={0}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => (value ? Number(value.replace(/,/g, '')) : 0) as number}
+                  addonAfter="đ"
+                />
+              </Form.Item>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="vat_rate" label={t('vatRate')}>
@@ -367,6 +391,8 @@ export function ProductForm({
 
           <Collapse
             ghost
+            activeKey={advancedOpen}
+            onChange={(keys) => setAdvancedOpen(keys as string[])}
             items={[
               {
                 key: 'advanced',
