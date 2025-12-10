@@ -14,57 +14,143 @@ import type {
 } from '@/lib/supabase/functions'
 
 /**
- * Export Revenue Book (So Doanh Thu) to Excel
+ * Export Revenue Book (Sổ Chi Tiết Doanh Thu Bán Hàng - Mẫu S1-HKD) to Excel
+ * Following Vietnamese Tax 2026 format with 4 revenue categories
  */
 export function exportRevenueBook(
   data: RevenueBookReport,
   storeName: string,
   period: string
 ): void {
-  const headers = [
-    'STT',
-    'Ngày',
-    'So HD',
-    'Khach hang',
-    'DT chua VAT',
-    'VAT',
-    'Tong',
-    'Hinh thuc TT',
-  ]
+  const XLSX = require('xlsx')
 
-  const rows = data.entries.map(entry => [
-    entry.stt,
-    formatDateForExcel(entry.date),
-    entry.invoice_no,
-    entry.customer_name || '',
-    formatCurrencyForExcel(entry.subtotal),
-    formatCurrencyForExcel(entry.vat_amount),
-    formatCurrencyForExcel(entry.total),
-    translatePaymentMethod(entry.payment_method),
+  const year = data.year || new Date().getFullYear()
+  const entries = data.entries || []
+  const totals = data.totals || { goods_distribution: 0, service_construction: 0, manufacturing_transport: 0, other_business: 0, total_revenue: 0 }
+  const tax_payable = data.tax_payable || { total_vat: 0, total_pit: 0 }
+
+  const workbook = XLSX.utils.book_new()
+  const rows: (string | number | null | undefined)[][] = []
+
+  rows.push([`HỘ, CÁ NHÂN KINH DOANH: ${storeName}`])
+  rows.push([`Địa chỉ: `])
+  rows.push([])
+  rows.push(['SỔ CHI TIẾT DOANH THU BÁN HÀNG HÓA, DỊCH VỤ'])
+  rows.push([`Tên địa điểm kinh doanh: `])
+  rows.push([`Năm: ${year}`])
+  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Đơn vị tính: Ngàn đồng'])
+
+  const headerRow1Start = rows.length
+  rows.push([
+    'NGÀY, THÁNG\nGHI SỔ',
+    'CHỨNG TỪ', '',
+    'DIỄN GIẢI',
+    'DOANH THU BÁN HÀNG HÓA, DỊCH VỤ CHIA THEO DANH MỤC NGÀNH NGHỀ', '', '', '', '', '', '', '', '', '', '',
+    'GHI CHÚ'
+  ])
+  rows.push([
+    '',
+    'SỐ HIỆU', 'NGÀY, THÁNG',
+    '',
+    'PHÂN PHỐI, CUNG CẤP HÀNG HÓA\n(GTGT: 1%, TNCN: 0,5%)', '', '',
+    'DỊCH VỤ, XÂY DỰNG KHÔNG BAO THẦU NVL\n(GTGT: 5%; TNCN: 2%)', '', '',
+    'SẢN XUẤT, VẬN TẢI, DỊCH VỤ GẮN VỚI HH,\nXD CÓ BAO THẦU NVL\n(GTGT: 3%, TNCN: 1,5%)', '', '',
+    'HOẠT ĐỘNG KINH DOANH KHÁC\n(GTGT: 2%; TNCN: 1%)', '',
+    ''
+  ])
+  rows.push(['A', 'B', 'C', 'D', '1', '2', '...', '4', '5', '...', '7', '8', '...', '10', '...', '12'])
+
+  entries.forEach(entry => {
+    rows.push([
+      entry.record_date ? formatDateForExcel(entry.record_date) : '',
+      entry.voucher_no || '',
+      entry.voucher_date ? formatDateForExcel(entry.voucher_date) : '',
+      entry.description,
+      entry.goods_distribution > 0 ? entry.goods_distribution : '',
+      '', '',
+      entry.service_construction > 0 ? entry.service_construction : '',
+      '', '',
+      entry.manufacturing_transport > 0 ? entry.manufacturing_transport : '',
+      '', '',
+      entry.other_business > 0 ? entry.other_business : '',
+      '',
+      entry.note || '',
+    ])
+  })
+
+  rows.push([])
+  rows.push([
+    '', '', '',
+    'Tổng cộng',
+    totals.goods_distribution > 0 ? totals.goods_distribution : '',
+    '', '',
+    totals.service_construction > 0 ? totals.service_construction : '',
+    '', '',
+    totals.manufacturing_transport > 0 ? totals.manufacturing_transport : '',
+    '', '',
+    totals.other_business > 0 ? totals.other_business : '',
+    '', ''
   ])
 
-  const totals = [
-    'TONG CONG',
-    '',
-    '',
-    `${data.totals.sale_count} hoa don`,
-    formatCurrencyForExcel(data.totals.total_subtotal),
-    formatCurrencyForExcel(data.totals.total_vat),
-    formatCurrencyForExcel(data.totals.total_revenue),
-    '',
+  rows.push([`- Sổ này có ... trang, đánh số từ trang 01 đến trang ...`])
+  rows.push([`- Ngày mở sổ: ..`])
+
+  rows.push([])
+  rows.push([
+    '', '', 'Tiền thuế phải nộp', '', '', '', '', '', '', '',
+    '', `           Ngày … tháng … năm …`
+  ])
+  rows.push([
+    '', '', `- Thuế GTGT: ${formatCurrencyForExcel(tax_payable.total_vat)}`, '', '', '', '', '', '', '',
+    '', 'Người đại diện HKD/Cá nhân KD'
+  ])
+  rows.push([
+    '', '', `- Thuế TNCN: ${formatCurrencyForExcel(tax_payable.total_pit)}`, '', '', '', '', '', '', '',
+    '', '(Ký, họ tên, đóng dấu)'
+  ])
+
+  const worksheet = XLSX.utils.aoa_to_sheet(rows)
+
+  worksheet['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+    { s: { r: 3, c: 0 }, e: { r: 3, c: 15 } },
+    { s: { r: 4, c: 0 }, e: { r: 4, c: 15 } },
+    { s: { r: 5, c: 0 }, e: { r: 5, c: 15 } },
+    { s: { r: headerRow1Start, c: 0 }, e: { r: headerRow1Start + 1, c: 0 } },
+    { s: { r: headerRow1Start, c: 1 }, e: { r: headerRow1Start, c: 2 } },
+    { s: { r: headerRow1Start, c: 3 }, e: { r: headerRow1Start + 1, c: 3 } },
+    { s: { r: headerRow1Start, c: 4 }, e: { r: headerRow1Start, c: 14 } },
+    { s: { r: headerRow1Start + 1, c: 4 }, e: { r: headerRow1Start + 1, c: 6 } },
+    { s: { r: headerRow1Start + 1, c: 7 }, e: { r: headerRow1Start + 1, c: 9 } },
+    { s: { r: headerRow1Start + 1, c: 10 }, e: { r: headerRow1Start + 1, c: 12 } },
+    { s: { r: headerRow1Start + 1, c: 13 }, e: { r: headerRow1Start + 1, c: 14 } },
+    { s: { r: headerRow1Start, c: 15 }, e: { r: headerRow1Start + 1, c: 15 } },
   ]
 
-  exportToExcel({
-    filename: `So_Doanh_Thu_${period.replace(/\//g, '-')}`,
-    sheetName: 'So Doanh Thu',
-    title: 'SO DOANH THU BAN HANG',
-    storeName,
-    period,
-    headers,
-    data: rows,
-    totals,
-    columnWidths: [6, 12, 15, 25, 15, 12, 15, 15],
-  })
+  worksheet['!cols'] = [
+    { wch: 14 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 30 },
+    { wch: 12 },
+    { wch: 8 },
+    { wch: 6 },
+    { wch: 12 },
+    { wch: 8 },
+    { wch: 6 },
+    { wch: 12 },
+    { wch: 8 },
+    { wch: 6 },
+    { wch: 12 },
+    { wch: 6 },
+    { wch: 12 },
+  ]
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Mẫu số S1-HKD')
+
+  const filename = `So_Chi_Tiet_Doanh_Thu_${year}_${period.replace(/\//g, '-')}.xlsx`
+  XLSX.writeFile(workbook, filename)
 }
 
 /**

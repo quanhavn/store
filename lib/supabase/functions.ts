@@ -785,21 +785,37 @@ export interface FinancialAnalytics {
 
 export interface RevenueBookReport {
   period: { from: string; to: string }
+  year: number
   entries: Array<{
     stt: number
-    date: string
-    invoice_no: string
-    customer_name: string
-    subtotal: number
-    vat_amount: number
-    total: number
-    payment_method: string
+    record_date: string
+    voucher_no: string
+    voucher_date: string
+    description: string
+    goods_distribution: number
+    service_construction: number
+    manufacturing_transport: number
+    other_business: number
+    note?: string
   }>
   totals: {
-    total_subtotal: number
-    total_vat: number
+    goods_distribution: number
+    service_construction: number
+    manufacturing_transport: number
+    other_business: number
     total_revenue: number
-    sale_count: number
+  }
+  tax_payable: {
+    vat_goods: number
+    pit_goods: number
+    vat_service: number
+    pit_service: number
+    vat_manufacturing: number
+    pit_manufacturing: number
+    vat_other: number
+    pit_other: number
+    total_vat: number
+    total_pit: number
   }
 }
 

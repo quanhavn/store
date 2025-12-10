@@ -25,6 +25,7 @@ export interface ProductFormData {
   cost_price: number
   sell_price: number
   vat_rate: number
+  pit_rate: number
   quantity: number
   min_stock: number
   unit: string
@@ -46,10 +47,17 @@ interface ProductFormProps {
 }
 
 const VAT_OPTIONS = [
-  { label: '0%', value: 0 },
-  { label: '5%', value: 5 },
-  { label: '8%', value: 8 },
-  { label: '10%', value: 10 },
+  { label: '1% - Phân phối hàng hóa', value: 1 },
+  { label: '2% - HĐKD khác', value: 2 },
+  { label: '3% - SX, vận tải', value: 3 },
+  { label: '5% - Dịch vụ/XD', value: 5 },
+]
+
+const PIT_OPTIONS = [
+  { label: '0.5% - Phân phối hàng hóa', value: 0.5 },
+  { label: '1% - HĐKD khác', value: 1 },
+  { label: '1.5% - SX, vận tải', value: 1.5 },
+  { label: '2% - Dịch vụ/XD', value: 2 },
 ]
 
 const UNIT_OPTIONS = [
@@ -103,7 +111,8 @@ export function ProductForm({
       
       if (initialValues) {
         form.setFieldsValue({
-          vat_rate: 8,
+          vat_rate: 1,
+          pit_rate: 0.5,
           quantity: 0,
           min_stock: 10,
           unit: 'cái',
@@ -246,7 +255,8 @@ export function ProductForm({
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            vat_rate: 8,
+            vat_rate: 1,
+            pit_rate: 0.5,
             quantity: 0,
             min_stock: 10,
             unit: 'cái',
@@ -342,6 +352,12 @@ export function ProductForm({
             <Form.Item name="vat_rate" label={t('vatRate')}>
               <Select options={VAT_OPTIONS} />
             </Form.Item>
+            <Form.Item name="pit_rate" label="Thuế TNCN" rules={[{ required: true }]}>
+              <Select options={PIT_OPTIONS} />
+            </Form.Item>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <Form.Item name="unit" label={t('units.baseUnit')}>
               <Select
                 showSearch

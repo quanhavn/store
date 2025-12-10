@@ -29,61 +29,119 @@ interface StoreInfo {
 }
 
 /**
- * 1. Revenue Book (So Doanh Thu)
- * Exports sales/revenue report with invoice details
+ * 1. Revenue Book (Sổ Chi Tiết Doanh Thu Bán Hàng - Mẫu S1-HKD)
+ * Exports sales revenue by 4 business categories with VAT/PIT rates
  */
-export function exportRevenueBookPDF(
+export async function exportRevenueBookPDF(
   data: RevenueBookReport,
   storeInfo: StoreInfo
-): void {
-  const { entries, totals, period } = data
+): Promise<void> {
+  const { loadVietnameseFonts, addVietnameseFonts } = await import('./pdf-fonts')
+  const jsPDF = (await import('jspdf')).default
+  const autoTable = (await import('jspdf-autotable')).default
 
-  const headers = [
-    'STT',
-    'Ngày',
-    'So HD',
-    'Khach hang',
-    'Gia truoc thue',
-    'VAT',
-    'Tong tien',
-    'Thanh toan',
-  ]
+  await loadVietnameseFonts()
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const hasVietnameseFont = addVietnameseFonts(doc)
+  const fontName = hasVietnameseFont ? 'Roboto' : 'helvetica'
+
+  const { entries = [], totals, period, year = new Date().getFullYear(), tax_payable } = data
+  const safeTaxPayable = tax_payable || { total_vat: 0, total_pit: 0 }
+  const pageWidth = doc.internal.pageSize.getWidth()
+
+  doc.setFont(fontName, 'normal')
+  doc.setFontSize(10)
+  doc.text(`HỘ, CÁ NHÂN KINH DOANH: ${storeInfo.name}`, 14, 15)
+  doc.text(`Địa chỉ: ${storeInfo.address || ''}`, 14, 21)
+
+  doc.setFont(fontName, 'bold')
+  doc.setFontSize(14)
+  doc.text('SỔ CHI TIẾT DOANH THU BÁN HÀNG HÓA, DỊCH VỤ', pageWidth / 2, 32, { align: 'center' })
+
+  doc.setFont(fontName, 'normal')
+  doc.setFontSize(10)
+  doc.text(`Năm: ${year}`, 14, 40)
+  doc.text('Đơn vị tính: Ngàn đồng', pageWidth - 14, 40, { align: 'right' })
 
   const tableData = entries.map((entry) => [
-    entry.stt,
-    entry.date,
-    entry.invoice_no,
-    entry.customer_name || 'Khach le',
-    entry.subtotal,
-    entry.vat_amount,
-    entry.total,
-    entry.payment_method,
+    entry.record_date || '',
+    entry.voucher_no || '',
+    entry.voucher_date || '',
+    entry.description,
+    entry.goods_distribution > 0 ? formatPDFCurrency(entry.goods_distribution) : '-',
+    entry.service_construction > 0 ? formatPDFCurrency(entry.service_construction) : '-',
+    entry.manufacturing_transport > 0 ? formatPDFCurrency(entry.manufacturing_transport) : '-',
+    entry.other_business > 0 ? formatPDFCurrency(entry.other_business) : '-',
+    entry.note || '',
   ])
 
-  const totalsRow = [
+  tableData.push([
+    '', '', '', 'Tổng cộng',
+    totals.goods_distribution > 0 ? formatPDFCurrency(totals.goods_distribution) : '-',
+    totals.service_construction > 0 ? formatPDFCurrency(totals.service_construction) : '-',
+    totals.manufacturing_transport > 0 ? formatPDFCurrency(totals.manufacturing_transport) : '-',
+    totals.other_business > 0 ? formatPDFCurrency(totals.other_business) : '-',
     '',
-    '',
-    '',
-    'TONG CONG',
-    totals.total_subtotal,
-    totals.total_vat,
-    totals.total_revenue,
-    `${totals.sale_count} HD`,
-  ]
+  ])
 
-  exportToPDF({
-    filename: `so-doanh-thu-${period.from}-${period.to}`,
-    title: 'SO DOANH THU',
-    storeName: storeInfo.name,
-    storeAddress: storeInfo.address,
-    storeTaxCode: storeInfo.taxCode,
-    period: `${period.from} - ${period.to}`,
-    headers,
-    data: tableData,
-    totals: totalsRow,
-    orientation: 'landscape',
-    columnAligns: ['center', 'center', 'left', 'left', 'right', 'right', 'right', 'center'],
+  autoTable(doc, {
+    startY: 45,
+    head: [
+      [
+        { content: 'NGÀY, THÁNG\nGHI SỔ', rowSpan: 2 },
+        { content: 'CHỨNG TỪ', colSpan: 2 },
+        { content: 'DIỄN GIẢI', rowSpan: 2 },
+        { content: 'DOANH THU BÁN HÀNG HÓA, DỊCH VỤ CHIA THEO DANH MỤC NGÀNH NGHỀ', colSpan: 4 },
+        { content: 'GHI CHÚ', rowSpan: 2 },
+      ],
+      [
+        'SỐ HIỆU', 'NGÀY, THÁNG',
+        'Phân phối HH\n(GTGT 1%,\nTNCN 0,5%)',
+        'Dịch vụ, XD\n(GTGT 5%,\nTNCN 2%)',
+        'SX, Vận tải\n(GTGT 3%,\nTNCN 1,5%)',
+        'KD khác\n(GTGT 2%,\nTNCN 1%)',
+      ],
+    ],
+    body: tableData,
+    styles: {
+      font: fontName,
+      fontSize: 8,
+      cellPadding: 2,
+    },
+    headStyles: {
+      fillColor: [240, 240, 240],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      halign: 'center',
+      valign: 'middle',
+    },
+    columnStyles: {
+      0: { cellWidth: 22, halign: 'center' },
+      1: { cellWidth: 18, halign: 'center' },
+      2: { cellWidth: 22, halign: 'center' },
+      3: { cellWidth: 50 },
+      4: { cellWidth: 28, halign: 'right' },
+      5: { cellWidth: 28, halign: 'right' },
+      6: { cellWidth: 28, halign: 'right' },
+      7: { cellWidth: 28, halign: 'right' },
+      8: { cellWidth: 25 },
+    },
   })
+
+  const finalY = (doc as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 180
+
+  doc.setFont(fontName, 'normal')
+  doc.setFontSize(9)
+  doc.text('Tiền thuế phải nộp:', 14, finalY + 10)
+  doc.text(`- Thuế GTGT: ${formatPDFCurrency(safeTaxPayable.total_vat)}`, 14, finalY + 16)
+  doc.text(`- Thuế TNCN: ${formatPDFCurrency(safeTaxPayable.total_pit)}`, 14, finalY + 22)
+
+  doc.text('Ngày ... tháng ... năm ...', pageWidth - 50, finalY + 10, { align: 'center' })
+  doc.text('Người đại diện HKD/Cá nhân KD', pageWidth - 50, finalY + 16, { align: 'center' })
+  doc.text('(Ký, họ tên, đóng dấu)', pageWidth - 50, finalY + 22, { align: 'center' })
+
+  doc.save(`so-chi-tiet-doanh-thu-${year}-${period.from}-${period.to}.pdf`)
 }
 
 /**

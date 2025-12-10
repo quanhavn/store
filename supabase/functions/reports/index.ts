@@ -393,35 +393,127 @@ serve(async (req: Request) => {
       case 'revenue_book': {
         const { date_from, date_to } = body
 
+        // Fetch store defaults for fallback
+        const { data: store } = await supabase
+          .from('stores')
+          .select('default_vat_rate, pit_rate')
+          .eq('id', store_id)
+          .single()
+
+        const defaultVat = store?.default_vat_rate ?? 1
+        const defaultPit = store?.pit_rate ?? 0.5
+
+        // Fetch sales with sale_items and products for tax categorization
         const { data: sales } = await supabase
           .from('sales')
-          .select('id, invoice_no, customer_name, subtotal, vat_amount, total, completed_at, payments(method)')
+          .select(`
+            id,
+            invoice_no,
+            customer_name,
+            total,
+            completed_at,
+            note,
+            sale_items(
+              quantity,
+              unit_price,
+              discount,
+              product_id,
+              products(
+                name,
+                vat_rate,
+                pit_rate
+              )
+            )
+          `)
           .eq('store_id', store_id)
           .eq('status', 'completed')
           .gte('completed_at', date_from)
           .lte('completed_at', date_to + 'T23:59:59')
-          .order('completed_at')
+          .order('completed_at', { ascending: true })
 
-        const entries = (sales || []).map((sale, index) => ({
-          stt: index + 1,
-          date: sale.completed_at.split('T')[0],
-          invoice_no: sale.invoice_no,
-          customer_name: sale.customer_name || 'Khach le',
-          subtotal: sale.subtotal,
-          vat_amount: sale.vat_amount,
-          total: sale.total,
-          payment_method: sale.payments?.[0]?.method || 'cash',
-        }))
+        // Category mapping by (VAT, PIT) rates
+        type CategoryKey = 'goods_distribution' | 'service_construction' | 'manufacturing_transport' | 'other_business'
+        const categorizeByRates = (vatRate: number, pitRate: number): CategoryKey => {
+          if (vatRate === 1 && pitRate === 0.5) return 'goods_distribution'
+          if (vatRate === 5 && pitRate === 2) return 'service_construction'
+          if (vatRate === 3 && pitRate === 1.5) return 'manufacturing_transport'
+          if (vatRate === 2 && pitRate === 1) return 'other_business'
+          return 'other_business' // fallback
+        }
+
+        const totals = {
+          goods_distribution: 0,
+          service_construction: 0,
+          manufacturing_transport: 0,
+          other_business: 0,
+        }
+
+        const entries = (sales || []).map((sale, idx) => {
+          let goods = 0, service = 0, manufacturing = 0, other = 0
+
+          for (const item of sale.sale_items || []) {
+            const product = item.products as { vat_rate: number | null; pit_rate: number | null } | null
+            const vatRate = product?.vat_rate ?? defaultVat
+            const pitRate = product?.pit_rate ?? defaultPit
+            const category = categorizeByRates(vatRate, pitRate)
+            const itemBase = (item.unit_price * item.quantity) - (item.discount || 0)
+
+            switch (category) {
+              case 'goods_distribution': goods += itemBase; break
+              case 'service_construction': service += itemBase; break
+              case 'manufacturing_transport': manufacturing += itemBase; break
+              case 'other_business': other += itemBase; break
+            }
+          }
+
+          totals.goods_distribution += goods
+          totals.service_construction += service
+          totals.manufacturing_transport += manufacturing
+          totals.other_business += other
+
+          const record_date = sale.completed_at.split('T')[0]
+          return {
+            stt: idx + 1,
+            record_date,
+            voucher_no: sale.invoice_no || '',
+            voucher_date: record_date,
+            description: sale.customer_name ? `Bán hàng cho ${sale.customer_name}` : 'Bán hàng',
+            goods_distribution: goods,
+            service_construction: service,
+            manufacturing_transport: manufacturing,
+            other_business: other,
+            note: sale.note || '',
+          }
+        })
+
+        // Compute tax payable per category using statutory rates
+        const tax_payable = {
+          vat_goods: Math.round(totals.goods_distribution * 0.01),
+          pit_goods: Math.round(totals.goods_distribution * 0.005),
+          vat_service: Math.round(totals.service_construction * 0.05),
+          pit_service: Math.round(totals.service_construction * 0.02),
+          vat_manufacturing: Math.round(totals.manufacturing_transport * 0.03),
+          pit_manufacturing: Math.round(totals.manufacturing_transport * 0.015),
+          vat_other: Math.round(totals.other_business * 0.02),
+          pit_other: Math.round(totals.other_business * 0.01),
+          total_vat: 0,
+          total_pit: 0,
+        }
+        tax_payable.total_vat = tax_payable.vat_goods + tax_payable.vat_service + tax_payable.vat_manufacturing + tax_payable.vat_other
+        tax_payable.total_pit = tax_payable.pit_goods + tax_payable.pit_service + tax_payable.pit_manufacturing + tax_payable.pit_other
+
+        const total_revenue = totals.goods_distribution + totals.service_construction + totals.manufacturing_transport + totals.other_business
+        const year = new Date(date_from).getFullYear()
 
         return successResponse({
           period: { from: date_from, to: date_to },
+          year,
           entries,
           totals: {
-            total_subtotal: entries.reduce((sum, e) => sum + e.subtotal, 0),
-            total_vat: entries.reduce((sum, e) => sum + e.vat_amount, 0),
-            total_revenue: entries.reduce((sum, e) => sum + e.total, 0),
-            sale_count: entries.length,
+            ...totals,
+            total_revenue,
           },
+          tax_payable,
         })
       }
 

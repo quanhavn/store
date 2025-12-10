@@ -60,6 +60,7 @@ interface CreateProductRequest {
   cost_price?: number
   sell_price?: number
   vat_rate?: number
+  pit_rate?: number
   quantity?: number
   min_stock?: number
   unit?: string
@@ -80,6 +81,7 @@ interface UpdateProductRequest {
   cost_price?: number
   sell_price?: number
   vat_rate?: number
+  pit_rate?: number
   quantity?: number
   min_stock?: number
   unit?: string
@@ -304,6 +306,7 @@ serve(async (req: Request) => {
           cost_price = 0,
           sell_price: requestSellPrice,
           vat_rate = 8,
+          pit_rate: requestPitRate,
           quantity = 0,
           min_stock = 10,
           unit = 'cái',
@@ -322,6 +325,15 @@ serve(async (req: Request) => {
         if (sell_price === undefined) {
           sell_price = 0
         }
+
+        // Fetch store's pit_rate for fallback
+        const { data: store } = await supabase
+          .from('stores')
+          .select('default_vat_rate, pit_rate')
+          .eq('id', store_id)
+          .single()
+
+        const pit_rate = requestPitRate ?? store?.pit_rate ?? 0.5
 
         // Check for duplicate barcode/sku
         if (barcode) {
@@ -361,6 +373,7 @@ serve(async (req: Request) => {
             cost_price,
             sell_price,
             vat_rate,
+            pit_rate,
             quantity: has_variants ? 0 : quantity, // If has variants, stock is tracked per variant
             min_stock,
             unit,

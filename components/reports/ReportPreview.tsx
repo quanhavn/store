@@ -303,7 +303,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
 
       switch (reportType) {
         case 'revenue':
-          exportRevenueBookPDF(data as RevenueBookReport, storeInfo)
+          await exportRevenueBookPDF(data as RevenueBookReport, storeInfo)
           break
         case 'cash':
           exportCashBookPDF(data as CashBookReport, storeInfo)
