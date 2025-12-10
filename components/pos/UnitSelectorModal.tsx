@@ -1,6 +1,6 @@
 'use client'
 
-import { Modal, List, Typography, Tag, Empty, Spin } from 'antd'
+import { Modal, List, Typography, Empty, Spin } from 'antd'
 import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
@@ -50,6 +50,8 @@ export function UnitSelectorModal({
   if (!product) return null
 
   const units = product.units || []
+  const baseUnit = units.find(u => u.is_base_unit)
+  const baseUnitName = baseUnit?.unit_name || product.unit || 'cái'
 
   const calculatePrice = (unit: ProductUnit): number => {
     if (unit.sell_price !== null && unit.sell_price !== undefined) {
@@ -90,20 +92,12 @@ export function UnitSelectorModal({
               >
                 <List.Item.Meta
                   title={
-                    <div className="flex items-center gap-2">
-                      <span>{unit.unit_name}</span>
-                      {unit.is_base_unit && (
-                        <Tag color="blue">{tProducts('units.baseUnit')}</Tag>
-                      )}
-                      {unit.is_default && (
-                        <Tag color="green">{tProducts('units.default')}</Tag>
-                      )}
-                    </div>
+                    <span className="font-medium">{unit.unit_name}</span>
                   }
                   description={
                     <div className="text-sm text-gray-500">
-                      {unit.conversion_rate > 1 && (
-                        <span>x{unit.conversion_rate} {tProducts('units.baseUnit').toLowerCase()}</span>
+                      {!unit.is_base_unit && unit.conversion_rate > 1 && (
+                        <span> = {unit.conversion_rate} {baseUnitName}</span>
                       )}
                     </div>
                   }

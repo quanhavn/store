@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Input, InputNumber, Switch, Table, Space, Popconfirm, message } from 'antd'
+import { Button, Input, InputNumber, Table, Popconfirm, message } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
@@ -105,6 +105,11 @@ export function ProductUnitsSection({
     return `${value.toLocaleString('vi-VN')}đ`
   }
 
+  const getBaseUnitName = () => {
+    const baseUnitRow = units.find(u => u.is_base_unit)
+    return baseUnitRow?.unit_name || baseUnit
+  }
+
   const columns: ColumnsType<ProductUnitInput> = [
     {
       title: t('units.unitName'),
@@ -125,17 +130,24 @@ export function ProductUnitsSection({
       title: t('units.conversionRate'),
       dataIndex: 'conversion_rate',
       key: 'conversion_rate',
-      width: 100,
+      width: 150,
       render: (value, record) => (
-        <InputNumber
-          value={value}
-          onChange={(v) => handleChange(record.id!, 'conversion_rate', v)}
-          min={0.0001}
-          step={1}
-          disabled={disabled || record.is_base_unit}
-          size="small"
-          className="w-full"
-        />
+        record.is_base_unit ? (
+          <span className="text-gray-500">{t('units.baseUnit')}</span>
+        ) : (
+          <div className="flex items-center gap-1">
+            <InputNumber
+              value={value}
+              onChange={(v) => handleChange(record.id!, 'conversion_rate', v)}
+              min={0.0001}
+              step={1}
+              disabled={disabled}
+              size="small"
+              className="w-20"
+            />
+            <span className="text-gray-500 text-xs">{getBaseUnitName()}</span>
+          </div>
+        )
       ),
     },
     {
@@ -167,36 +179,6 @@ export function ProductUnitsSection({
           value={value}
           onChange={(e) => handleChange(record.id!, 'barcode', e.target.value)}
           placeholder="..."
-          disabled={disabled}
-          size="small"
-        />
-      ),
-    },
-    {
-      title: t('units.baseUnit'),
-      dataIndex: 'is_base_unit',
-      key: 'is_base_unit',
-      width: 70,
-      align: 'center',
-      render: (value, record) => (
-        <Switch
-          checked={value}
-          onChange={(v) => handleChange(record.id!, 'is_base_unit', v)}
-          disabled={disabled || units.length <= 1}
-          size="small"
-        />
-      ),
-    },
-    {
-      title: t('units.default'),
-      dataIndex: 'is_default',
-      key: 'is_default',
-      width: 80,
-      align: 'center',
-      render: (value, record) => (
-        <Switch
-          checked={value}
-          onChange={(v) => handleChange(record.id!, 'is_default', v)}
           disabled={disabled}
           size="small"
         />
