@@ -145,17 +145,13 @@ export const useCartStore = create<CartStore>()(
       },
 
       getVatAmount: () => {
-        return get().items.reduce((sum, item) => {
-          const itemTotal = item.quantity * item.unit_price - item.discount
-          return sum + itemTotal * (item.vat_rate / 100)
-        }, 0)
+        return 0
       },
 
       getTotal: () => {
         const subtotal = get().getSubtotal()
-        const vatAmount = get().getVatAmount()
         const discount = get().discount
-        return subtotal + vatAmount - discount
+        return subtotal - discount
       },
 
       getItemCount: () => {

@@ -23,7 +23,6 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
     setDiscount,
     clearActiveOrder,
     getSubtotal,
-    getVatAmount,
     getTotal,
   } = useMultiOrderStore()
 
@@ -32,7 +31,6 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
   const discount = activeOrder?.discount || 0
 
   const subtotal = getSubtotal()
-  const vatAmount = getVatAmount()
   const total = getTotal()
 
   return (
@@ -47,17 +45,13 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
             <Text>{t('subtotal')}:</Text>
             <Text>{subtotal.toLocaleString('vi-VN')}d</Text>
           </div>
-          <div className="flex justify-between">
-            <Text>{t('vat')}:</Text>
-            <Text>{vatAmount.toLocaleString('vi-VN')}d</Text>
-          </div>
           <div className="flex justify-between items-center">
             <Text>{t('discount')}:</Text>
             <Space.Compact className="w-32">
               <InputNumber
                 size="small"
                 min={0}
-                max={subtotal + vatAmount}
+                max={subtotal}
                 value={discount}
                 onChange={(v) => setDiscount(v || 0)}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}

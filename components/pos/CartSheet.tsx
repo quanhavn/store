@@ -14,12 +14,11 @@ interface CartSheetProps {
 }
 
 export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
-  const { items, discount, updateQuantity, removeItem, setDiscount, clear, getSubtotal, getVatAmount, getTotal } = useCartStore()
+  const { items, discount, updateQuantity, removeItem, setDiscount, clear, getSubtotal, getTotal } = useCartStore()
   const t = useTranslations('pos')
   const tCommon = useTranslations('common')
 
   const subtotal = getSubtotal()
-  const vatAmount = getVatAmount()
   const total = getTotal()
 
   return (
@@ -34,17 +33,13 @@ export function CartSheet({ open, onClose, onCheckout }: CartSheetProps) {
             <Text>{t('subtotal')}:</Text>
             <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
           </div>
-          <div className="flex justify-between">
-            <Text>{t('vat')}:</Text>
-            <Text>{vatAmount.toLocaleString('vi-VN')}đ</Text>
-          </div>
           <div className="flex justify-between items-center">
             <Text>{t('discount')}:</Text>
             <Space.Compact className="w-32">
               <InputNumber
                 size="small"
                 min={0}
-                max={subtotal + vatAmount}
+                max={subtotal}
                 value={discount}
                 onChange={(v) => setDiscount(v || 0)}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}

@@ -48,22 +48,6 @@ function formatTime(dateString: string): string {
   return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Group items by VAT rate for breakdown
-function groupByVatRate(items: SaleItem[]): Array<{ rate: number; amount: number }> {
-  const vatGroups: Record<number, number> = {}
-
-  items.forEach((item) => {
-    const rate = item.vat_rate || 0
-    const amount = item.vat_amount || 0
-    vatGroups[rate] = (vatGroups[rate] || 0) + amount
-  })
-
-  return Object.entries(vatGroups)
-    .map(([rate, amount]) => ({ rate: Number(rate), amount }))
-    .filter((v) => v.amount > 0)
-    .sort((a, b) => a.rate - b.rate)
-}
-
 // Calculate change for cash payments
 function calculateChange(payments: Payment[], total: number): number {
   const cashPayment = payments.find((p) => p.method === 'cash')
@@ -89,7 +73,6 @@ export function ReceiptTemplate({
 }: ReceiptProps) {
   const t = useTranslations('pos')
   const charWidth = PAPER_WIDTH[paperWidth]
-  const vatBreakdown = groupByVatRate(items)
   const totalAmount = sale.total || 0
   const cashReceived = payments.reduce((sum, p) => sum + p.amount, 0)
   const change = calculateChange(payments, totalAmount)
@@ -246,14 +229,6 @@ export function ReceiptTemplate({
             <span>{t('subtotal')}:</span>
             <span>{formatCurrency(sale.subtotal || 0)}</span>
           </div>
-
-          {/* VAT Breakdown */}
-          {vatBreakdown.map((vat, index) => (
-            <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>VAT {vat.rate}%:</span>
-              <span>{formatCurrency(vat.amount)}</span>
-            </div>
-          ))}
 
           {/* Discount */}
           {sale.discount && sale.discount > 0 && (

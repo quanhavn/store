@@ -509,20 +509,14 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
       },
 
       getVatAmount: () => {
-        const activeOrder = get().getActiveOrder()
-        if (!activeOrder) return 0
-        return activeOrder.items.reduce((sum, item) => {
-          const itemTotal = item.quantity * item.unit_price - item.discount
-          return sum + itemTotal * (item.vat_rate / 100)
-        }, 0)
+        return 0
       },
 
       getTotal: () => {
         const activeOrder = get().getActiveOrder()
         if (!activeOrder) return 0
         const subtotal = get().getSubtotal()
-        const vatAmount = get().getVatAmount()
-        return subtotal + vatAmount - activeOrder.discount
+        return subtotal - activeOrder.discount
       },
 
       getItemCount: () => {

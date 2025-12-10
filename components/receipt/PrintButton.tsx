@@ -313,14 +313,6 @@ function buildReceiptHtml(
     vnpay: 'VNPay',
   }
 
-  // Group VAT
-  const vatGroups: Record<number, number> = {}
-  items.forEach((item) => {
-    const rate = item.vat_rate || 0
-    const amount = item.vat_amount || 0
-    vatGroups[rate] = (vatGroups[rate] || 0) + amount
-  })
-
   const totalAmount = sale.total || 0
   const cashReceived = payments.reduce((sum, p) => sum + p.amount, 0)
   const change =
@@ -388,10 +380,6 @@ function buildReceiptHtml(
           .join('')}
         <div class="dashed"></div>
         <div class="row"><span>Tam tinh:</span><span>${formatCurrency(sale.subtotal || 0)}</span></div>
-        ${Object.entries(vatGroups)
-          .filter(([_, amount]) => amount > 0)
-          .map(([rate, amount]) => `<div class="row"><span>VAT ${rate}%:</span><span>${formatCurrency(amount)}</span></div>`)
-          .join('')}
         ${sale.discount && sale.discount > 0 ? `<div class="row"><span>Giam gia:</span><span>-${formatCurrency(sale.discount)}</span></div>` : ''}
         <div class="double"></div>
         <div class="row bold" style="font-size: ${paperWidth === 'MM_58' ? '13px' : '14px'}">
