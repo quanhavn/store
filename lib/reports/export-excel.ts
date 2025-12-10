@@ -52,7 +52,7 @@ export function exportToExcel(options: ExcelExportOptions): void {
     hour: '2-digit',
     minute: '2-digit',
   })
-  rows.push([`Ngay xuat: ${exportDate}`])
+  rows.push([`Ngày xuat: ${exportDate}`])
 
   // Row 5: Empty row for spacing
   rows.push([])

@@ -44,3 +44,6 @@ export type {
   InventoryDetailProduct,
   InventoryDetailBookReport,
 } from './inventory-book-detail'
+
+// Vietnamese font utilities for PDF
+export { loadVietnameseFonts, addVietnameseFonts, areFontsLoaded } from './pdf-fonts'

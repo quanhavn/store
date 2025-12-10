@@ -5,21 +5,21 @@
   - generic [ref=e3]:
     - main [ref=e4]:
       - generic [ref=e5]:
-        - heading "Bao cao" [level=4] [ref=e6]
+        - heading "Báo cáo" [level=4] [ref=e6]
         - generic [ref=e7]:
           - tablist [ref=e8]:
             - generic [ref=e10]:
-              - tab "dashboard Tong quan" [active] [selected] [ref=e12] [cursor=pointer]:
+              - tab "dashboard Tổng quan" [active] [selected] [ref=e12] [cursor=pointer]:
                 - generic [ref=e13]:
                   - img "dashboard" [ref=e14]:
                     - img [ref=e15]
-                  - text: Tong quan
-              - tab "file-text So sach" [ref=e18] [cursor=pointer]:
+                  - text: Tổng quan
+              - tab "file-text Sổ sách" [ref=e18] [cursor=pointer]:
                 - generic [ref=e19]:
                   - img "file-text" [ref=e20]:
                     - img [ref=e21]
-                  - text: So sach
-          - tabpanel "dashboard Tong quan" [ref=e25]:
+                  - text: Sổ sách
+          - tabpanel "dashboard Tổng quan" [ref=e25]:
             - generic [ref=e26]:
               - generic [ref=e28]:
                 - text: HOM NAY
@@ -45,7 +45,7 @@
                     - generic [ref=e56]: Doanh thu
                     - generic [ref=e57]: 29.160 ₫
                   - generic [ref=e58]:
-                    - generic [ref=e59]: Chi phi
+                    - generic [ref=e59]: Chi phí
                     - generic [ref=e60]: 0 ₫
                   - generic [ref=e61]:
                     - generic [ref=e62]: Loi nhuan
@@ -64,12 +64,12 @@
                         - generic [ref=e93]: 23K
                         - generic [ref=e95]: 30K
                 - generic [ref=e97]:
-                  - heading "Doanh thu vs Chi phi" [level=3] [ref=e98]
+                  - heading "Doanh thu vs Chi phí" [level=3] [ref=e98]
                   - generic [ref=e101]:
                     - list [ref=e103]:
                       - listitem [ref=e104]:
                         - img "[object Object] legend icon" [ref=e105]
-                        - generic [ref=e107]: Chi phi
+                        - generic [ref=e107]: Chi phí
                       - listitem [ref=e108]:
                         - img "[object Object] legend icon" [ref=e109]
                         - generic [ref=e111]: Doanh thu
@@ -103,7 +103,7 @@
                       - list [ref=e173]:
                         - listitem [ref=e174]:
                           - img "[object Object] legend icon" [ref=e175]
-                          - generic [ref=e177]: Tien mat
+                          - generic [ref=e177]: Tiền mặt
                       - application [ref=e178]:
                         - generic [ref=e186]: 100%
                 - generic [ref=e188]:
@@ -165,11 +165,11 @@
           - img "calculator" [ref=e274]:
             - img [ref=e275]
           - generic [ref=e277]: Thue
-        - link "bar-chart Bao cao" [ref=e278] [cursor=pointer]:
+        - link "bar-chart Báo cáo" [ref=e278] [cursor=pointer]:
           - /url: /reports
           - img "bar-chart" [ref=e279]:
             - img [ref=e280]
-          - generic [ref=e282]: Bao cao
+          - generic [ref=e282]: Báo cáo
   - alert [ref=e283]
   - generic [ref=e284]: T12
 ```

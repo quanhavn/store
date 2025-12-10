@@ -232,7 +232,7 @@ export function generateReceiptText(
 
   // Invoice info
   lines.push(`So HD: ${data.invoice.invoiceNo}`)
-  lines.push(`Ngay: ${data.invoice.dateTime.toLocaleDateString('vi-VN')} ${data.invoice.dateTime.toLocaleTimeString('vi-VN')}`)
+  lines.push(`Ngày: ${data.invoice.dateTime.toLocaleDateString('vi-VN')} ${data.invoice.dateTime.toLocaleTimeString('vi-VN')}`)
   if (data.invoice.cashier) {
     lines.push(`Thu ngan: ${data.invoice.cashier}`)
   }
@@ -292,7 +292,7 @@ export function generateReceiptText(
 
   // Payment
   const paymentMethodLabels: Record<string, string> = {
-    cash: 'Tien mat',
+    cash: 'Tiền mặt',
     bank_transfer: 'Chuyen khoan',
     momo: 'MoMo',
     zalopay: 'ZaloPay',

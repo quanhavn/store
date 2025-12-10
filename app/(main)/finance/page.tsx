@@ -34,7 +34,7 @@ export default function FinancePage() {
       label: (
         <span className="flex items-center gap-1">
           <WalletOutlined />
-          Tien mat
+          Tiền mặt
         </span>
       ),
       children: (
@@ -46,7 +46,7 @@ export default function FinancePage() {
 
           <div className="bg-white rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">
-              <Title level={5} className="!mb-0">Giao dich gan day</Title>
+              <Title level={5} className="!mb-0">Giao dịch gần đây</Title>
             </div>
             <CashTransactionList limit={10} />
           </div>
@@ -58,7 +58,7 @@ export default function FinancePage() {
       label: (
         <span className="flex items-center gap-1">
           <BankOutlined />
-          Ngan hang
+          Ngân hàng
         </span>
       ),
       children: <BankAccountList />,
@@ -68,7 +68,7 @@ export default function FinancePage() {
       label: (
         <span className="flex items-center gap-1">
           <AccountBookOutlined />
-          Chi phi
+          Chi phí
         </span>
       ),
       children: <ExpenseList />,
@@ -78,13 +78,13 @@ export default function FinancePage() {
   return (
     <div className="p-4 pb-20">
       <div className="flex justify-between items-center mb-4">
-        <Title level={4} className="!mb-0">Quan ly thu chi</Title>
+        <Title level={4} className="!mb-0">Quản lý thu chi</Title>
         <Segmented
           size="small"
           options={[
-            { label: 'Ngay', value: 'day' },
-            { label: 'Tuan', value: 'week' },
-            { label: 'Thang', value: 'month' },
+            { label: 'Ngày', value: 'day' },
+            { label: 'Tuần', value: 'week' },
+            { label: 'Tháng', value: 'month' },
           ]}
           value={period}
           onChange={(value) => setPeriod(value as Period)}

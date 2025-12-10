@@ -280,6 +280,7 @@
     "inStock": "Còn hàng",
     "outOfStock": "Hết hàng",
     "stock": "Tồn kho",
+    "unit": "ĐVT",
     "stockCheck": "Kiểm kho",
     "addProduct": "Thêm sản phẩm mới",
     "noProducts": "Chưa có sản phẩm nào",
@@ -461,7 +462,8 @@
       "applicableAttributes": "Thuộc tính áp dụng",
       "selectAttributes": "Chọn thuộc tính cho biến thể",
       "attributes": "Thuộc tính",
-      "noAttributesWarning": "Vui lòng thêm thuộc tính trước khi tạo biến thể"
+      "noAttributesWarning": "Vui lòng thêm thuộc tính trước khi tạo biến thể",
+      "selectVariant": "Chọn biến thể"
     },
     "noProducts": "Chưa có sản phẩm nào",
     "scanBarcode": "Quét mã vạch",
@@ -485,7 +487,12 @@
     "addCategory": "Thêm danh mục",
     "editCategory": "Sửa danh mục",
     "categoryName": "Tên danh mục",
+    "name": "Tên danh mục",
+    "nameRequired": "Vui lòng nhập tên danh mục",
+    "namePlaceholder": "VD: Thực phẩm, Đồ uống...",
     "parentCategory": "Danh mục cha",
+    "parentCategoryPlaceholder": "Chọn danh mục cha",
+    "noParent": "Không có danh mục cha",
     "sortOrder": "Thứ tự sắp xếp",
     "addSubcategory": "Thêm danh mục con cho \"{name}\"",
     "noCategories": "Chưa có danh mục nào",
@@ -724,7 +731,9 @@
       "hr": "Nhân sự"
     },
     "salesReport": "Báo cáo bán hàng",
-    "financeReport": "Báo cáo tài chính"
+    "financeReport": "Báo cáo tài chính",
+    "totalIn": "Tổng nhập",
+    "totalOut": "Tổng xuất"
   },
   "pos": {
     "title": "Bán hàng",

@@ -149,11 +149,11 @@
           - img "calculator" [ref=e216]:
             - img [ref=e217]
           - generic [ref=e219]: Thue
-        - link "bar-chart Bao cao" [ref=e220] [cursor=pointer]:
+        - link "bar-chart Báo cáo" [ref=e220] [cursor=pointer]:
           - /url: /reports
           - img "bar-chart" [ref=e221]:
             - img [ref=e222]
-          - generic [ref=e224]: Bao cao
+          - generic [ref=e224]: Báo cáo
   - alert [ref=e225]
   - dialog "Giỏ hàng (1)" [ref=e227]:
     - generic [ref=e229]:

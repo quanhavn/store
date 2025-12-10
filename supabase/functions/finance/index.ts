@@ -210,7 +210,7 @@ serve(async (req: Request) => {
 
         if (error) {
           if (error.message?.includes('Insufficient cash balance')) {
-            return errorResponse('Khong du tien mat trong quy', 400)
+            return errorResponse('Khong du tiền mặt trong quy', 400)
           }
           throw error
         }

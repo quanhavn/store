@@ -256,7 +256,7 @@ export function exportToPDF(options: PDFExportOptions): void {
         minute: '2-digit',
       })
       doc.text(
-        `Ngay xuat: ${exportDate}`,
+        `Ngày xuat: ${exportDate}`,
         marginLeft,
         pageHeight - 10
       )
@@ -448,7 +448,7 @@ export function exportMultiSectionPDF(options: PDFMultiSectionOptions): void {
           minute: '2-digit',
         })
         doc.text(
-          `Ngay xuat: ${exportDate}`,
+          `Ngày xuat: ${exportDate}`,
           marginLeft,
           pageHeight - 10
         )

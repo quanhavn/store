@@ -121,10 +121,10 @@
           - img "calculator" [ref=e154]:
             - img [ref=e155]
           - generic [ref=e157]: Thue
-        - link "bar-chart Bao cao" [ref=e158] [cursor=pointer]:
+        - link "bar-chart Báo cáo" [ref=e158] [cursor=pointer]:
           - /url: /reports
           - img "bar-chart" [ref=e159]:
             - img [ref=e160]
-          - generic [ref=e162]: Bao cao
+          - generic [ref=e162]: Báo cáo
   - alert [ref=e163]
 ```

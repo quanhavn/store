@@ -39,7 +39,7 @@ export function exportRevenueBookPDF(
 
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'So HD',
     'Khach hang',
     'Gia truoc thue',
@@ -97,7 +97,7 @@ export function exportCashBookPDF(
 
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'Dien giai',
     'Thu (No)',
     'Chi (Co)',
@@ -149,8 +149,8 @@ export function exportBankBookPDF(
 
   const headers = [
     'STT',
-    'Ngay',
-    'Ngan hang',
+    'Ngày',
+    'Ngân hàng',
     'So TK',
     'Dien giai',
     'Thu (No)',
@@ -208,7 +208,7 @@ export function exportExpenseBookPDF(
   // Main expense entries
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'Loai',
     'Dien giai',
     'So tien',
@@ -224,7 +224,7 @@ export function exportExpenseBookPDF(
     entry.description,
     entry.amount,
     entry.vat_amount,
-    entry.payment_method === 'cash' ? 'Tien mat' : 'Chuyen khoan',
+    entry.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyen khoan',
     entry.invoice_no || '-',
   ])
 
@@ -299,7 +299,7 @@ export function exportInventoryBookPDF(
 
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'San pham',
     'Ma SP',
     'Loai',
@@ -425,7 +425,7 @@ export function exportSalaryBookPDF(
     'STT',
     'Ho ten',
     'Chuc vu',
-    'Ngay cong',
+    'Ngày cong',
     'Luong co ban',
     'Phu cap',
     'Tong luong',

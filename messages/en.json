@@ -297,6 +297,7 @@
     "inStock": "In Stock",
     "outOfStock": "Out of Stock",
     "stock": "Stock",
+    "unit": "Unit",
     "stockCheck": "Stock Check",
     "addProduct": "Add new product",
     "noProducts": "No products yet",
@@ -472,7 +473,8 @@
       "applicableAttributes": "Applicable attributes",
       "selectAttributes": "Select attributes for variants",
       "attributes": "Attributes",
-      "noAttributesWarning": "Please add attributes first to create variants"
+      "noAttributesWarning": "Please add attributes first to create variants",
+      "selectVariant": "Select variant"
     },
     "noProducts": "No products yet",
     "scanBarcode": "Scan barcode",
@@ -494,6 +496,11 @@
   "categories": {
     "title": "Categories",
     "description": "Manage categories",
+    "name": "Category name",
+    "nameRequired": "Please enter category name",
+    "namePlaceholder": "e.g. Food, Beverages...",
+    "parentCategoryPlaceholder": "Select parent category",
+    "noParent": "No parent category",
     "deleteConfirm": "Confirm delete",
     "deleteMessage": "Are you sure you want to delete category \"{name}\"?",
     "createSuccess": "Category created successfully",
@@ -726,7 +733,9 @@
       "hr": "HR"
     },
     "salesReport": "Sales Report",
-    "financeReport": "Finance Report"
+    "financeReport": "Finance Report",
+    "totalIn": "Total In",
+    "totalOut": "Total Out"
   },
   "pos": {
     "title": "Point of Sale",

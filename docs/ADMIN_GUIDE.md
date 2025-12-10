@@ -2,13 +2,13 @@
 ## Admin Guide - Store Management PWA
 
 **Phien ban:** 1.0
-**Cap nhat:** Thang 12/2024
+**Cap nhat:** Tháng 12/2024
 
 ---
 
 ## MUC LUC
 
-1. [Tong quan he thong](#1-tong-quan-he-thong)
+1. [Tổng quan he thong](#1-tong-quan-he-thong)
 2. [Cau hinh he thong](#2-cau-hinh-he-thong)
 3. [Quan ly nguoi dung](#3-quan-ly-nguoi-dung)
 4. [Quan ly co so du lieu](#4-quan-ly-co-so-du-lieu)
@@ -162,7 +162,7 @@ He thong co 3 cap do quyen:
 |------|-----------|
 | **owner** | Toan quyen: CRUD tat ca, cau hinh, xem bao cao, quan ly nguoi dung |
 | **manager** | Quan ly: Ban hang, kho, tai chinh, xem bao cao |
-| **staff** | Nhan vien: Ban hang, xem ton kho |
+| **staff** | Nhân viên: Ban hang, xem ton kho |
 
 ### 3.2 Tao nguoi dung moi (qua Dashboard)
 
@@ -219,20 +219,20 @@ UPDATE users SET active = false WHERE id = 'user-uuid';
 |------|-------|
 | `stores` | Thong tin cua hang |
 | `users` | Nguoi dung he thong |
-| `categories` | Danh muc san pham |
+| `categories` | Danh mục sản phẩm |
 | `products` | San pham |
 | `sales` | Don hang |
 | `sale_items` | Chi tiet don hang |
 | `payments` | Thanh toan |
-| `cash_book` | So tien mat |
+| `cash_book` | So tiền mặt |
 | `bank_book` | So ngan hang |
 | `bank_accounts` | Tai khoan ngan hang |
-| `expenses` | Chi phi |
+| `expenses` | Chi phí |
 | `expense_categories` | Danh muc chi phi |
 | `inventory_logs` | Nhat ky kho |
-| `employees` | Nhan vien |
+| `employees` | Nhân viên |
 | `attendance` | Cham cong |
-| `salary_records` / `payroll` | Bang luong |
+| `salary_records` / `payroll` | Bảng lương |
 | `e_invoices` | Hoa don dien tu |
 | `tax_obligations` | Nghia vu thue |
 | `sync_queue` | Hang doi dong bo |
@@ -622,7 +622,7 @@ Cach xu ly:
 
 1. **Phat hien**: Tu monitoring hoac bao cao nguoi dung
 2. **Danh gia**: Xac dinh muc do nghiem trong
-3. **Thong bao**: Bao cao stakeholders
+3. **Thong bao**: Báo cáo stakeholders
 4. **Xu ly**: Fix hoac rollback
 5. **Xac nhan**: Test lai he thong
 6. **Post-mortem**: Ghi nhan va rut kinh nghiem

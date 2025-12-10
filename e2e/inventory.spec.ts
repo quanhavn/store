@@ -14,19 +14,19 @@ test.describe('Inventory Management', () => {
   test.describe('Inventory Page Load', () => {
     test('should load inventory page with correct elements', async ({ page }) => {
       // Check page header
-      await expect(page.locator('h4:has-text("Quan ly kho")')).toBeVisible()
+      await expect(page.locator('h4:has-text("Quản lý kho")')).toBeVisible()
 
       // Check tabs are present
       await expect(page.locator('.ant-tabs')).toBeVisible()
 
       // Check stock check tab
-      await expect(page.locator('text=Ton kho')).toBeVisible()
+      await expect(page.locator('text=Tồn kho')).toBeVisible()
 
       // Check adjustment tab
-      await expect(page.locator('text=Nhap/Xuat')).toBeVisible()
+      await expect(page.locator('text=Nhập/Xuất')).toBeVisible()
 
       // Check alerts tab
-      await expect(page.locator('text=Canh bao')).toBeVisible()
+      await expect(page.locator('text=Cảnh báo')).toBeVisible()
     })
 
     test('should display stock check button', async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe('Inventory Management', () => {
   test.describe('Stock Check Tab', () => {
     test('should display product list on stock check tab', async ({ page }) => {
       // Ensure we are on stock check tab (default)
-      await page.locator('text=Ton kho').click()
+      await page.locator('text=Tồn kho').click()
       await page.waitForTimeout(300)
 
       // Wait for product list to load
@@ -85,7 +85,7 @@ test.describe('Inventory Management', () => {
   test.describe('Stock Adjustment Tab', () => {
     test('should switch to adjustment tab', async ({ page }) => {
       // Click adjustment tab
-      await page.locator('.ant-tabs-tab:has-text("Nhap/Xuat")').click()
+      await page.locator('.ant-tabs-tab:has-text("Nhập/Xuất")').click()
       await page.waitForTimeout(300)
 
       // Tab content should be visible
@@ -94,7 +94,7 @@ test.describe('Inventory Management', () => {
 
     test('should display stock adjustment form', async ({ page }) => {
       // Switch to adjustment tab
-      await page.locator('.ant-tabs-tab:has-text("Nhap/Xuat")').click()
+      await page.locator('.ant-tabs-tab:has-text("Nhập/Xuất")').click()
       await page.waitForTimeout(500)
 
       // Check for adjustment type selector
@@ -106,7 +106,7 @@ test.describe('Inventory Management', () => {
 
     test('should have import and export options', async ({ page }) => {
       // Switch to adjustment tab
-      await page.locator('.ant-tabs-tab:has-text("Nhap/Xuat")').click()
+      await page.locator('.ant-tabs-tab:has-text("Nhập/Xuất")').click()
       await page.waitForTimeout(500)
 
       // Check import option
@@ -122,7 +122,7 @@ test.describe('Inventory Management', () => {
 
     test('should allow selecting products for adjustment', async ({ page }) => {
       // Switch to adjustment tab
-      await page.locator('.ant-tabs-tab:has-text("Nhap/Xuat")').click()
+      await page.locator('.ant-tabs-tab:has-text("Nhập/Xuất")').click()
       await page.waitForTimeout(500)
 
       // Look for product selector or add button
@@ -144,7 +144,7 @@ test.describe('Inventory Management', () => {
 
     test('should allow entering adjustment quantity', async ({ page }) => {
       // Switch to adjustment tab
-      await page.locator('.ant-tabs-tab:has-text("Nhap/Xuat")').click()
+      await page.locator('.ant-tabs-tab:has-text("Nhập/Xuất")').click()
       await page.waitForTimeout(500)
 
       // Look for quantity input
@@ -165,7 +165,7 @@ test.describe('Inventory Management', () => {
   test.describe('Low Stock Alerts Tab', () => {
     test('should switch to alerts tab', async ({ page }) => {
       // Click alerts tab
-      await page.locator('.ant-tabs-tab:has-text("Canh bao")').click()
+      await page.locator('.ant-tabs-tab:has-text("Cảnh báo")').click()
       await page.waitForTimeout(300)
 
       // Tab content should be visible
@@ -174,7 +174,7 @@ test.describe('Inventory Management', () => {
 
     test('should display low stock alerts section', async ({ page }) => {
       // Switch to alerts tab
-      await page.locator('.ant-tabs-tab:has-text("Canh bao")').click()
+      await page.locator('.ant-tabs-tab:has-text("Cảnh báo")').click()
       await page.waitForTimeout(500)
 
       // Wait for content to load
@@ -189,7 +189,7 @@ test.describe('Inventory Management', () => {
 
     test('should display out of stock and low stock counts', async ({ page }) => {
       // Switch to alerts tab
-      await page.locator('.ant-tabs-tab:has-text("Canh bao")').click()
+      await page.locator('.ant-tabs-tab:has-text("Cảnh báo")').click()
       await page.waitForTimeout(500)
 
       // Check for count displays
@@ -204,7 +204,7 @@ test.describe('Inventory Management', () => {
 
     test('should show quick import button for low stock items', async ({ page }) => {
       // Switch to alerts tab
-      await page.locator('.ant-tabs-tab:has-text("Canh bao")').click()
+      await page.locator('.ant-tabs-tab:has-text("Cảnh báo")').click()
       await page.waitForTimeout(500)
 
       // Check for quick import buttons if there are low stock items
@@ -219,7 +219,7 @@ test.describe('Inventory Management', () => {
 
     test('should display minimum stock threshold info', async ({ page }) => {
       // Switch to alerts tab
-      await page.locator('.ant-tabs-tab:has-text("Canh bao")').click()
+      await page.locator('.ant-tabs-tab:has-text("Cảnh báo")').click()
       await page.waitForTimeout(500)
 
       // Check for threshold info text

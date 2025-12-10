@@ -602,7 +602,8 @@ serve(async (req: Request) => {
         for (const log of openingLogs || []) {
           const current = openingStockMap.get(log.product_id) || 0
           const isIn = ['import', 'return'].includes(log.type)
-          openingStockMap.set(log.product_id, current + (isIn ? log.quantity : -log.quantity))
+          const qty = Math.abs(log.quantity)
+          openingStockMap.set(log.product_id, current + (isIn ? qty : -qty))
         }
 
         // Group logs by product
@@ -653,7 +654,7 @@ serve(async (req: Request) => {
           // Process each log
           for (const log of productLogs) {
             const isIn = ['import', 'return'].includes(log.type)
-            const qty = log.quantity
+            const qty = Math.abs(log.quantity)
             const unitPrice = log.unit_cost || costPrice
             const amount = qty * unitPrice
 
@@ -801,7 +802,7 @@ serve(async (req: Request) => {
         }))
 
         return successResponse({
-          period: `Thang ${month}/${year}`,
+          period: `Tháng ${month}/${year}`,
           entries,
           totals: {
             total_base_salary: entries.reduce((sum, e) => sum + e.base_salary, 0),

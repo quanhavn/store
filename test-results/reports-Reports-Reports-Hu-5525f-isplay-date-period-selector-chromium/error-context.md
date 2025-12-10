@@ -5,21 +5,21 @@
   - generic [ref=e3]:
     - main [ref=e4]:
       - generic [ref=e5]:
-        - heading "Bao cao" [level=4] [ref=e6]
+        - heading "Báo cáo" [level=4] [ref=e6]
         - generic [ref=e7]:
           - tablist [ref=e8]:
             - generic [ref=e10]:
-              - tab "dashboard Tong quan" [ref=e12] [cursor=pointer]:
+              - tab "dashboard Tổng quan" [ref=e12] [cursor=pointer]:
                 - generic [ref=e13]:
                   - img "dashboard" [ref=e14]:
                     - img [ref=e15]
-                  - text: Tong quan
-              - tab "file-text So sach" [active] [selected] [ref=e18] [cursor=pointer]:
+                  - text: Tổng quan
+              - tab "file-text Sổ sách" [active] [selected] [ref=e18] [cursor=pointer]:
                 - generic [ref=e19]:
                   - img "file-text" [ref=e20]:
                     - img [ref=e21]
-                  - text: So sach
-          - tabpanel "file-text So sach" [ref=e25]:
+                  - text: Sổ sách
+          - tabpanel "file-text Sổ sách" [ref=e25]:
             - generic [ref=e26]:
               - generic [ref=e29]:
                 - text: "Chon ky bao cao:"
@@ -29,11 +29,11 @@
                       - radio "Hom nay"
                       - radio "Hom nay" [ref=e33]
                     - generic [ref=e34] [cursor=pointer]:
-                      - radio "Tuan"
-                      - radio "Tuan" [ref=e35]
+                      - radio "Tuần"
+                      - radio "Tuần" [ref=e35]
                     - generic [ref=e36] [cursor=pointer]:
-                      - radio "Thang" [checked]
-                      - radio "Thang" [checked] [ref=e37]
+                      - radio "Tháng" [checked]
+                      - radio "Tháng" [checked] [ref=e37]
                     - generic [ref=e38] [cursor=pointer]:
                       - radio "Quy"
                       - radio "Quy" [ref=e39]
@@ -56,8 +56,8 @@
                   - img "wallet" [ref=e69]:
                     - img [ref=e70]
                   - generic [ref=e72]:
-                    - strong [ref=e74]: So tien mat
-                    - generic [ref=e75]: Thu chi tien mat
+                    - strong [ref=e74]: So tiền mặt
+                    - generic [ref=e75]: Thu chi tiền mặt
                   - button "download" [ref=e76]:
                     - img "download" [ref=e78]:
                       - img [ref=e79]
@@ -75,7 +75,7 @@
                     - img [ref=e102]
                   - generic [ref=e104]:
                     - strong [ref=e106]: So chi phi
-                    - generic [ref=e107]: Chi phi theo danh muc
+                    - generic [ref=e107]: Chi phí theo danh muc
                   - button "download" [ref=e108]:
                     - img "download" [ref=e110]:
                       - img [ref=e111]
@@ -138,11 +138,11 @@
           - img "calculator" [ref=e189]:
             - img [ref=e190]
           - generic [ref=e192]: Thue
-        - link "bar-chart Bao cao" [ref=e193] [cursor=pointer]:
+        - link "bar-chart Báo cáo" [ref=e193] [cursor=pointer]:
           - /url: /reports
           - img "bar-chart" [ref=e194]:
             - img [ref=e195]
-          - generic [ref=e197]: Bao cao
+          - generic [ref=e197]: Báo cáo
   - alert [ref=e198]
   - generic [ref=e199]: T12
 ```

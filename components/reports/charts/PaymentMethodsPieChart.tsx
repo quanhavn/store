@@ -35,7 +35,7 @@ const COLORS: Record<string, string> = {
 const DEFAULT_COLOR = '#6b7280'
 
 const METHOD_LABELS: Record<string, string> = {
-  cash: 'Tien mat',
+  cash: 'Tiền mặt',
   bank_transfer: 'Chuyen khoan',
   momo: 'MoMo',
   zalopay: 'ZaloPay',

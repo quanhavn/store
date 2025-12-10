@@ -10,8 +10,8 @@
 3. [San pham va Kho](#3-san-pham-va-kho)
 4. [Tai chinh](#4-tai-chinh)
 5. [Thue](#5-thue)
-6. [Nhan su](#6-nhan-su)
-7. [Bao cao](#7-bao-cao)
+6. [Nhân sự](#6-nhan-su)
+7. [Báo cáo](#7-bao-cao)
 8. [Ky thuat va Xu ly loi](#8-ky-thuat-va-xu-ly-loi)
 9. [Offline va Dong bo](#9-offline-va-dong-bo)
 
@@ -41,14 +41,14 @@
 **A:** Co. Chu cua hang (owner) co the them nguoi dung moi:
 1. Lien he quan tri vien de tao tai khoan
 2. Cung cap so dien thoai va mat khau cho nhan vien
-3. Nhan vien co the dang nhap voi quyen han tuong ung
+3. Nhân viên co the dang nhap voi quyen han tuong ung
 
 ### Q: Co may loai quyen han trong he thong?
 
 **A:** Co 3 loai:
 - **Owner (Chu cua hang)**: Toan quyen
 - **Manager (Quan ly)**: Quan ly ban hang, kho, tai chinh, bao cao
-- **Staff (Nhan vien)**: Chi ban hang va xem ton kho
+- **Staff (Nhân viên)**: Chi ban hang va xem ton kho
 
 ---
 
@@ -101,7 +101,7 @@
 ### Q: He thong ho tro nhung phuong thuc thanh toan nao?
 
 **A:**
-- **Tien mat**
+- **Tiền mặt**
 - **Chuyen khoan ngan hang** (can setup tai khoan ngan hang truoc)
 - **MoMo**
 - **ZaloPay**
@@ -167,16 +167,16 @@
 
 ## 4. TAI CHINH
 
-### Q: So du tien mat duoc tinh the nao?
+### Q: So du tiền mặt duoc tinh the nao?
 
 **A:** So du = Tong thu - Tong chi
-- **Thu**: Ban hang (tien mat), thu no, thu khac
-- **Chi**: Chi phi, tra hang, chi khac
+- **Thu**: Ban hang (tiền mặt), thu no, thu khac
+- **Chi**: Chi phí, tra hang, chi khac
 
 ### Q: Lam sao de ghi nhan chi phi?
 
 **A:**
-1. Vao **Thu chi** > **Chi phi**
+1. Vao **Thu chi** > **Chi phí**
 2. Nhan **Them chi phi**
 3. Nhap: danh muc, so tien, mo ta, phuong thuc thanh toan
 4. Luu
@@ -191,19 +191,19 @@
 - Van phong pham
 - Sua chua thiet bi
 - Quang cao
-- Chi phi khac
+- Chi phí khac
 
-### Q: Lam sao de xem lich su giao dich tien mat?
+### Q: Lam sao de xem lich su giao dich tiền mặt?
 
 **A:**
 1. Vao **Thu chi**
-2. Chon tab **Tien mat**
-3. Xem danh sach **Giao dich gan day**
+2. Chon tab **Tiền mặt**
+3. Xem danh sach **Giao dịch gần đây**
 4. Co the loc theo ngay, loai giao dich
 
 ### Q: Co the theo doi nhieu tai khoan ngan hang khong?
 
-**A:** Co. Vao **Thu chi** > **Ngan hang** de:
+**A:** Co. Vao **Thu chi** > **Ngân hàng** de:
 - Them tai khoan moi
 - Xem so du tung tai khoan
 - Theo doi giao dich
@@ -223,7 +223,7 @@
 **A:** Ho kinh doanh ca the thuong phai nop:
 - **Thue GTGT**: Theo quy
 - **Thue Thu nhap ca nhan**: Theo quy
-- Han nop: Ngay 30 cua thang dau quy sau
+- Han nop: Ngày 30 cua thang dau quy sau
 
 ### Q: Lam sao de cai dat thong tin thue?
 
@@ -238,7 +238,7 @@
 
 **A:** Co. Dashboard hien thi:
 - So ngay con lai den han nop
-- Canh bao khi gan den han (7 ngay)
+- Cảnh báo khi gan den han (7 ngay)
 
 ### Q: Lam sao de xuat hoa don dien tu?
 
@@ -255,19 +255,19 @@
 ### Q: Lam sao de them nhan vien moi?
 
 **A:**
-1. Vao **Nhan su** > **Nhan vien**
+1. Vao **Nhân sự** > **Nhân viên**
 2. Nhan **Them moi**
 3. Nhap thong tin: ho ten, SDT, CCCD, chuc vu, luong...
 4. Luu
 
-### Q: Nhan vien tu cham cong the nao?
+### Q: Nhân viên tu cham cong the nao?
 
 **A:**
-1. Nhan vien dang nhap vao ung dung
+1. Nhân viên dang nhap vao ung dung
 2. Nhan nut **Cham cong vao** khi den
 3. Nhan **Cham cong ra** khi ve
 
-### Q: Bang luong duoc tinh tu dong khong?
+### Q: Bảng lương duoc tinh tu dong khong?
 
 **A:** Co. He thong tinh:
 - Luong theo so ngay cong thuc te
@@ -279,7 +279,7 @@
 ### Q: Ti le bao hiem la bao nhieu?
 
 **A:** Theo quy dinh 2024-2025:
-| Loai | Nhan vien dong | Cong ty dong |
+| Loai | Nhân viên dong | Cong ty dong |
 |------|----------------|--------------|
 | BHXH | 8% | 17.5% |
 | BHYT | 1.5% | 3% |
@@ -288,10 +288,10 @@
 ### Q: Lam sao de tra luong cho nhan vien?
 
 **A:**
-1. Vao **Nhan su** > **Bang luong**
+1. Vao **Nhân sự** > **Bảng lương**
 2. Chon thang
 3. Kiem tra va **Duyet** bang luong
-4. Nhan **Tra luong** va chon phuong thuc (tien mat/chuyen khoan)
+4. Nhan **Tra luong** va chon phuong thuc (tiền mặt/chuyen khoan)
 
 ---
 
@@ -300,14 +300,14 @@
 ### Q: Co nhung bao cao nao?
 
 **A:** He thong cung cap:
-- **Dashboard**: Tong quan doanh thu, chi phi, loi nhuan
+- **Dashboard**: Tổng quan doanh thu, chi phi, loi nhuan
 - **So doanh thu**: Chi tiet tung don hang
-- **So tien mat**: Thu chi tien mat
+- **So tiền mặt**: Thu chi tiền mặt
 - **So ngan hang**: Giao dich ngan hang
 - **So chi phi**: Chi tiet chi phi
 - **So ton kho**: Xuat nhap kho
 - **So thue**: Nghia vu thue theo quy
-- **So luong**: Bang luong nhan vien
+- **So luong**: Bảng lương nhan vien
 
 ### Q: Lam sao de xuat bao cao ra Excel?
 
@@ -323,9 +323,9 @@
 2. Nhap ngay bat dau va ngay ket thuc
 3. Nhan Xem bao cao
 
-### Q: Bao cao co tu dong cap nhat khong?
+### Q: Báo cáo co tu dong cap nhat khong?
 
-**A:** Co. Bao cao cap nhat theo thoi gian thuc khi co mang. Khi offline, bao cao hien thi du lieu tai thoi diem cuoi cung dong bo.
+**A:** Co. Báo cáo cap nhat theo thoi gian thuc khi co mang. Khi offline, bao cao hien thi du lieu tai thoi diem cuoi cung dong bo.
 
 ---
 
@@ -455,4 +455,4 @@ Neu van that bai sau nhieu lan:
 
 ---
 
-*Cap nhat lan cuoi: Thang 12/2024*
+*Cap nhat lan cuoi: Tháng 12/2024*

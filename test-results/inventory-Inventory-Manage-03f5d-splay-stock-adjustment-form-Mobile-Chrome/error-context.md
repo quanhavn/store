@@ -6,7 +6,7 @@
     - main [ref=e4]:
       - generic [ref=e5]:
         - generic [ref=e6]:
-          - heading "Quan ly kho" [level=4] [ref=e7]
+          - heading "Quản lý kho" [level=4] [ref=e7]
           - button "plus Thêm down" [ref=e9] [cursor=pointer]:
             - img "plus" [ref=e11]:
               - img [ref=e12]
@@ -16,22 +16,22 @@
         - generic [ref=e19]:
           - tablist [ref=e20]:
             - generic [ref=e22]:
-              - tab "unordered-list Ton kho" [ref=e24] [cursor=pointer]:
+              - tab "unordered-list Tồn kho" [ref=e24] [cursor=pointer]:
                 - generic [ref=e25]:
                   - img "unordered-list" [ref=e26]:
                     - img [ref=e27]
-                  - text: Ton kho
-              - tab "swap Nhap/Xuat" [active] [selected] [ref=e30] [cursor=pointer]:
+                  - text: Tồn kho
+              - tab "swap Nhập/Xuất" [active] [selected] [ref=e30] [cursor=pointer]:
                 - generic [ref=e31]:
                   - img "swap" [ref=e32]:
                     - img [ref=e33]
-                  - text: Nhap/Xuat
-              - tab "warning Canh bao" [ref=e36] [cursor=pointer]:
+                  - text: Nhập/Xuất
+              - tab "warning Cảnh báo" [ref=e36] [cursor=pointer]:
                 - generic [ref=e37]:
                   - img "warning" [ref=e38]:
                     - img [ref=e39]
-                  - text: Canh bao
-          - tabpanel "swap Nhap/Xuat" [ref=e43]:
+                  - text: Cảnh báo
+          - tabpanel "swap Nhập/Xuất" [ref=e43]:
             - generic [ref=e44]:
               - radiogroup "segmented control" [ref=e45]:
                 - generic [ref=e46]:
@@ -83,10 +83,10 @@
           - img "calculator" [ref=e103]:
             - img [ref=e104]
           - generic [ref=e106]: Thue
-        - link "bar-chart Bao cao" [ref=e107] [cursor=pointer]:
+        - link "bar-chart Báo cáo" [ref=e107] [cursor=pointer]:
           - /url: /reports
           - img "bar-chart" [ref=e108]:
             - img [ref=e109]
-          - generic [ref=e111]: Bao cao
+          - generic [ref=e111]: Báo cáo
   - alert [ref=e112]
 ```

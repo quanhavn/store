@@ -513,7 +513,7 @@ BEGIN
             debit, credit, balance, created_by
         ) VALUES (
             p_store_id,
-            'Chi phi: ' || p_description,
+            'Chi phí: ' || p_description,
             'expense',
             v_expense_id,
             0,
@@ -549,7 +549,7 @@ BEGIN
             debit, credit
         ) VALUES (
             p_store_id, p_bank_account_id,
-            'Chi phi: ' || p_description,
+            'Chi phí: ' || p_description,
             'expense',
             v_expense_id,
             0,

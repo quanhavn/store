@@ -14,16 +14,16 @@ test.describe('Reports', () => {
   test.describe('Reports Page Load', () => {
     test('should load reports page with correct elements', async ({ page }) => {
       // Check page header
-      await expect(page.locator('h4:has-text("Bao cao")')).toBeVisible()
+      await expect(page.locator('h4:has-text("Báo cáo")')).toBeVisible()
 
       // Check tabs are present
       await expect(page.locator('.ant-tabs')).toBeVisible()
 
       // Check dashboard tab
-      await expect(page.locator('text=Tong quan')).toBeVisible()
+      await expect(page.locator('text=Tổng quan')).toBeVisible()
 
       // Check reports tab
-      await expect(page.locator('text=So sach')).toBeVisible()
+      await expect(page.locator('text=Sổ sách')).toBeVisible()
     })
 
     test('should have dashboard and reports tabs', async ({ page }) => {
@@ -38,7 +38,7 @@ test.describe('Reports', () => {
   test.describe('Dashboard Tab', () => {
     test('should display dashboard summary widgets', async ({ page }) => {
       // Ensure we are on dashboard tab (should be default)
-      await page.locator('.ant-tabs-tab:has-text("Tong quan")').click()
+      await page.locator('.ant-tabs-tab:has-text("Tổng quan")').click()
       await page.waitForTimeout(500)
 
       // Wait for dashboard to load
@@ -53,7 +53,7 @@ test.describe('Reports', () => {
     })
 
     test('should display today sales widget', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("Tong quan")').click()
+      await page.locator('.ant-tabs-tab:has-text("Tổng quan")').click()
       await page.waitForTimeout(500)
 
       // Check for sales-related content
@@ -65,12 +65,12 @@ test.describe('Reports', () => {
     })
 
     test('should display recent sales widget', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("Tong quan")').click()
+      await page.locator('.ant-tabs-tab:has-text("Tổng quan")').click()
       await page.waitForTimeout(500)
 
       // Check for recent transactions
       const recentWidget = page.locator(
-        'text=Giao dich gan day, text=Don hang, .recent-sales'
+        'text=Giao dịch gần đây, text=Don hang, .recent-sales'
       ).first()
 
       // May or may not have recent sales, but widget area should exist
@@ -78,12 +78,12 @@ test.describe('Reports', () => {
     })
 
     test('should display alerts widget', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("Tong quan")').click()
+      await page.locator('.ant-tabs-tab:has-text("Tổng quan")').click()
       await page.waitForTimeout(500)
 
       // Check for alerts section
       const alertsWidget = page.locator(
-        'text=Canh bao, text=Het hang, text=Thong bao, .alerts-widget'
+        'text=Cảnh báo, text=Het hang, text=Thong bao, .alerts-widget'
       ).first()
 
       // Alerts widget should be visible
@@ -93,12 +93,12 @@ test.describe('Reports', () => {
     })
 
     test('should display month summary widget', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("Tong quan")').click()
+      await page.locator('.ant-tabs-tab:has-text("Tổng quan")').click()
       await page.waitForTimeout(500)
 
       // Check for month summary
       const monthSummary = page.locator(
-        'text=Thang nay, text=Tong ket, text=Thang, .month-summary'
+        'text=Tháng nay, text=Tong ket, text=Tháng, .month-summary'
       ).first()
 
       await expect(
@@ -110,7 +110,7 @@ test.describe('Reports', () => {
   test.describe('Reports Hub Tab', () => {
     test('should switch to reports hub tab', async ({ page }) => {
       // Click reports tab
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(300)
 
       // Tab content should be visible
@@ -119,7 +119,7 @@ test.describe('Reports', () => {
 
     test('should display all 7 report books', async ({ page }) => {
       // Switch to reports hub
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Check for all 7 report types
@@ -130,23 +130,23 @@ test.describe('Reports', () => {
     })
 
     test('should display revenue book (So doanh thu)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       await expect(page.locator('text=So doanh thu')).toBeVisible()
       await expect(page.locator('text=Doanh thu ban hang')).toBeVisible()
     })
 
-    test('should display cash book (So tien mat)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+    test('should display cash book (So tiền mặt)', async ({ page }) => {
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
-      await expect(page.locator('text=So tien mat')).toBeVisible()
-      await expect(page.locator('text=Thu chi tien mat')).toBeVisible()
+      await expect(page.locator('text=So tiền mặt')).toBeVisible()
+      await expect(page.locator('text=Thu chi tiền mặt')).toBeVisible()
     })
 
     test('should display bank book (So tien gui)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       await expect(page.locator('text=So tien gui')).toBeVisible()
@@ -154,15 +154,15 @@ test.describe('Reports', () => {
     })
 
     test('should display expense book (So chi phi)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       await expect(page.locator('text=So chi phi')).toBeVisible()
-      await expect(page.locator('text=Chi phi theo danh muc')).toBeVisible()
+      await expect(page.locator('text=Chi phí theo danh muc')).toBeVisible()
     })
 
     test('should display inventory book (So ton kho)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       await expect(page.locator('text=So ton kho')).toBeVisible()
@@ -170,7 +170,7 @@ test.describe('Reports', () => {
     })
 
     test('should display tax book (So nghia vu thue)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       await expect(page.locator('text=So nghia vu thue')).toBeVisible()
@@ -178,7 +178,7 @@ test.describe('Reports', () => {
     })
 
     test('should display salary book (So luong)', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       await expect(page.locator('text=So luong')).toBeVisible()
@@ -186,13 +186,13 @@ test.describe('Reports', () => {
     })
 
     test('should display date period selector', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Check for period selector
       await expect(page.locator('text=Hom nay')).toBeVisible()
-      await expect(page.locator('text=Tuan')).toBeVisible()
-      await expect(page.locator('text=Thang')).toBeVisible()
+      await expect(page.locator('text=Tuần')).toBeVisible()
+      await expect(page.locator('text=Tháng')).toBeVisible()
       await expect(page.locator('text=Quy')).toBeVisible()
     })
   })
@@ -200,7 +200,7 @@ test.describe('Reports', () => {
   test.describe('Report Preview', () => {
     test('should open report preview when clicking a report', async ({ page }) => {
       // Switch to reports hub
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click on first report (Revenue)
@@ -217,7 +217,7 @@ test.describe('Reports', () => {
 
     test('should display report content in preview', async ({ page }) => {
       // Switch to reports hub
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click on revenue report
@@ -238,11 +238,11 @@ test.describe('Reports', () => {
 
     test('should allow closing report preview', async ({ page }) => {
       // Switch to reports hub
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click on a report
-      const report = page.locator('.ant-card:has-text("So tien mat")').first()
+      const report = page.locator('.ant-card:has-text("So tiền mặt")').first()
       await report.click()
 
       // Wait for preview
@@ -262,7 +262,7 @@ test.describe('Reports', () => {
 
     test('should show download option in report preview', async ({ page }) => {
       // Switch to reports hub
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Check for download buttons on report cards
@@ -276,7 +276,7 @@ test.describe('Reports', () => {
 
   test.describe('Date Period Selection', () => {
     test('should change period to today', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click today option
@@ -289,33 +289,33 @@ test.describe('Reports', () => {
     })
 
     test('should change period to week', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click week option
-      await page.locator('.ant-segmented-item:has-text("Tuan")').click()
+      await page.locator('.ant-segmented-item:has-text("Tuần")').click()
 
       // Should be selected
       await expect(
-        page.locator('.ant-segmented-item-selected:has-text("Tuan")')
+        page.locator('.ant-segmented-item-selected:has-text("Tuần")')
       ).toBeVisible()
     })
 
     test('should change period to month', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click month option
-      await page.locator('.ant-segmented-item:has-text("Thang")').click()
+      await page.locator('.ant-segmented-item:has-text("Tháng")').click()
 
       // Should be selected
       await expect(
-        page.locator('.ant-segmented-item-selected:has-text("Thang")')
+        page.locator('.ant-segmented-item-selected:has-text("Tháng")')
       ).toBeVisible()
     })
 
     test('should change period to quarter', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click quarter option
@@ -328,7 +328,7 @@ test.describe('Reports', () => {
     })
 
     test('should show custom date picker when custom is selected', async ({ page }) => {
-      await page.locator('.ant-tabs-tab:has-text("So sach")').click()
+      await page.locator('.ant-tabs-tab:has-text("Sổ sách")').click()
       await page.waitForTimeout(500)
 
       // Click custom option

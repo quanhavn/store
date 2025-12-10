@@ -306,7 +306,7 @@ function buildReceiptHtml(
     new Date(dateString).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 
   const paymentLabels: Record<string, string> = {
-    cash: 'Tien mat',
+    cash: 'Tiền mặt',
     bank_transfer: 'Chuyen khoan',
     momo: 'MoMo',
     zalopay: 'ZaloPay',
@@ -367,7 +367,7 @@ function buildReceiptHtml(
         <div class="center bold">HOA DON BAN HANG</div>
         <div class="double"></div>
         <div>So HD: ${sale.invoice_no || '---'}</div>
-        ${sale.completed_at ? `<div>Ngay: ${formatDate(sale.completed_at)} ${formatTime(sale.completed_at)}</div>` : ''}
+        ${sale.completed_at ? `<div>Ngày: ${formatDate(sale.completed_at)} ${formatTime(sale.completed_at)}</div>` : ''}
         ${cashier ? `<div>Thu ngan: ${cashier}</div>` : ''}
         ${sale.customer_name ? `<div>KH: ${sale.customer_name}</div>` : ''}
         ${sale.customer_phone ? `<div>SDT: ${sale.customer_phone}</div>` : ''}

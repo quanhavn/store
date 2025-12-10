@@ -1,7 +1,8 @@
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable, { type RowInput, type CellDef } from 'jspdf-autotable'
-import { normalizeVietnamese, formatPDFCurrency } from './export-pdf'
+import { formatPDFCurrency } from './export-pdf'
+import { loadVietnameseFonts, addVietnameseFonts } from './pdf-fonts'
 
 /**
  * Sổ chi tiết vật liệu, dụng cụ, sản phẩm
@@ -240,15 +241,20 @@ export function exportInventoryDetailBookExcel(
   URL.revokeObjectURL(url)
 }
 
-export function exportInventoryDetailBookPDF(
+export async function exportInventoryDetailBookPDF(
   data: InventoryDetailBookReport,
   storeInfo: StoreInfo
-): void {
+): Promise<void> {
+  await loadVietnameseFonts()
+
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
     format: 'a4',
   })
+
+  const hasVietnameseFont = addVietnameseFonts(doc)
+  const fontName = hasVietnameseFont ? 'Roboto' : 'helvetica'
 
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -264,14 +270,14 @@ export function exportInventoryDetailBookPDF(
     let yPos = 12
 
     doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-    doc.text(normalizeVietnamese(storeInfo.name), pageWidth / 2, yPos, { align: 'center' })
+    doc.setFont(fontName, 'bold')
+    doc.text(storeInfo.name, pageWidth / 2, yPos, { align: 'center' })
     yPos += 6
 
     if (storeInfo.address) {
       doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.text(normalizeVietnamese(storeInfo.address), pageWidth / 2, yPos, { align: 'center' })
+      doc.setFont(fontName, 'normal')
+      doc.text(storeInfo.address, pageWidth / 2, yPos, { align: 'center' })
       yPos += 4
     }
 
@@ -284,39 +290,39 @@ export function exportInventoryDetailBookPDF(
     yPos += 3
 
     doc.setFontSize(14)
-    doc.setFont('helvetica', 'bold')
-    doc.text(normalizeVietnamese('SỔ CHI TIẾT VẬT LIỆU, DỤNG CỤ, SẢN PHẨM, HÀNG HÓA'), pageWidth / 2, yPos, { align: 'center' })
+    doc.setFont(fontName, 'bold')
+    doc.text('SỔ CHI TIẾT VẬT LIỆU, DỤNG CỤ, SẢN PHẨM, HÀNG HÓA', pageWidth / 2, yPos, { align: 'center' })
     yPos += 6
 
     doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.text(normalizeVietnamese(`Tên vật liệu, dụng cụ, sản phẩm, hàng hóa: ${product.productName}`), marginLeft, yPos)
+    doc.setFont(fontName, 'normal')
+    doc.text(`Tên vật liệu, dụng cụ, sản phẩm, hàng hóa: ${product.productName}`, marginLeft, yPos)
     yPos += 4
-    doc.text(normalizeVietnamese(`Ma SP: ${product.sku}  |  DVT: ${product.unit}`), marginLeft, yPos)
+    doc.text(`Mã SP: ${product.sku}  |  ĐVT: ${product.unit}`, marginLeft, yPos)
     yPos += 4
-    doc.text(`Ky: ${period}`, marginLeft, yPos)
+    doc.text(`Kỳ: ${period}`, marginLeft, yPos)
     yPos += 6
 
     const headers: CellDef[][] = [
       [
         { content: 'STT', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
-        { content: normalizeVietnamese('CHỨNG TỪ'), colSpan: 2, styles: { halign: 'center' } },
-        { content: normalizeVietnamese('DIỄN GIẢI'), rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
-        { content: normalizeVietnamese('NHẬP'), colSpan: 3, styles: { halign: 'center' } },
-        { content: normalizeVietnamese('XUẤT'), colSpan: 3, styles: { halign: 'center' } },
-        { content: normalizeVietnamese('TỒN'), colSpan: 2, styles: { halign: 'center' } },
+        { content: 'CHỨNG TỪ', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'DIỄN GIẢI', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+        { content: 'NHẬP', colSpan: 3, styles: { halign: 'center' } },
+        { content: 'XUẤT', colSpan: 3, styles: { halign: 'center' } },
+        { content: 'TỒN', colSpan: 2, styles: { halign: 'center' } },
       ],
       [
-        { content: normalizeVietnamese('SỐ HIỆU'), styles: { halign: 'center' } },
-        { content: normalizeVietnamese('NGÀY, THÁNG'), styles: { halign: 'center' } },
+        { content: 'SỐ HIỆU', styles: { halign: 'center' } },
+        { content: 'NGÀY, THÁNG', styles: { halign: 'center' } },
         { content: 'SỐ LƯỢNG', styles: { halign: 'center' } },
-        { content: normalizeVietnamese('ĐƠN GIÁ'), styles: { halign: 'center' } },
-        { content: normalizeVietnamese('THÀNH TIỀN'), styles: { halign: 'center' } },
+        { content: 'ĐƠN GIÁ', styles: { halign: 'center' } },
+        { content: 'THÀNH TIỀN', styles: { halign: 'center' } },
         { content: 'SỐ LƯỢNG', styles: { halign: 'center' } },
-        { content: normalizeVietnamese('ĐƠN GIÁ'), styles: { halign: 'center' } },
-        { content: normalizeVietnamese('THÀNH TIỀN'), styles: { halign: 'center' } },
+        { content: 'ĐƠN GIÁ', styles: { halign: 'center' } },
+        { content: 'THÀNH TIỀN', styles: { halign: 'center' } },
         { content: 'SỐ LƯỢNG', styles: { halign: 'center' } },
-        { content: normalizeVietnamese('THÀNH TIỀN'), styles: { halign: 'center' } },
+        { content: 'THÀNH TIỀN', styles: { halign: 'center' } },
       ],
     ]
 
@@ -324,7 +330,7 @@ export function exportInventoryDetailBookPDF(
       { content: entry.stt, styles: { halign: 'center' } },
       { content: entry.documentNo, styles: { halign: 'left' } },
       { content: formatDate(entry.documentDate), styles: { halign: 'center' } },
-      { content: normalizeVietnamese(entry.description), styles: { halign: 'left' } },
+      { content: entry.description, styles: { halign: 'left' } },
       { content: entry.inQty ?? '', styles: { halign: 'right' } },
       { content: formatCurrency(entry.inUnitPrice), styles: { halign: 'right' } },
       { content: formatCurrency(entry.inAmount), styles: { halign: 'right' } },
@@ -339,7 +345,7 @@ export function exportInventoryDetailBookPDF(
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
-      { content: normalizeVietnamese('Cộng phát sinh trong kỳ'), styles: { fontStyle: 'bold', halign: 'left' } },
+      { content: 'Cộng phát sinh trong kỳ', styles: { fontStyle: 'bold', halign: 'left' } },
       { content: product.totals.totalInQty, styles: { fontStyle: 'bold', halign: 'right' } },
       { content: '', styles: {} },
       { content: formatCurrency(product.totals.totalInAmount), styles: { fontStyle: 'bold', halign: 'right' } },
@@ -354,7 +360,7 @@ export function exportInventoryDetailBookPDF(
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
-      { content: normalizeVietnamese('Cong xuat trong ky'), styles: { fontStyle: 'bold', halign: 'left' } },
+      { content: 'Cộng xuất trong kỳ', styles: { fontStyle: 'bold', halign: 'left' } },
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
@@ -369,7 +375,7 @@ export function exportInventoryDetailBookPDF(
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
-      { content: normalizeVietnamese('Số dư cuối kỳ'), styles: { fontStyle: 'bold', halign: 'left' } },
+      { content: 'Số dư cuối kỳ', styles: { fontStyle: 'bold', halign: 'left' } },
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
@@ -386,7 +392,7 @@ export function exportInventoryDetailBookPDF(
       body: tableBody,
       theme: 'grid',
       styles: {
-        font: 'helvetica',
+        font: fontName,
         fontSize: 7,
         cellPadding: 1.5,
         lineColor: [180, 180, 180],
@@ -433,7 +439,7 @@ export function exportInventoryDetailBookPDF(
           year: 'numeric',
         })
         doc.text(
-          `Ngay xuat: ${exportDate}`,
+          `Ngày xuat: ${exportDate}`,
           marginLeft,
           pageHeight - 8
         )

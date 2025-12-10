@@ -55,7 +55,7 @@ Phase 8 ██████████████████░░  90% [Launc
 
 ## TIMELINE
 
-| Phase | Tuan | Status |
+| Phase | Tuần | Status |
 |-------|------|--------|
 | **Phase 1: Setup** | 1-2 | ✅ Complete |
 | **Phase 2: Core POS** | 3-6 | ✅ Complete |
@@ -126,7 +126,7 @@ Phase 8 ██████████████████░░  90% [Launc
 ---
 
 ### Phase 4: Finance (3 tuan)
-**Muc tieu:** Tien mat, ngan hang, chi phi
+**Muc tieu:** Tiền mặt, ngan hang, chi phi
 
 | Tasks | Status |
 |-------|--------|
@@ -166,7 +166,7 @@ Phase 8 ██████████████████░░  90% [Launc
 ---
 
 ### Phase 6: HR (2 tuan)
-**Muc tieu:** Nhan vien, cham cong, luong
+**Muc tieu:** Nhân viên, cham cong, luong
 
 | Tasks | Status |
 |-------|--------|
@@ -221,7 +221,7 @@ Phase 8 ██████████████████░░  90% [Launc
 | # | Ten so | Phase | Function | Status |
 |---|--------|-------|----------|--------|
 | 1 | So doanh thu | 5 | reports/revenue_book | ✅ |
-| 2 | So tien mat | 4 | reports/cash_book | ✅ |
+| 2 | So tiền mặt | 4 | reports/cash_book | ✅ |
 | 3 | So tien gui | 4 | reports/bank_book | ✅ |
 | 4 | So chi phi | 4 | reports/expense_book | ✅ |
 | 5 | So ton kho | 3 | reports/inventory_book | ✅ |

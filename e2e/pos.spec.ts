@@ -214,7 +214,7 @@ test.describe('POS (Point of Sale)', () => {
 
       // Check payment methods are visible
       await expect(
-        page.locator(`text=${PAYMENT_METHODS.cash}, text=Tien mat`)
+        page.locator(`text=${PAYMENT_METHODS.cash}, text=Tiền mặt`)
       ).toBeVisible()
     })
 
@@ -233,7 +233,7 @@ test.describe('POS (Point of Sale)', () => {
 
       // Select cash payment (should be default or click to select)
       const cashOption = page.locator(
-        'text=Tien mat, button:has-text("Tien mat"), .payment-cash'
+        'text=Tiền mặt, button:has-text("Tiền mặt"), .payment-cash'
       ).first()
       if (await cashOption.isVisible()) {
         await cashOption.click()

@@ -153,7 +153,7 @@ export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
           <Input placeholder="012345678901" />
         </Form.Item>
 
-        <Form.Item name="date_of_birth" label="Ngay sinh">
+        <Form.Item name="date_of_birth" label="Ngày sinh">
           <DatePicker className="w-full" format="DD/MM/YYYY" />
         </Form.Item>
 
@@ -190,7 +190,7 @@ export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
 
         <Form.Item
           name="hire_date"
-          label="Ngay vao lam"
+          label="Ngày vao lam"
           rules={[{ required: true, message: 'Chon ngay vao lam' }]}
         >
           <DatePicker className="w-full" format="DD/MM/YYYY" />
@@ -238,7 +238,7 @@ export function EmployeeForm({ open, onClose, employee }: EmployeeFormProps) {
           Thong tin ngan hang
         </div>
 
-        <Form.Item name="bank_name" label="Ngan hang">
+        <Form.Item name="bank_name" label="Ngân hàng">
           <Input placeholder="VD: Vietcombank" />
         </Form.Item>
 

@@ -23,7 +23,7 @@ export function exportRevenueBook(
 ): void {
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'So HD',
     'Khach hang',
     'DT chua VAT',
@@ -77,7 +77,7 @@ export function exportCashBook(
 ): void {
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'Dien giai',
     'Thu',
     'Chi',
@@ -125,8 +125,8 @@ export function exportBankBook(
 ): void {
   const headers = [
     'STT',
-    'Ngay',
-    'Ngan hang',
+    'Ngày',
+    'Ngân hàng',
     'So TK',
     'Dien giai',
     'Thu',
@@ -179,7 +179,7 @@ export function exportExpenseBook(
 ): void {
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'Loai chi phi',
     'Dien giai',
     'So tien',
@@ -236,7 +236,7 @@ export function exportInventoryBook(
 ): void {
   const headers = [
     'STT',
-    'Ngay',
+    'Ngày',
     'San pham',
     'Ma SP',
     'Loai',
@@ -355,7 +355,7 @@ export function exportSalaryBook(
     'STT',
     'Ho ten',
     'Chuc vu',
-    'Ngay cong',
+    'Ngày cong',
     'Luong co ban',
     'Phu cap',
     'Tong luong',
@@ -416,7 +416,7 @@ export function exportSalaryBook(
 
 function translatePaymentMethod(method: string): string {
   const translations: Record<string, string> = {
-    cash: 'Tien mat',
+    cash: 'Tiền mặt',
     bank_transfer: 'Chuyen khoan',
     momo: 'MoMo',
     zalopay: 'ZaloPay',

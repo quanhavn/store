@@ -47,7 +47,7 @@ export const TEST_CATEGORIES = [
 // Reports - 7 books as per requirements
 export const REPORT_TYPES = [
   { key: 'revenue', title: 'So doanh thu' },
-  { key: 'cash', title: 'So tien mat' },
+  { key: 'cash', title: 'So tiền mặt' },
   { key: 'bank', title: 'So tien gui' },
   { key: 'expense', title: 'So chi phi' },
   { key: 'inventory', title: 'So ton kho' },
@@ -79,7 +79,7 @@ export const TIMEOUTS = {
 
 // Test payment methods
 export const PAYMENT_METHODS = {
-  cash: 'Tien mat',
+  cash: 'Tiền mặt',
   bank: 'Chuyen khoan',
   mixed: 'Ket hop',
 }

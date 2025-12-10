@@ -353,7 +353,7 @@ export default function InventoryPage() {
       label: (
         <span className="flex items-center gap-1">
           <UnorderedListOutlined />
-          Ton kho
+          Tồn kho
         </span>
       ),
       children: <StockCheckList />,
@@ -363,7 +363,7 @@ export default function InventoryPage() {
       label: (
         <span className="flex items-center gap-1">
           <SwapOutlined />
-          Nhap/Xuat
+          Nhập/Xuất
         </span>
       ),
       children: <StockAdjustment />,
@@ -373,7 +373,7 @@ export default function InventoryPage() {
       label: (
         <span className="flex items-center gap-1">
           <WarningOutlined />
-          Canh bao
+          Cảnh báo
         </span>
       ),
       children: <LowStockAlerts />,
@@ -383,7 +383,7 @@ export default function InventoryPage() {
   return (
     <div className="p-4 pb-20">
       <div className="flex justify-between items-center mb-4">
-        <Title level={4} className="!mb-0">Quan ly kho</Title>
+        <Title level={4} className="!mb-0">Quản lý kho</Title>
         <div className="flex gap-2">
           <Dropdown
             menu={{

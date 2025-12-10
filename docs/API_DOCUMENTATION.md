@@ -938,7 +938,7 @@ POST /hr
       "name": "Nguyen Van A",
       "phone": "0912345678",
       "id_card": "012345678901",
-      "position": "Nhan vien ban hang",
+      "position": "Nhân viên ban hang",
       "base_salary": 7000000,
       "allowances": 500000,
       "hire_date": "2024-01-15",
@@ -963,7 +963,7 @@ POST /hr
   "id_card": "012345678901",
   "date_of_birth": "1990-05-15",
   "address": "123 ABC Street, District 1, HCMC",
-  "position": "Nhan vien ban hang",
+  "position": "Nhân viên ban hang",
   "department": "Sales",
   "hire_date": "2024-12-07",
   "contract_type": "full_time",
@@ -1536,12 +1536,12 @@ POST /reports
 **Response:**
 ```json
 {
-  "period": "Thang 12/2024",
+  "period": "Tháng 12/2024",
   "entries": [
     {
       "stt": 1,
       "name": "Nguyen Van A",
-      "position": "Nhan vien ban hang",
+      "position": "Nhân viên ban hang",
       "working_days": "20.5/26",
       "base_salary": 7000000,
       "allowances": 500000,

@@ -2,7 +2,7 @@
 ## He Thong Quan Ly Cua Hang PWA
 
 **Phien ban:** 1.0
-**Cap nhat:** Thang 12/2024
+**Cap nhat:** Tháng 12/2024
 
 ---
 
@@ -11,11 +11,11 @@
 1. [Bat dau](#1-bat-dau)
 2. [Ban hang (POS)](#2-ban-hang-pos)
 3. [Quan ly san pham](#3-quan-ly-san-pham)
-4. [Quan ly kho](#4-quan-ly-kho)
+4. [Quản lý kho](#4-quan-ly-kho)
 5. [Tai chinh](#5-tai-chinh)
 6. [Thue](#6-thue)
-7. [Nhan su](#7-nhan-su)
-8. [Bao cao](#8-bao-cao)
+7. [Nhân sự](#7-nhan-su)
+8. [Báo cáo](#8-bao-cao)
 9. [Cai dat](#9-cai-dat)
 10. [Che do Offline](#10-che-do-offline)
 
@@ -53,11 +53,11 @@ Sau khi dang nhap, ban se thay thanh dieu huong phia duoi voi 5 tab:
 
 | Icon | Ten | Chuc nang |
 |------|-----|-----------|
-| Nha | Trang chu | Tong quan doanh thu, thong bao |
+| Nha | Trang chu | Tổng quan doanh thu, thong bao |
 | Gio hang | Ban hang | Man hinh POS ban hang |
 | Hop | Kho | Quan ly ton kho |
-| Vi | Thu chi | Quan ly tien mat, ngan hang, chi phi |
-| Bieu do | Bao cao | Xem bao cao va so sach |
+| Vi | Thu chi | Quan ly tiền mặt, ngan hang, chi phi |
+| Bieu do | Báo cáo | Xem bao cao va so sach |
 
 ---
 
@@ -85,7 +85,7 @@ Sau khi dang nhap, ban se thay thanh dieu huong phia duoi voi 5 tab:
 **Buoc 4: Thanh toan**
 - Nhan nut "Thanh toan" trong gio hang
 - Chon phuong thuc thanh toan:
-  - **Tien mat**: Nhap so tien khach tra, he thong tinh tien thua
+  - **Tiền mặt**: Nhap so tien khach tra, he thong tinh tien thua
   - **Chuyen khoan**: Chon tai khoan ngan hang, nhap ma giao dich
   - **MoMo/ZaloPay/VNPay**: Chon vi dien tu tuong ung
 - Nhan "Xac nhan thanh toan"
@@ -110,13 +110,13 @@ He thong ho tro cac phuong thuc thanh toan sau:
 
 | Phuong thuc | Mo ta | Yeu cau |
 |-------------|-------|---------|
-| Tien mat | Khach tra tien mat | Khong |
+| Tiền mặt | Khach tra tiền mặt | Khong |
 | Chuyen khoan | Chuyen khoan ngan hang | Cai dat tai khoan ngan hang |
 | MoMo | Vi dien tu MoMo | Khong |
 | ZaloPay | Vi dien tu ZaloPay | Khong |
 | VNPay | Cong thanh toan VNPay | Khong |
 
-**Thanh toan ket hop**: Co the ket hop nhieu phuong thuc (VD: 50% tien mat, 50% chuyen khoan).
+**Thanh toan ket hop**: Co the ket hop nhieu phuong thuc (VD: 50% tiền mặt, 50% chuyen khoan).
 
 ### 2.4 In hoa don
 
@@ -153,8 +153,8 @@ Sau khi thanh toan thanh cong:
    - **Gia ban** (bat buoc): Gia ban cho khach
    - **Gia nhap**: Gia mua vao
    - **Thue VAT**: Ti le VAT (0%, 5%, 8%, 10%)
-   - **Ton kho hien tai**: So luong hien co
-   - **Ton kho toi thieu**: Muc canh bao sap het hang
+   - **Tồn kho hien tai**: So luong hien co
+   - **Tồn kho toi thieu**: Muc canh bao sap het hang
    - **Hinh anh**: Chon tu thu vien hoac chup moi
 3. Nhan "Luu"
 
@@ -184,7 +184,7 @@ Sau khi thanh toan thanh cong:
 
 ## 4. QUAN LY KHO
 
-### 4.1 Tong quan ton kho
+### 4.1 Tổng quan ton kho
 
 Trang Kho hien thi:
 - Tong so san pham
@@ -203,7 +203,7 @@ Trang Kho hien thi:
 4. Nhan "Xac nhan nhap hang"
 
 **Tu dong cap nhat**:
-- Ton kho san pham tang tuong ung
+- Tồn kho san pham tang tuong ung
 - Tao phieu nhap kho
 - Ghi nhan vao so kho
 
@@ -236,13 +236,13 @@ Kiem ke ton kho dinh ky:
 5. Xac nhan kiem ke
 6. Tu dong tao phieu dieu chinh neu co chenh lech
 
-### 4.6 Canh bao het hang
+### 4.6 Cảnh báo het hang
 
 He thong tu dong canh bao khi:
-- Ton kho giam xuong duoi muc toi thieu
+- Tồn kho giam xuong duoi muc toi thieu
 - San pham het hang hoan toan
 
-Canh bao hien thi:
+Cảnh báo hien thi:
 - Tren Dashboard (Trang chu)
 - Badge so luong tren tab Kho
 - Thong bao push (neu bat)
@@ -251,27 +251,27 @@ Canh bao hien thi:
 
 ## 5. TAI CHINH
 
-### 5.1 Tong quan
+### 5.1 Tổng quan
 
 Tab "Thu chi" gom 3 phan:
-- **Tien mat**: Quan ly tien mat tai cua hang
-- **Ngan hang**: Quan ly tai khoan ngan hang
-- **Chi phi**: Ghi nhan cac khoan chi
+- **Tiền mặt**: Quan ly tiền mặt tai cua hang
+- **Ngân hàng**: Quan ly tai khoan ngan hang
+- **Chi phí**: Ghi nhan cac khoan chi
 
-### 5.2 Quan ly tien mat
+### 5.2 Quan ly tiền mặt
 
-**Xem so du tien mat**:
+**Xem so du tiền mặt**:
 - Hien thi so du hien tai
 - Bieu do thu/chi trong ngay/tuan/thang
 
-**Thu tien mat**:
+**Thu tiền mặt**:
 1. Nhan "Thu tien"
 2. Nhap so tien
 3. Chon loai: Ban hang, Thu no, Thu khac...
 4. Nhap mo ta
 5. Xac nhan
 
-**Chi tien mat**:
+**Chi tiền mặt**:
 1. Nhan "Chi tien"
 2. Nhap so tien
 3. Chon loai chi
@@ -286,7 +286,7 @@ Tab "Thu chi" gom 3 phan:
 ### 5.3 Quan ly tai khoan ngan hang
 
 **Them tai khoan ngan hang**:
-1. Vao "Ngan hang" > "Them tai khoan"
+1. Vao "Ngân hàng" > "Them tai khoan"
 2. Nhap thong tin:
    - Ten ngan hang
    - So tai khoan
@@ -302,12 +302,12 @@ Tab "Thu chi" gom 3 phan:
 ### 5.4 Quan ly chi phi
 
 **Them chi phi moi**:
-1. Vao "Chi phi" > "Them chi phi"
+1. Vao "Chi phí" > "Them chi phi"
 2. Nhap thong tin:
    - **Danh muc chi**: Tien thue, dien nuoc, hang hoa, khac...
    - **So tien**
    - **Thue VAT** (neu co)
-   - **Phuong thuc thanh toan**: Tien mat hoac chuyen khoan
+   - **Phuong thuc thanh toan**: Tiền mặt hoac chuyen khoan
    - **So hoa don** (tuy chon)
    - **Ten nha cung cap** (tuy chon)
    - **Ma so thue NCC** (tuy chon - can de khau tru thue)
@@ -335,10 +335,10 @@ Tab "Thu chi" gom 3 phan:
 
 ### 6.2 Xem nghia vu thue
 
-**Tong quan thue**:
+**Tổng quan thue**:
 - Hien thi thue du kien phai nop theo quy
 - Lich nop thue sap toi
-- Canh bao han nop
+- Cảnh báo han nop
 
 **Tinh thue theo quy**:
 - Tong doanh thu trong quy
@@ -350,10 +350,10 @@ Tab "Thu chi" gom 3 phan:
 
 | Quy | Ky tinh | Han nop |
 |-----|---------|---------|
-| Quy 1 | Thang 1-3 | Ngay 30/4 |
-| Quy 2 | Thang 4-6 | Ngay 30/7 |
-| Quy 3 | Thang 7-9 | Ngay 30/10 |
-| Quy 4 | Thang 10-12 | Ngay 30/1 nam sau |
+| Quy 1 | Tháng 1-3 | Ngày 30/4 |
+| Quy 2 | Tháng 4-6 | Ngày 30/7 |
+| Quy 3 | Tháng 7-9 | Ngày 30/10 |
+| Quy 4 | Tháng 10-12 | Ngày 30/1 nam sau |
 
 ### 6.4 Hoa don dien tu
 
@@ -376,7 +376,7 @@ Tab "Thu chi" gom 3 phan:
 ### 7.1 Quan ly nhan vien
 
 **Them nhan vien moi**:
-1. Vao "Nhan su" > "Nhan vien" > "Them moi"
+1. Vao "Nhân sự" > "Nhân viên" > "Them moi"
 2. Nhap thong tin:
    - Ho ten
    - So dien thoai
@@ -385,7 +385,7 @@ Tab "Thu chi" gom 3 phan:
    - Luong co ban
    - Phu cap
    - So nguoi phu thuoc (de tinh thue)
-   - Ngay vao lam
+   - Ngày vao lam
 3. Luu
 
 **Xem/sua thong tin nhan vien**:
@@ -395,12 +395,12 @@ Tab "Thu chi" gom 3 phan:
 **Vo hieu hoa nhan vien** (khi nghi viec):
 - Vao chi tiet nhan vien
 - Nhan "Vo hieu hoa"
-- Nhan vien van duoc luu de xem lich su
+- Nhân viên van duoc luu de xem lich su
 
 ### 7.2 Cham cong
 
 **Cham cong vao/ra**:
-1. Nhan vien truy cap ung dung
+1. Nhân viên truy cap ung dung
 2. Nhan nut "Cham cong vao" khi bat dau lam
 3. Nhan "Cham cong ra" khi ket thuc
 
@@ -417,10 +417,10 @@ Tab "Thu chi" gom 3 phan:
 3. Ghi chu ly do
 4. Luu
 
-### 7.3 Bang luong
+### 7.3 Bảng lương
 
 **Tinh luong hang thang**:
-1. Vao "Nhan su" > "Bang luong"
+1. Vao "Nhân sự" > "Bảng lương"
 2. Chon thang can tinh
 3. He thong tu dong tinh:
    - So ngay cong
@@ -449,7 +449,7 @@ Tab "Thu chi" gom 3 phan:
 
 ### 8.1 Dashboard tong quan
 
-Man hinh Bao cao hien thi:
+Man hinh Báo cáo hien thi:
 
 **Thong tin hom nay**:
 - Doanh thu hom nay
@@ -458,11 +458,11 @@ Man hinh Bao cao hien thi:
 
 **Thong tin thang nay**:
 - Doanh thu thang
-- Chi phi thang
+- Chi phí thang
 - Loi nhuan
 - So sanh voi thang truoc (tang/giam %)
 
-**Canh bao**:
+**Cảnh báo**:
 - So san pham sap het hang
 - So ngay den han nop thue
 
@@ -470,22 +470,22 @@ Man hinh Bao cao hien thi:
 - 5 don hang moi nhat
 - Ma hoa don, tong tien, thoi gian
 
-### 8.2 So sach ke toan
+### 8.2 Sổ sách ke toan
 
 He thong cung cap 7 so sach theo quy dinh:
 
 | # | Ten so | Mo ta |
 |---|--------|-------|
 | 1 | So doanh thu | Ghi nhan tat ca doanh thu ban hang |
-| 2 | So tien mat | Ghi nhan thu/chi tien mat |
+| 2 | So tiền mặt | Ghi nhan thu/chi tiền mặt |
 | 3 | So tien gui | Ghi nhan giao dich ngan hang |
 | 4 | So chi phi | Ghi nhan tat ca chi phi |
 | 5 | So ton kho | Ghi nhan xuat/nhap kho |
 | 6 | So nghia vu thue | Thue GTGT va TNCN phai nop |
-| 7 | So luong | Bang luong nhan vien |
+| 7 | So luong | Bảng lương nhan vien |
 
 **Xem so sach**:
-1. Vao "Bao cao" > "So sach"
+1. Vao "Báo cáo" > "Sổ sách"
 2. Chon loai so
 3. Chon ky bao cao (tu ngay - den ngay)
 4. Nhan "Xem bao cao"
@@ -520,7 +520,7 @@ He thong cung cap 7 so sach theo quy dinh:
 - Biet khung gio ban hang cao diem
 
 **Doanh thu theo phuong thuc thanh toan**:
-- Ti le tien mat vs chuyen khoan vs vi dien tu
+- Ti le tiền mặt vs chuyen khoan vs vi dien tu
 
 ---
 

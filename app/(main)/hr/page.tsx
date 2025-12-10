@@ -54,7 +54,7 @@ export default function HRPage() {
       label: (
         <span className="flex items-center gap-1">
           <TeamOutlined />
-          Nhan vien
+          Nhân viên
         </span>
       ),
       children: (
@@ -69,7 +69,7 @@ export default function HRPage() {
       label: (
         <span className="flex items-center gap-1">
           <DollarOutlined />
-          Bang luong
+          Bảng lương
         </span>
       ),
       children: (
@@ -87,7 +87,7 @@ export default function HRPage() {
   return (
     <div className="p-4 pb-20">
       <div className="flex justify-between items-center mb-4">
-        <Title level={4} className="!mb-0">Nhan su</Title>
+        <Title level={4} className="!mb-0">Nhân sự</Title>
         {activeTab === 'employees' && (
           <Button
             icon={<UploadOutlined />}

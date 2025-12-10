@@ -315,7 +315,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           exportExpenseBookPDF(data as ExpenseBookReport, storeInfo)
           break
         case 'inventory':
-          exportInventoryDetailBookPDF(data as InventoryDetailBookReport, storeInfo)
+          await exportInventoryDetailBookPDF(data as InventoryDetailBookReport, storeInfo)
           break
         case 'tax':
           exportTaxBookPDF(data as TaxBookReport, storeInfo)

@@ -27,7 +27,7 @@ export default function ReportsPage() {
       label: (
         <span className="flex items-center gap-1">
           <DashboardOutlined />
-          Tong quan
+          Tổng quan
         </span>
       ),
       children: <DashboardSummary />,
@@ -37,7 +37,7 @@ export default function ReportsPage() {
       label: (
         <span className="flex items-center gap-1">
           <FileTextOutlined />
-          So sach
+          Sổ sách
         </span>
       ),
       children: <ReportsHub onViewReport={handleViewReport} />,
@@ -46,7 +46,7 @@ export default function ReportsPage() {
 
   return (
     <div className="p-4 pb-20">
-      <Title level={4}>Bao cao</Title>
+      <Title level={4}>Báo cáo</Title>
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}

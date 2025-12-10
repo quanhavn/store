@@ -369,7 +369,7 @@ serve(async (req: Request) => {
 
         // Add default positions if empty
         const defaultPositions = [
-          'Nhan vien ban hang',
+          'Nhân viên ban hang',
           'Thu ngan',
           'Quan ly',
           'Kho',
@@ -949,7 +949,7 @@ serve(async (req: Request) => {
         return successResponse({
           salary_book: salaryBook,
           totals,
-          period: `Thang ${month}/${year}`,
+          period: `Tháng ${month}/${year}`,
           employee_count: data.length,
         })
       }

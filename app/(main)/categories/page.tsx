@@ -118,7 +118,7 @@ export default function CategoriesPage() {
   return (
     <div className="p-4 pb-20">
       <div className="mb-4">
-        <Title level={4} className="!mb-0">Danh muc san pham</Title>
+        <Title level={4} className="!mb-0">Danh mục sản phẩm</Title>
       </div>
 
       {isLoading ? (
@@ -127,7 +127,7 @@ export default function CategoriesPage() {
         </div>
       ) : categories.length === 0 ? (
         <Empty
-          description="Chua co danh muc nao"
+          description="Chưa có danh mục nào"
           className="py-8"
         >
           <Button
@@ -139,7 +139,7 @@ export default function CategoriesPage() {
               setFormOpen(true)
             }}
           >
-            Them danh muc
+            Thêm danh mục
           </Button>
         </Empty>
       ) : (
@@ -169,7 +169,7 @@ export default function CategoriesPage() {
         categories={flatCategories}
         initialValues={editCategory}
         parentCategory={parentCategory}
-        title={editCategory ? 'Sua danh muc' : parentCategory ? `Them danh muc con cho "${parentCategory.name}"` : 'Them danh muc'}
+        title={editCategory ? 'Sua danh muc' : parentCategory ? `Thêm danh mục con cho "${parentCategory.name}"` : 'Thêm danh mục'}
         loading={createMutation.isPending || updateMutation.isPending}
       />
     </div>
