@@ -117,7 +117,8 @@
     "createdAt": "Ngày tạo",
     "orderId": "Mã đơn hàng",
     "confirmCancel": "Xác nhận hủy",
-    "confirmCancelDescription": "Bạn có chắc chắn muốn hủy không?"
+    "confirmCancelDescription": "Bạn có chắc chắn muốn hủy không?",
+    "updatedProducts": "Đã cập nhật {count} sản phẩm"
   },
   "nav": {
     "home": "Trang chủ",

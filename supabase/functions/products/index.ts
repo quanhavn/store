@@ -58,7 +58,7 @@ interface CreateProductRequest {
   barcode?: string
   category_id?: string
   cost_price?: number
-  sell_price: number
+  sell_price?: number
   vat_rate?: number
   quantity?: number
   min_stock?: number
@@ -302,7 +302,7 @@ serve(async (req: Request) => {
           barcode,
           category_id,
           cost_price = 0,
-          sell_price,
+          sell_price: requestSellPrice,
           vat_rate = 8,
           quantity = 0,
           min_stock = 10,
@@ -313,6 +313,15 @@ serve(async (req: Request) => {
           units = [],
           variants = [],
         } = body
+
+        // For products with variants, use first variant's sell_price if not provided at product level
+        let sell_price = requestSellPrice
+        if (has_variants && variants.length > 0 && sell_price === undefined) {
+          sell_price = (variants as ProductVariant[])[0].sell_price ?? 0
+        }
+        if (sell_price === undefined) {
+          sell_price = 0
+        }
 
         // Check for duplicate barcode/sku
         if (barcode) {
