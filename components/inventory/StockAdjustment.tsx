@@ -107,7 +107,7 @@ export function StockAdjustment() {
     getTotalValue,
   } = useInventoryStore()
 
-  const { data: bankAccounts = [] } = useQuery<{ id: string; bank_name: string; account_number: string; is_default: boolean }[]>({
+  const { data: bankAccountsData } = useQuery<{ id: string; bank_name: string; account_number: string; is_default: boolean }[]>({
     queryKey: ['bank-accounts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -118,6 +118,7 @@ export function StockAdjustment() {
       return data || []
     },
   })
+  const bankAccounts = Array.isArray(bankAccountsData) ? bankAccountsData : []
 
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
     queryKey: ['products-search-with-variants', searchTerm],
@@ -453,7 +454,10 @@ export function StockAdjustment() {
                     </div>
                   )}
                   <div className="text-xs text-gray-500 mt-2">
-                    {t('autoDeductExpense', { amount: formatCurrency(getTotalValue()) })}
+                    {paymentMethod === 'cash' 
+                      ? t('autoDeductExpenseCash', { amount: formatCurrency(getTotalValue()) })
+                      : t('autoDeductExpenseBank', { amount: formatCurrency(getTotalValue()) })
+                    }
                   </div>
                 </div>
               )}

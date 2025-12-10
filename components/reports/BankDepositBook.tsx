@@ -36,9 +36,11 @@ export function BankDepositBook({ storeInfo }: BankDepositBookProps) {
   const { data: accountsData, isLoading: loadingAccounts } = useQuery({
     queryKey: ['bank-accounts'],
     queryFn: () => api.finance.listBankAccounts(),
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 
-  const accounts = accountsData?.bank_accounts || []
+  const accounts = Array.isArray(accountsData?.bank_accounts) ? accountsData.bank_accounts : []
 
   const { data: reportData, isLoading: loadingReport, refetch } = useQuery({
     queryKey: ['bank-book-report', selectedAccountId, dateRange[0].format('YYYY-MM-DD'), dateRange[1].format('YYYY-MM-DD')],
