@@ -57,6 +57,12 @@ interface InventoryBookRequest {
   date_to: string
 }
 
+interface InventoryDetailBookRequest {
+  action: 'inventory_detail_book'
+  date_from: string
+  date_to: string
+}
+
 interface TaxBookRequest {
   action: 'tax_book'
   year: number
@@ -77,6 +83,7 @@ type ReportsRequest =
   | BankBookRequest
   | ExpenseBookRequest
   | InventoryBookRequest
+  | InventoryDetailBookRequest
   | TaxBookRequest
   | SalaryBookRequest
 
@@ -536,26 +543,29 @@ serve(async (req: Request) => {
       case 'inventory_book': {
         const { date_from, date_to } = body
 
-        const { data: movements } = await supabase
-          .from('inventory_movements')
-          .select('*, products(name, sku)')
+        const { data: logs } = await supabase
+          .from('inventory_logs')
+          .select('*, products(name, sku, stock_quantity)')
           .eq('store_id', store_id)
           .gte('created_at', date_from)
           .lte('created_at', date_to + 'T23:59:59')
           .order('created_at')
 
-        const entries = (movements || []).map((m, index) => ({
-          stt: index + 1,
-          date: m.created_at.split('T')[0],
-          product_name: (m.products as { name: string })?.name,
-          sku: (m.products as { sku: string })?.sku,
-          movement_type: m.movement_type,
-          quantity: m.quantity,
-          before_quantity: m.before_quantity,
-          after_quantity: m.after_quantity,
-          reason: m.reason,
-          reference_id: m.reference_id,
-        }))
+        const entries = (logs || []).map((log, index) => {
+          const isIn = ['import', 'return'].includes(log.type)
+          return {
+            stt: index + 1,
+            date: log.created_at.split('T')[0],
+            product_name: (log.products as { name: string })?.name,
+            sku: (log.products as { sku: string })?.sku,
+            movement_type: isIn ? 'in' : 'out',
+            quantity: log.quantity,
+            before_quantity: 0,
+            after_quantity: (log.products as { stock_quantity: number })?.stock_quantity || 0,
+            reason: log.note,
+            reference_id: log.reference_id,
+          }
+        })
 
         return successResponse({
           period: { from: date_from, to: date_to },
@@ -565,6 +575,144 @@ serve(async (req: Request) => {
             total_out: entries.filter(e => e.movement_type === 'out').reduce((sum, e) => sum + e.quantity, 0),
             total_movements: entries.length,
           },
+        })
+      }
+
+      case 'inventory_detail_book': {
+        const { date_from, date_to } = body
+
+        // Get all inventory logs in the period
+        const { data: logs } = await supabase
+          .from('inventory_logs')
+          .select('*, products(id, name, sku, unit, cost_price)')
+          .eq('store_id', store_id)
+          .gte('created_at', date_from)
+          .lte('created_at', date_to + 'T23:59:59')
+          .order('created_at')
+
+        // Get opening stock for each product by summing all logs before date_from
+        const { data: openingLogs } = await supabase
+          .from('inventory_logs')
+          .select('product_id, type, quantity')
+          .eq('store_id', store_id)
+          .lt('created_at', date_from)
+
+        // Calculate opening stock per product
+        const openingStockMap = new Map<string, number>()
+        for (const log of openingLogs || []) {
+          const current = openingStockMap.get(log.product_id) || 0
+          const isIn = ['import', 'return'].includes(log.type)
+          openingStockMap.set(log.product_id, current + (isIn ? log.quantity : -log.quantity))
+        }
+
+        // Group logs by product
+        const productLogsMap = new Map<string, typeof logs>()
+        for (const log of logs || []) {
+          const productId = log.product_id
+          if (!productLogsMap.has(productId)) {
+            productLogsMap.set(productId, [])
+          }
+          productLogsMap.get(productId)!.push(log)
+        }
+
+        // Build per-product report
+        const productReports = []
+
+        for (const [productId, productLogs] of productLogsMap) {
+          const firstLog = productLogs[0]
+          const product = firstLog.products as { id: string; name: string; sku: string; unit: string; cost_price: number }
+          const costPrice = product?.cost_price || 0
+          const openingQty = openingStockMap.get(productId) || 0
+          const openingAmount = openingQty * costPrice
+
+          let runningQty = openingQty
+          let runningAmount = openingAmount
+          let totalInQty = 0
+          let totalInAmount = 0
+          let totalOutQty = 0
+          let totalOutAmount = 0
+
+          const entries = []
+
+          // First entry: opening balance
+          entries.push({
+            stt: 1,
+            documentNo: '',
+            documentDate: date_from,
+            description: 'Tồn đầu kỳ',
+            inQty: null,
+            inUnitPrice: null,
+            inAmount: null,
+            outQty: null,
+            outUnitPrice: null,
+            outAmount: null,
+            balanceQty: openingQty,
+            balanceAmount: openingAmount,
+          })
+
+          // Process each log
+          for (const log of productLogs) {
+            const isIn = ['import', 'return'].includes(log.type)
+            const qty = log.quantity
+            const unitPrice = log.unit_cost || costPrice
+            const amount = qty * unitPrice
+
+            if (isIn) {
+              runningQty += qty
+              runningAmount += amount
+              totalInQty += qty
+              totalInAmount += amount
+            } else {
+              runningQty -= qty
+              runningAmount -= amount
+              totalOutQty += qty
+              totalOutAmount += amount
+            }
+
+            const typeDescriptions: Record<string, string> = {
+              import: 'Nhập hàng',
+              export: 'Xuất hàng',
+              sale: 'Bán hàng',
+              return: 'Trả hàng',
+              adjustment: 'Điều chỉnh',
+            }
+
+            entries.push({
+              stt: entries.length + 1,
+              documentNo: log.reference_id || '',
+              documentDate: log.created_at.split('T')[0],
+              description: log.note || typeDescriptions[log.type] || log.type,
+              inQty: isIn ? qty : null,
+              inUnitPrice: isIn ? unitPrice : null,
+              inAmount: isIn ? amount : null,
+              outQty: !isIn ? qty : null,
+              outUnitPrice: !isIn ? unitPrice : null,
+              outAmount: !isIn ? amount : null,
+              balanceQty: runningQty,
+              balanceAmount: runningAmount,
+            })
+          }
+
+          productReports.push({
+            productId: productId,
+            productName: product?.name || 'Unknown',
+            sku: product?.sku || '',
+            unit: product?.unit || 'cái',
+            entries,
+            totals: {
+              totalInQty,
+              totalInAmount,
+              totalOutQty,
+              totalOutAmount,
+              closingQty: runningQty,
+              closingAmount: runningAmount,
+            },
+          })
+        }
+
+        return successResponse({
+          period: { from: date_from, to: date_to },
+          products: productReports,
         })
       }
 

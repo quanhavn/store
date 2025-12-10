@@ -10,7 +10,7 @@ import type {
   CashBookReport,
   BankBookReport,
   ExpenseBookReport,
-  InventoryBookReport,
+  InventoryDetailBookReport,
   TaxBookReport,
   SalaryBookReport,
 } from '@/lib/supabase/functions'
@@ -20,7 +20,6 @@ import {
   exportCashBook,
   exportBankBook,
   exportExpenseBook,
-  exportInventoryBook,
   exportTaxBook,
   exportSalaryBook,
 } from '@/lib/reports/export-templates'
@@ -29,10 +28,13 @@ import {
   exportCashBookPDF,
   exportBankBookPDF,
   exportExpenseBookPDF,
-  exportInventoryBookPDF,
   exportTaxBookPDF,
   exportSalaryBookPDF,
 } from '@/lib/reports/pdf-templates'
+import {
+  exportInventoryDetailBookExcel,
+  exportInventoryDetailBookPDF,
+} from '@/lib/reports/inventory-book-detail'
 import { trackReportExported } from '@/lib/analytics'
 import { useTranslations } from 'next-intl'
 
@@ -68,7 +70,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         case 'expense':
           return api.reports.expenseBook(dateFrom, dateTo)
         case 'inventory':
-          return api.reports.inventoryBook(dateFrom, dateTo)
+          return api.reports.inventoryDetailBook(dateFrom, dateTo)
         case 'tax': {
           const year = new Date(dateFrom).getFullYear()
           return api.reports.taxBookReport(year)
@@ -161,12 +163,20 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         ]
       case 'inventory':
         return [
-          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: tCommon('date'), dataIndex: 'date', key: 'date', width: 100 },
-          { title: tCommon('name'), dataIndex: 'product_name', key: 'product_name', ellipsis: true },
-          { title: tCommon('type'), dataIndex: 'movement_type', key: 'movement_type', width: 80 },
-          { title: tCommon('quantity'), dataIndex: 'quantity', key: 'quantity', width: 60, align: 'right' as const },
-          { title: tInventory('stock'), dataIndex: 'after_quantity', key: 'after_quantity', width: 60, align: 'right' as const },
+          { title: tCommon('name'), dataIndex: 'productName', key: 'productName', ellipsis: true },
+          { title: 'SKU', dataIndex: 'sku', key: 'sku', width: 100 },
+          { title: tInventory('unit'), dataIndex: 'unit', key: 'unit', width: 60 },
+          { title: t('totalIn'), dataIndex: ['totals', 'totalInQty'], key: 'totalInQty', width: 80, align: 'right' as const },
+          { title: t('totalOut'), dataIndex: ['totals', 'totalOutQty'], key: 'totalOutQty', width: 80, align: 'right' as const },
+          { title: tInventory('stock'), dataIndex: ['totals', 'closingQty'], key: 'closingQty', width: 80, align: 'right' as const },
+          {
+            title: tCommon('amount'),
+            dataIndex: ['totals', 'closingAmount'],
+            key: 'closingAmount',
+            width: 120,
+            align: 'right' as const,
+            render: (v: number) => formatCurrency(v),
+          },
         ]
       case 'tax':
         return [
@@ -197,6 +207,11 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
 
   const getDataSource = () => {
     if (!data) return []
+
+    // Inventory detail book has 'products' instead of 'entries'
+    if ('products' in data) {
+      return data.products
+    }
 
     if ('entries' in data) {
       return data.entries
@@ -245,7 +260,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           exportExpenseBook(data as ExpenseBookReport, storeName, period)
           break
         case 'inventory':
-          exportInventoryBook(data as InventoryBookReport, storeName, period)
+          exportInventoryDetailBookExcel(data as InventoryDetailBookReport, { name: storeName })
           break
         case 'tax': {
           // Tax book uses year from the period
@@ -300,7 +315,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           exportExpenseBookPDF(data as ExpenseBookReport, storeInfo)
           break
         case 'inventory':
-          exportInventoryBookPDF(data as InventoryBookReport, storeInfo)
+          exportInventoryDetailBookPDF(data as InventoryDetailBookReport, storeInfo)
           break
         case 'tax':
           exportTaxBookPDF(data as TaxBookReport, storeInfo)
@@ -368,7 +383,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           <Table
             dataSource={getDataSource() as Record<string, unknown>[]}
             columns={getColumns() as { title: string; dataIndex: string; key: string }[]}
-            rowKey="stt"
+            rowKey={(record) => String(record.stt ?? record.productId ?? record.quarter ?? '')}
             size="small"
             pagination={false}
             scroll={{ x: true }}

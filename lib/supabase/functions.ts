@@ -262,6 +262,8 @@ export const api = {
       callFunction<ExpenseBookReport>('reports', { action: 'expense_book', date_from: dateFrom, date_to: dateTo }),
     inventoryBook: (dateFrom: string, dateTo: string) =>
       callFunction<InventoryBookReport>('reports', { action: 'inventory_book', date_from: dateFrom, date_to: dateTo }),
+    inventoryDetailBook: (dateFrom: string, dateTo: string) =>
+      callFunction<InventoryDetailBookReport>('reports', { action: 'inventory_detail_book', date_from: dateFrom, date_to: dateTo }),
     taxBookReport: (year: number) =>
       callFunction<TaxBookReport>('reports', { action: 'tax_book', year }),
     salaryBookReport: (month: number, year: number) =>
@@ -876,6 +878,42 @@ export interface InventoryBookReport {
     total_out: number
     total_movements: number
   }
+}
+
+export interface InventoryDetailEntry {
+  stt: number
+  documentNo: string
+  documentDate: string
+  description: string
+  inQty: number | null
+  inUnitPrice: number | null
+  inAmount: number | null
+  outQty: number | null
+  outUnitPrice: number | null
+  outAmount: number | null
+  balanceQty: number
+  balanceAmount: number
+}
+
+export interface InventoryDetailProduct {
+  productId: string
+  productName: string
+  sku: string
+  unit: string
+  entries: InventoryDetailEntry[]
+  totals: {
+    totalInQty: number
+    totalInAmount: number
+    totalOutQty: number
+    totalOutAmount: number
+    closingQty: number
+    closingAmount: number
+  }
+}
+
+export interface InventoryDetailBookReport {
+  period: { from: string; to: string }
+  products: InventoryDetailProduct[]
 }
 
 export interface TaxBookReport {

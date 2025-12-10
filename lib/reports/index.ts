@@ -33,3 +33,14 @@ export {
   exportSalaryBookPDF,
   exportReportPDF,
 } from './pdf-templates'
+
+// Per-product inventory detail book (Vietnamese accounting standard)
+export {
+  exportInventoryDetailBookExcel,
+  exportInventoryDetailBookPDF,
+} from './inventory-book-detail'
+export type {
+  InventoryDetailEntry,
+  InventoryDetailProduct,
+  InventoryDetailBookReport,
+} from './inventory-book-detail'
