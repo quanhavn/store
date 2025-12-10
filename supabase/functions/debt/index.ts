@@ -138,6 +138,14 @@ function getDefaultDueDate(): string {
   return date.toISOString().split('T')[0]
 }
 
+function parseAmount(value: unknown): number {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    return parseInt(value.replace(/[,.\s]/g, ''), 10) || 0
+  }
+  return 0
+}
+
 // ============================================================================
 // Main Handler
 // ============================================================================
@@ -158,7 +166,8 @@ serve(async (req: Request) => {
       // CREATE CREDIT DEBT - Simple insert via client
       // ========================================================================
       case 'create_credit': {
-        const { customer_id, sale_id, amount, due_date, notes } = body
+        const { customer_id, sale_id, due_date, notes } = body
+        const amount = parseAmount(body.amount)
 
         if (amount <= 0) {
           return errorResponse('So tien phai lon hon 0', 400)
@@ -213,7 +222,8 @@ serve(async (req: Request) => {
       // CREATE INSTALLMENT DEBT - Simple inserts via client
       // ========================================================================
       case 'create_installment': {
-        const { customer_id, sale_id, amount, installments, first_due_date, frequency, notes } = body
+        const { customer_id, sale_id, installments, first_due_date, frequency, notes } = body
+        const amount = parseAmount(body.amount)
 
         if (amount <= 0) {
           return errorResponse('So tien phai lon hon 0', 400)
@@ -295,7 +305,8 @@ serve(async (req: Request) => {
       // RECORD PAYMENT - Uses RPC for atomic transaction
       // ========================================================================
       case 'record_payment': {
-        const { debt_id, installment_id, amount, payment_method, bank_account_id, bank_ref, notes } = body
+        const { debt_id, installment_id, payment_method, bank_account_id, bank_ref, notes } = body
+        const amount = parseAmount(body.amount)
 
         if (amount <= 0) {
           return errorResponse('So tien phai lon hon 0', 400)

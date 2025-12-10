@@ -95,18 +95,11 @@ export function PaymentMethods({
   const [isPartialPayment, setIsPartialPayment] = useState(false)
   const [partialAmount, setPartialAmount] = useState(0)
 
-  // Debt options states
-  const [debtType, setDebtType] = useState<'credit' | 'installment'>('credit')
+  // Debt options states - simplified, only due_date needed
   const [debtOptions, setDebtOptions] = useState<{
     due_date?: string
-    installments?: number
-    frequency?: 'weekly' | 'biweekly' | 'monthly'
-    first_due_date?: string
   }>({
     due_date: dayjs().add(30, 'day').format('YYYY-MM-DD'),
-    installments: 2,
-    frequency: 'monthly',
-    first_due_date: dayjs().add(7, 'day').format('YYYY-MM-DD'),
   })
 
   // Debt payment states (pay extra to reduce existing debt)
@@ -148,8 +141,8 @@ export function PaymentMethods({
     if (!isPartialPayment) return true
     // Must have a customer for partial payment
     if (!customer) return false
-    // Partial amount must be greater than 0 and less than total
-    if (partialAmount <= 0 || partialAmount >= total) return false
+    // Partial amount can be 0 (full debt) but must be less than total
+    if (partialAmount < 0 || partialAmount >= total) return false
     return true
   }, [isPartialPayment, customer, partialAmount, total])
 
@@ -175,15 +168,8 @@ export function PaymentMethods({
       const debtInfo: DebtInfo = {
         customer_id: customer.id,
         amount: debtAmount,
-        debt_type: debtType,
-        ...(debtType === 'credit'
-          ? { due_date: debtOptions.due_date }
-          : {
-              installments: debtOptions.installments,
-              frequency: debtOptions.frequency,
-              first_due_date: debtOptions.first_due_date,
-            }
-        ),
+        debt_type: 'credit',
+        due_date: debtOptions.due_date,
       }
       onConfirm([payment], debtInfo, debtPayment)
     } else {
@@ -196,10 +182,19 @@ export function PaymentMethods({
     setIsPartialPayment(checked)
     if (checked) {
       // Default to paying half
-      setPartialAmount(Math.floor(total / 2))
+      const defaultPartial = Math.floor(total / 2)
+      setPartialAmount(defaultPartial)
+      setCashReceived(defaultPartial)
     } else {
       setPartialAmount(0)
+      setCashReceived(total)
     }
+  }
+
+  // Sync cashReceived with partialAmount when partial payment is enabled
+  const handlePartialAmountChange = (value: number) => {
+    setPartialAmount(value)
+    setCashReceived(value)
   }
 
   // Generate VietQR URL
@@ -278,23 +273,23 @@ export function PaymentMethods({
             <InputNumber
               size="large"
               className="!w-full"
-              min={1}
+              min={0}
               max={total - 1}
               value={partialAmount}
-              onChange={(v) => setPartialAmount(v || 0)}
+              onChange={(v) => handlePartialAmountChange(v || 0)}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
             />
             <Space.Addon>d</Space.Addon>
           </Space.Compact>
-          <div className="grid grid-cols-4 gap-2 mt-2">
-            {[0.25, 0.5, 0.75, 0.9].map((ratio) => (
+          <div className="grid grid-cols-5 gap-2 mt-2">
+            {[0, 0.25, 0.5, 0.75, 0.9].map((ratio) => (
               <Button
                 key={ratio}
                 size="small"
-                onClick={() => setPartialAmount(Math.floor(total * ratio))}
+                onClick={() => handlePartialAmountChange(Math.floor(total * ratio))}
               >
-                {(ratio * 100).toFixed(0)}%
+                {ratio === 0 ? '0đ' : `${(ratio * 100).toFixed(0)}%`}
               </Button>
             ))}
           </div>
@@ -330,28 +325,33 @@ export function PaymentMethods({
 
       {method === 'cash' && (
         <div className="space-y-4">
-          <div>
-            <Text className="block mb-2">{t('cashReceived')}:</Text>
-            <Space.Compact className="w-full">
-              <InputNumber
-                size="large"
-                className="!w-full"
-                min={0}
-                value={cashReceived}
-                onChange={(v) => setCashReceived(v || 0)}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
-              />
-              <Space.Addon>d</Space.Addon>
-            </Space.Compact>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {[50000, 100000, 200000, 500000].map((amount) => (
-              <Button key={amount} onClick={() => setCashReceived(amount)}>
-                {(amount / 1000).toFixed(0)}k
-              </Button>
-            ))}
-          </div>
+          {/* Chỉ hiển thị ô nhập tiền mặt khi KHÔNG ghi nhận nợ (vì khi ghi nợ đã có partialAmount) */}
+          {!isPartialPayment && (
+            <>
+              <div>
+                <Text className="block mb-2">{t('cashReceived')}:</Text>
+                <Space.Compact className="w-full">
+                  <InputNumber
+                    size="large"
+                    className="!w-full"
+                    min={0}
+                    value={cashReceived}
+                    onChange={(v) => setCashReceived(v || 0)}
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
+                  />
+                  <Space.Addon>d</Space.Addon>
+                </Space.Compact>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[50000, 100000, 200000, 500000].map((amount) => (
+                  <Button key={amount} onClick={() => setCashReceived(amount)}>
+                    {(amount / 1000).toFixed(0)}k
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Apply extra to debt section */}
           {!isPartialPayment && customer && customer.total_debt > 0 && extraAmount > 0 && (
@@ -494,8 +494,6 @@ export function PaymentMethods({
           <Divider />
           <DebtOptionsForm
             amount={debtAmount}
-            debtType={debtType}
-            onDebtTypeChange={setDebtType}
             debtOptions={debtOptions}
             onOptionsChange={setDebtOptions}
           />
