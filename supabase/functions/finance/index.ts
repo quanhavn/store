@@ -446,7 +446,21 @@ serve(async (req: Request) => {
 
         if (error) throw error
 
-        return successResponse({ bank_accounts: data })
+        // Get transaction count for each account (excluding opening balance)
+        const accountsWithTxCount = await Promise.all(
+          (data || []).map(async (account) => {
+            const { count } = await supabase
+              .from('bank_book')
+              .select('*', { count: 'exact', head: true })
+              .eq('bank_account_id', account.id)
+              .eq('store_id', store_id)
+              .neq('reference_type', 'opening')
+
+            return { ...account, transaction_count: count || 0 }
+          })
+        )
+
+        return successResponse({ bank_accounts: accountsWithTxCount })
       }
 
       // ========================================================================
@@ -493,7 +507,7 @@ serve(async (req: Request) => {
       // UPDATE BANK ACCOUNT - Simple update via client
       // ========================================================================
       case 'update_bank_account': {
-        const { id, bank_name, account_number, account_name, branch, is_default } = body
+        const { id, bank_name, account_number, account_name, branch, is_default, initial_balance } = body
 
         if (is_default) {
           await supabase.from('bank_accounts').update({ is_default: false }).eq('store_id', store_id)
@@ -506,6 +520,58 @@ serve(async (req: Request) => {
         if (branch !== undefined) updateData.branch = branch
         if (is_default !== undefined) updateData.is_default = is_default
 
+        // Handle initial_balance update - only allowed if no real transactions exist
+        if (initial_balance !== undefined) {
+          // Check for transactions (excluding opening balance entry)
+          const { count: txCount, error: countError } = await supabase
+            .from('bank_book')
+            .select('*', { count: 'exact', head: true })
+            .eq('bank_account_id', id)
+            .eq('store_id', store_id)
+            .neq('reference_type', 'opening')
+
+          if (countError) throw countError
+
+          if (txCount && txCount > 0) {
+            return errorResponse('Khong the sua so du ban dau khi da co giao dich', 400)
+          }
+
+          // Update balance and the opening entry in bank_book
+          updateData.balance = initial_balance
+
+          // Update or create opening balance entry
+          const { data: existingOpening } = await supabase
+            .from('bank_book')
+            .select('id')
+            .eq('bank_account_id', id)
+            .eq('store_id', store_id)
+            .eq('reference_type', 'opening')
+            .maybeSingle()
+
+          if (existingOpening) {
+            if (initial_balance > 0) {
+              await supabase
+                .from('bank_book')
+                .update({ debit: initial_balance, credit: 0 })
+                .eq('id', existingOpening.id)
+            } else {
+              await supabase
+                .from('bank_book')
+                .delete()
+                .eq('id', existingOpening.id)
+            }
+          } else if (initial_balance > 0) {
+            await supabase.from('bank_book').insert({
+              store_id,
+              bank_account_id: id,
+              description: 'So du dau ky',
+              reference_type: 'opening',
+              debit: initial_balance,
+              credit: 0,
+            })
+          }
+        }
+
         const { data, error } = await supabase
           .from('bank_accounts')
           .update(updateData)
@@ -517,6 +583,51 @@ serve(async (req: Request) => {
         if (error) throw error
 
         return successResponse({ bank_account: data })
+      }
+
+      // ========================================================================
+      // DELETE BANK ACCOUNT - Only allowed if no transactions exist
+      // ========================================================================
+      case 'delete_bank_account': {
+        const { id } = body
+
+        if (!id) {
+          return errorResponse('ID tai khoan la bat buoc', 400)
+        }
+
+        // Check for transactions (excluding opening balance entry)
+        const { count: txCount, error: countError } = await supabase
+          .from('bank_book')
+          .select('*', { count: 'exact', head: true })
+          .eq('bank_account_id', id)
+          .eq('store_id', store_id)
+          .neq('reference_type', 'opening')
+
+        if (countError) throw countError
+
+        if (txCount && txCount > 0) {
+          return errorResponse('Khong the xoa tai khoan da co giao dich', 400)
+        }
+
+        // Delete ALL bank_book entries for this account (including opening balance)
+        const { error: deleteBookError } = await supabase
+          .from('bank_book')
+          .delete()
+          .eq('bank_account_id', id)
+          .eq('store_id', store_id)
+
+        if (deleteBookError) throw deleteBookError
+
+        // Delete the bank account
+        const { error } = await supabase
+          .from('bank_accounts')
+          .delete()
+          .eq('id', id)
+          .eq('store_id', store_id)
+
+        if (error) throw error
+
+        return successResponse({ success: true })
       }
 
       // ========================================================================

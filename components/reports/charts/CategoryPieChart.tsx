@@ -24,14 +24,16 @@ interface CategoryPieChartProps {
 }
 
 const COLORS = [
-  '#3ecf8e',
-  '#10b981',
-  '#059669',
-  '#047857',
-  '#065f46',
-  '#6ee7b7',
-  '#34d399',
-  '#a7f3d0',
+  '#3b82f6', // Blue
+  '#ef4444', // Red
+  '#f59e0b', // Amber
+  '#10b981', // Emerald
+  '#8b5cf6', // Violet
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#f97316', // Orange
+  '#84cc16', // Lime
+  '#6366f1', // Indigo
 ]
 
 const formatCurrency = (value: number) => {

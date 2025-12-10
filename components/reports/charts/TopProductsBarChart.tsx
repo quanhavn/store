@@ -122,6 +122,19 @@ export function TopProductsBarChart({
   const dataKey = displayMode === 'revenue' ? 'revenue' : 'quantity_sold'
   const formatter = displayMode === 'revenue' ? formatCurrency : (v: number) => v.toString()
 
+  const BAR_COLORS = [
+    '#3b82f6', // Blue
+    '#ef4444', // Red
+    '#f59e0b', // Amber
+    '#10b981', // Emerald
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+    '#06b6d4', // Cyan
+    '#f97316', // Orange
+    '#84cc16', // Lime
+    '#6366f1', // Indigo
+  ]
+
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm">
       <h3 className="text-base font-semibold text-gray-700 mb-4">
@@ -156,7 +169,7 @@ export function TopProductsBarChart({
               {chartData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={index === chartData.length - 1 ? '#3ecf8e' : '#6ee7b7'}
+                  fill={BAR_COLORS[index % BAR_COLORS.length]}
                 />
               ))}
             </Bar>

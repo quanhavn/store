@@ -199,7 +199,10 @@ export const api = {
       account_name?: string
       branch?: string
       is_default?: boolean
+      initial_balance?: number
     }) => callFunction<{ bank_account: BankAccount }>('finance', { action: 'update_bank_account', ...data }),
+    deleteBankAccount: (id: string) =>
+      callFunction<{ success: boolean }>('finance', { action: 'delete_bank_account', id }),
     bankIn: (data: {
       bank_account_id: string
       amount: number
@@ -414,6 +417,7 @@ export interface BankAccount {
   balance: number
   is_default: boolean
   created_at: string
+  transaction_count?: number
 }
 
 export interface BankTransaction {

@@ -35,6 +35,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const isEdit = !!editData
+  const canEditBalance = !isEdit || editData?.transaction_count === 0
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
   const tErrors = useTranslations('errors')
@@ -47,6 +48,7 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
         account_name: editData.account_name,
         branch: editData.branch,
         is_default: editData.is_default,
+        initial_balance: editData.balance,
       })
     } else if (open) {
       form.resetFields()
@@ -155,8 +157,12 @@ export function BankAccountForm({ open, onClose, editData }: BankAccountFormProp
             <Input placeholder={t('placeholders.branch')} />
           </Form.Item>
 
-          {!isEdit && (
-            <Form.Item name="initial_balance" label={t('initialBalance')}>
+          {canEditBalance && (
+            <Form.Item
+              name="initial_balance"
+              label={t('initialBalance')}
+              extra={isEdit ? t('initialBalanceEditHint') : undefined}
+            >
               <InputNumber
                 className="!w-full"
                 placeholder="0"

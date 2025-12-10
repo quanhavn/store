@@ -1,17 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { List, Card, Tag, Empty, Spin, Typography, Button, Dropdown } from 'antd'
+import { List, Card, Tag, Empty, Spin, Typography, Button, Dropdown, Modal, message } from 'antd'
 import {
   BankOutlined,
   PlusOutlined,
   StarFilled,
   MoreOutlined,
   EditOutlined,
+  DeleteOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { api, type BankAccount } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
@@ -30,6 +31,8 @@ export function BankAccountList() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>()
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
+  const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: ['bank-accounts'],
@@ -38,9 +41,31 @@ export function BankAccountList() {
 
   const accounts = data?.bank_accounts || []
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.finance.deleteBankAccount(id),
+    onSuccess: () => {
+      message.success(t('accountDeletedSuccess'))
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+    },
+    onError: (error) => {
+      message.error(error instanceof Error ? error.message : tErrors('generic'))
+    },
+  })
+
   const handleEdit = (account: BankAccount) => {
     setEditingAccount(account)
     setFormOpen(true)
+  }
+
+  const handleDelete = (account: BankAccount) => {
+    Modal.confirm({
+      title: t('deleteAccountConfirm'),
+      content: t('deleteAccountConfirmDesc', { name: account.bank_name }),
+      okText: tCommon('delete'),
+      okType: 'danger',
+      cancelText: tCommon('cancel'),
+      onOk: () => deleteMutation.mutate(account.id),
+    })
   }
 
   const handleFormClose = () => {
@@ -152,6 +177,17 @@ export function BankAccountList() {
                           label: tCommon('edit'),
                           onClick: () => handleEdit(account),
                         },
+                        ...(account.transaction_count === 0
+                          ? [
+                              {
+                                key: 'delete',
+                                icon: <DeleteOutlined />,
+                                label: tCommon('delete'),
+                                danger: true,
+                                onClick: () => handleDelete(account),
+                              },
+                            ]
+                          : []),
                       ],
                     }}
                     trigger={['click']}
