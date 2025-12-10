@@ -23,9 +23,13 @@ export interface InventoryStore {
   adjustmentNote: string
   recordExpense: boolean
   supplierName: string
+  shouldNavigateToAdjustment: boolean
+  paymentMethod: 'cash' | 'bank_transfer'
+  bankAccountId: string | null
 
   // Actions
   setAdjustmentType: (type: AdjustmentType) => void
+  setShouldNavigateToAdjustment: (value: boolean) => void
   addAdjustmentItem: (product: {
     id: string
     name: string
@@ -53,6 +57,8 @@ export interface InventoryStore {
   setAdjustmentNote: (note: string) => void
   setRecordExpense: (record: boolean) => void
   setSupplierName: (name: string) => void
+  setPaymentMethod: (method: 'cash' | 'bank_transfer') => void
+  setBankAccountId: (id: string | null) => void
   clearAdjustment: () => void
 
   // Computed
@@ -68,9 +74,24 @@ export const useInventoryStore = create<InventoryStore>()(
       adjustmentNote: '',
       recordExpense: true,
       supplierName: '',
+      shouldNavigateToAdjustment: false,
+      paymentMethod: 'cash',
+      bankAccountId: null,
 
       setAdjustmentType: (type) => {
         set({ adjustmentType: type })
+      },
+
+      setShouldNavigateToAdjustment: (value) => {
+        set({ shouldNavigateToAdjustment: value })
+      },
+
+      setPaymentMethod: (method) => {
+        set({ paymentMethod: method })
+      },
+
+      setBankAccountId: (id) => {
+        set({ bankAccountId: id })
       },
 
       addAdjustmentItem: (product) => {
@@ -250,6 +271,8 @@ export const useInventoryStore = create<InventoryStore>()(
           adjustmentNote: '',
           recordExpense: true,
           supplierName: '',
+          paymentMethod: 'cash',
+          bankAccountId: null,
         })
       },
 

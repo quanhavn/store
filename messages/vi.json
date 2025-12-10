@@ -343,6 +343,7 @@
     "quickImport": "Nhập kho",
     "lowStockInfo": "Danh sách cập nhật tự động mỗi phút. Sản phẩm được hiển thị khi số lượng tồn bằng hoặc thấp hơn mức tồn kho tối thiểu đã thiết lập.",
     "variantCount": "{count} biến thể",
+    "variantsLowStock": "{count} biến thể sắp hết",
     "checkProgress": "Tiến độ kiểm kê",
     "productsLabel": "sản phẩm",
     "matched": "Khớp",
@@ -377,7 +378,9 @@
     "noAdjustmentNeeded": "Không có sản phẩm nào cần điều chỉnh tồn kho.",
     "confirmAdjustProducts": "Xác nhận điều chỉnh {count} sản phẩm",
     "completeStockCheck": "Hoàn tất kiểm kê",
-    "backToEdit": "Quay lại chỉnh sửa"
+    "backToEdit": "Quay lại chỉnh sửa",
+    "paymentMethod": "Phương thức thanh toán",
+    "selectBankAccount": "Chọn tài khoản ngân hàng"
   },
   "products": {
     "title": "Sản phẩm",

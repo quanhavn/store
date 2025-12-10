@@ -305,39 +305,113 @@ serve(async (req: Request) => {
       }
 
       case 'low_stock': {
-        // Fetch products with their variants
+        // Fetch products with their variants (including min_stock per variant)
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, quantity, min_stock, unit, image_url, sku, cost_price, has_variants, categories(name), product_variants(id, name, quantity)')
+          .select('id, name, quantity, min_stock, unit, image_url, sku, cost_price, has_variants, categories(name), product_variants(id, name, sku, barcode, quantity, min_stock, cost_price)')
           .eq('store_id', store_id)
           .eq('active', true)
           .order('quantity', { ascending: true })
 
         if (error) throw error
 
-        // Calculate effective quantity and filter low stock products
-        const lowStockProducts = (data || [])
-          .map((p) => {
-            const hasVariants = p.has_variants && p.product_variants && p.product_variants.length > 0
-            const effectiveQuantity = hasVariants
-              ? p.product_variants.reduce((sum: number, v: { quantity: number }) => sum + v.quantity, 0)
-              : p.quantity
-            return {
-              id: p.id,
-              name: p.name,
-              quantity: effectiveQuantity,
-              min_stock: p.min_stock,
-              unit: p.unit,
-              image_url: p.image_url,
-              sku: p.sku,
-              cost_price: p.cost_price,
-              categories: p.categories,
-              has_variants: p.has_variants,
-              variant_count: hasVariants ? p.product_variants.length : 0,
+        interface VariantData {
+          id: string
+          name: string | null
+          sku: string | null
+          barcode: string | null
+          quantity: number
+          min_stock: number | null
+          cost_price: number | null
+        }
+
+        interface LowStockVariant {
+          id: string
+          name: string | null
+          sku: string | null
+          barcode: string | null
+          quantity: number
+          min_stock: number
+          cost_price: number | null
+        }
+
+        // Build list including per-variant low stock alerts
+        const lowStockProducts: Array<{
+          id: string
+          name: string
+          quantity: number
+          min_stock: number
+          unit: string
+          image_url: string | null
+          sku: string | null
+          cost_price: number
+          categories: { name: string } | null
+          has_variants: boolean
+          variant_count: number
+          low_stock_variants?: LowStockVariant[]
+        }> = []
+
+        for (const p of data || []) {
+          const hasVariants = p.has_variants && p.product_variants && p.product_variants.length > 0
+
+          if (hasVariants) {
+            // Check each variant individually for low stock
+            const lowStockVariants: LowStockVariant[] = (p.product_variants as VariantData[])
+              .filter((v) => {
+                const variantMinStock = v.min_stock ?? p.min_stock ?? 10
+                return v.quantity <= variantMinStock
+              })
+              .map((v) => ({
+                id: v.id,
+                name: v.name,
+                sku: v.sku,
+                barcode: v.barcode,
+                quantity: v.quantity,
+                min_stock: v.min_stock ?? p.min_stock ?? 10,
+                cost_price: v.cost_price ?? p.cost_price,
+              }))
+              .sort((a, b) => a.quantity - b.quantity)
+
+            // If any variant is low stock, include product with variant details
+            if (lowStockVariants.length > 0) {
+              const totalVariantQty = (p.product_variants as VariantData[]).reduce((sum, v) => sum + v.quantity, 0)
+              lowStockProducts.push({
+                id: p.id,
+                name: p.name,
+                quantity: totalVariantQty,
+                min_stock: p.min_stock,
+                unit: p.unit,
+                image_url: p.image_url,
+                sku: p.sku,
+                cost_price: p.cost_price,
+                categories: p.categories,
+                has_variants: true,
+                variant_count: p.product_variants.length,
+                low_stock_variants: lowStockVariants,
+              })
             }
-          })
-          .filter((p) => p.quantity <= p.min_stock)
-          .sort((a, b) => a.quantity - b.quantity)
+          } else {
+            // Non-variant product: check product-level stock
+            if (p.quantity <= p.min_stock) {
+              lowStockProducts.push({
+                id: p.id,
+                name: p.name,
+                quantity: p.quantity,
+                min_stock: p.min_stock,
+                unit: p.unit,
+                image_url: p.image_url,
+                sku: p.sku,
+                cost_price: p.cost_price,
+                categories: p.categories,
+                has_variants: false,
+                variant_count: 0,
+              })
+            }
+          }
+        }
+
+        // Sort by quantity ascending (most critical first)
+        lowStockProducts.sort((a, b) => a.quantity - b.quantity)
 
         return successResponse({ products: lowStockProducts })
       }

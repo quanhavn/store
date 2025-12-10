@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Tabs, Typography, Button, Modal, message, Spin, Alert, Dropdown } from 'antd'
 import {
   UnorderedListOutlined,
@@ -21,6 +21,7 @@ import { ProductForm } from '@/components/products/ProductForm'
 import { createClient } from '@/lib/supabase/client'
 import { api } from '@/lib/supabase/functions'
 import { formatDateTime } from '@/lib/utils'
+import { useInventoryStore } from '@/lib/stores/inventory'
 
 const { Title, Text } = Typography
 
@@ -51,6 +52,14 @@ export default function InventoryPage() {
 
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const { shouldNavigateToAdjustment, setShouldNavigateToAdjustment } = useInventoryStore()
+
+  useEffect(() => {
+    if (shouldNavigateToAdjustment) {
+      setActiveTab('adjustment')
+      setShouldNavigateToAdjustment(false)
+    }
+  }, [shouldNavigateToAdjustment, setShouldNavigateToAdjustment])
 
   // Fetch categories for product form
   const { data: categories = [] } = useQuery({

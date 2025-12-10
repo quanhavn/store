@@ -356,6 +356,7 @@
     "quickImport": "Quick import",
     "lowStockInfo": "List updates automatically every minute. Products are shown when stock quantity is at or below the minimum stock level set.",
     "variantCount": "{count} variants",
+    "variantsLowStock": "{count} variants low stock",
     "checkProgress": "Check progress",
     "productsLabel": "products",
     "matched": "Matched",
@@ -390,7 +391,9 @@
     "noAdjustmentNeeded": "No products need stock adjustment.",
     "confirmAdjustProducts": "Confirm adjust {count} products",
     "completeStockCheck": "Complete stock check",
-    "backToEdit": "Back to edit"
+    "backToEdit": "Back to edit",
+    "paymentMethod": "Payment method",
+    "selectBankAccount": "Select bank account"
   },
   "products": {
     "title": "Product Management",

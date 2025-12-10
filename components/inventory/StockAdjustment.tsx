@@ -12,9 +12,9 @@ import {
   message,
   Spin,
   Typography,
-  Switch,
   Tag,
-  Select
+  Select,
+  Radio
 } from 'antd'
 import {
   PlusOutlined,
@@ -22,7 +22,8 @@ import {
   DeleteOutlined,
   SearchOutlined,
   CheckOutlined,
-  DollarOutlined
+  DollarOutlined,
+  BankOutlined
 } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
@@ -87,8 +88,9 @@ export function StockAdjustment() {
     adjustmentType,
     adjustmentItems,
     adjustmentNote,
-    recordExpense,
     supplierName,
+    paymentMethod,
+    bankAccountId,
     setAdjustmentType,
     addAdjustmentItem,
     addAdjustmentItemWithVariant,
@@ -97,12 +99,25 @@ export function StockAdjustment() {
     updateAdjustmentCost,
     updateAdjustmentUnit,
     setAdjustmentNote,
-    setRecordExpense,
     setSupplierName,
+    setPaymentMethod,
+    setBankAccountId,
     clearAdjustment,
     getItemCount,
     getTotalValue,
   } = useInventoryStore()
+
+  const { data: bankAccounts = [] } = useQuery<{ id: string; bank_name: string; account_number: string; is_default: boolean }[]>({
+    queryKey: ['bank-accounts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('id, bank_name, account_number, is_default')
+        .order('is_default', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+  })
 
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
     queryKey: ['products-search-with-variants', searchTerm],
@@ -154,8 +169,9 @@ export function StockAdjustment() {
             quantity: baseQuantity,
             unit_cost: item.unit_cost ?? undefined,
             note: item.note || adjustmentNote,
-            record_expense: recordExpense,
-            payment_method: 'cash',
+            record_expense: (item.unit_cost ?? 0) > 0,
+            payment_method: paymentMethod,
+            bank_account_id: paymentMethod === 'bank_transfer' ? bankAccountId || undefined : undefined,
             supplier_name: supplierName || undefined,
           })
         } else if (adjustmentType === 'export') {
@@ -177,7 +193,7 @@ export function StockAdjustment() {
       return true
     },
     onSuccess: () => {
-      const expenseMsg = adjustmentType === 'import' && recordExpense 
+      const expenseMsg = adjustmentType === 'import' && getTotalValue() > 0 
         ? ` (${t('expenseRecorded')})` 
         : ''
       message.success(
@@ -392,19 +408,53 @@ export function StockAdjustment() {
                 onChange={(e) => setSupplierName(e.target.value)}
                 className="mt-4"
               />
-              <div className="flex items-center justify-between mt-4 p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <DollarOutlined className="text-blue-500" />
-                  <Text>{t('recordExpense')}</Text>
-                </div>
-                <Switch
-                  checked={recordExpense}
-                  onChange={setRecordExpense}
-                />
-              </div>
-              {recordExpense && (
-                <div className="text-xs text-gray-500 mt-1 px-3">
-                  {t('autoDeductExpense', { amount: formatCurrency(getTotalValue()) })}
+              {getTotalValue() > 0 && (
+                <div className="mt-4">
+                  <Text className="block mb-2 font-medium">{t('paymentMethod')}:</Text>
+                  <Radio.Group
+                    value={paymentMethod}
+                    onChange={(e) => {
+                      setPaymentMethod(e.target.value)
+                      if (e.target.value === 'bank_transfer' && bankAccounts.length > 0) {
+                        const defaultBank = bankAccounts.find((b: { is_default?: boolean }) => b.is_default) || bankAccounts[0]
+                        setBankAccountId(defaultBank.id)
+                      }
+                    }}
+                    className="w-full"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <Radio value="cash" className="!flex items-center p-2 border rounded-lg hover:bg-gray-50">
+                        <span className="flex items-center gap-2">
+                          <DollarOutlined />
+                          {tCommon('cash')}
+                        </span>
+                      </Radio>
+                      <Radio value="bank_transfer" className="!flex items-center p-2 border rounded-lg hover:bg-gray-50">
+                        <span className="flex items-center gap-2">
+                          <BankOutlined />
+                          {tCommon('bankTransfer')}
+                        </span>
+                      </Radio>
+                    </div>
+                  </Radio.Group>
+                  
+                  {paymentMethod === 'bank_transfer' && (
+                    <div className="mt-2">
+                      <Select
+                        className="w-full"
+                        placeholder={t('selectBankAccount')}
+                        value={bankAccountId}
+                        onChange={(value) => setBankAccountId(value)}
+                        options={bankAccounts.map((bank: { id: string; bank_name: string; account_number: string }) => ({
+                          value: bank.id,
+                          label: `${bank.bank_name} - ${bank.account_number}`,
+                        }))}
+                      />
+                    </div>
+                  )}
+                  <div className="text-xs text-gray-500 mt-2">
+                    {t('autoDeductExpense', { amount: formatCurrency(getTotalValue()) })}
+                  </div>
                 </div>
               )}
             </>
@@ -436,6 +486,7 @@ export function StockAdjustment() {
               icon={<CheckOutlined />}
               onClick={() => submitMutation.mutate()}
               loading={submitMutation.isPending}
+              disabled={getTotalValue() > 0 && paymentMethod === 'bank_transfer' && !bankAccountId}
               className="flex-1"
             >
               {tCommon('confirm')}
