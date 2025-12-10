@@ -53,3 +53,5 @@ public/workbox-*.js
 public/workbox-*.js.map
 
 .mail
+
+test-results
