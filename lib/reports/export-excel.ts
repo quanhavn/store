@@ -4,6 +4,7 @@ export interface ExcelExportOptions {
   filename: string
   sheetName: string
   title: string
+  subtitle?: string
   storeName: string
   period: string
   headers: string[]
@@ -21,6 +22,7 @@ export function exportToExcel(options: ExcelExportOptions): void {
     filename,
     sheetName,
     title,
+    subtitle,
     storeName,
     period,
     headers,
@@ -41,7 +43,12 @@ export function exportToExcel(options: ExcelExportOptions): void {
   // Row 2: Report title
   rows.push([title])
 
-  // Row 3: Period
+  // Row 3: Subtitle (optional, e.g., bank name, account number)
+  if (subtitle) {
+    rows.push([subtitle])
+  }
+
+  // Row 4: Period
   rows.push([`Ky: ${period}`])
 
   // Row 4: Export date

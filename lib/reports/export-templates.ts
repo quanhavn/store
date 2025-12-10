@@ -116,57 +116,83 @@ export function exportCashBook(
 }
 
 /**
- * Export Bank Book (So Tien Gui Ngan Hang) to Excel
+ * Export Bank Book (Sổ Tiền Gửi Ngân Hàng - Mẫu S7-HKD) to Excel
+ * Each bank account has its own book with 3-row header structure
  */
 export function exportBankBook(
   data: BankBookReport,
   storeName: string,
   period: string
 ): void {
-  const headers = [
-    'STT',
-    'Ngày',
-    'Ngân hàng',
-    'So TK',
-    'Dien giai',
-    'Thu',
-    'Chi',
-    'So tham chieu',
-  ]
+  const XLSX = require('xlsx')
+  
+  const bankName = data.bank_account?.bank_name || ''
+  const accountNumber = data.bank_account?.account_number || ''
 
-  const rows = data.entries.map(entry => [
-    entry.stt,
-    formatDateForExcel(entry.date),
-    entry.bank_name,
-    entry.account_number,
-    entry.description,
-    entry.debit > 0 ? formatCurrencyForExcel(entry.debit) : '',
-    entry.credit > 0 ? formatCurrencyForExcel(entry.credit) : '',
-    entry.bank_ref || '',
-  ])
+  const workbook = XLSX.utils.book_new()
+  const rows: (string | number | null | undefined)[][] = []
 
-  const totals = [
-    'TONG CONG',
-    '',
-    '',
-    '',
-    '',
-    formatCurrencyForExcel(data.totals.total_debit),
-    formatCurrencyForExcel(data.totals.total_credit),
-    '',
-  ]
+  rows.push([storeName])
+  rows.push(['SỔ TIỀN GỬI NGÂN HÀNG'])
+  rows.push([`Nơi mở tài khoản giao dịch: ${bankName}`])
+  rows.push([`Số hiệu tài khoản tại nơi gửi: ${accountNumber}`])
+  rows.push([`Kỳ: ${period}`, '', '', '', '', '', '', 'ĐVT: Đồng'])
+  rows.push([])
 
-  exportToExcel({
-    filename: `So_Tien_Gui_NH_${period.replace(/\//g, '-')}`,
-    sheetName: 'So Tien Gui NH',
-    title: 'SO TIEN GUI NGAN HANG',
-    storeName,
-    period,
-    headers,
-    data: rows,
-    totals,
-    columnWidths: [6, 12, 20, 18, 30, 15, 15, 18],
+  const headerRow1Start = rows.length
+  rows.push(['GHI SỔ', 'CHỨNG TỪ', '', 'DIỄN GIẢI', 'SỐ TIỀN', '', '', 'GHI CHÚ'])
+  rows.push(['', 'SỐ HIỆU', 'NGÀY, THÁNG', '', 'THU\n(GỬI VÀO)', 'CHI\n(RÚT RA)', 'CÒN LẠI', ''])
+  rows.push(['A', 'B', 'C', 'D', '1', '2', '3', 'F'])
+
+  rows.push(['', '', '', '- Số dư đầu kỳ', '', '', formatCurrencyForExcel(data.opening_balance), ''])
+
+  data.entries.forEach(entry => {
+    rows.push([
+      entry.record_date ? formatDateForExcel(entry.record_date) : '',
+      entry.voucher_no || '',
+      entry.voucher_date ? formatDateForExcel(entry.voucher_date) : '',
+      entry.description,
+      entry.debit > 0 ? formatCurrencyForExcel(entry.debit) : '',
+      entry.credit > 0 ? formatCurrencyForExcel(entry.credit) : '',
+      formatCurrencyForExcel(entry.balance),
+      entry.note || '',
+    ])
   })
+
+  rows.push(['', '', '', '- Cộng số phát sinh trong kỳ', formatCurrencyForExcel(data.totals.total_debit), formatCurrencyForExcel(data.totals.total_credit), '', ''])
+  rows.push(['', '', '', '- Số dư cuối kỳ', 'x', 'x', formatCurrencyForExcel(data.totals.closing_balance), 'x'])
+
+  rows.push([])
+  rows.push([])
+  rows.push(['Người lập biểu', '', '', '', '', 'Ngày ... tháng ... năm ...', '', ''])
+  rows.push(['(Ký, họ tên)', '', '', '', '', 'Người đại diện HKD/Cá nhân KD', '', ''])
+  rows.push(['', '', '', '', '', '(Ký, họ tên, đóng dấu)', '', ''])
+
+  const worksheet = XLSX.utils.aoa_to_sheet(rows)
+
+  worksheet['!merges'] = [
+    { s: { r: headerRow1Start, c: 0 }, e: { r: headerRow1Start + 1, c: 0 } },
+    { s: { r: headerRow1Start, c: 1 }, e: { r: headerRow1Start, c: 2 } },
+    { s: { r: headerRow1Start, c: 3 }, e: { r: headerRow1Start + 1, c: 3 } },
+    { s: { r: headerRow1Start, c: 4 }, e: { r: headerRow1Start, c: 6 } },
+    { s: { r: headerRow1Start, c: 7 }, e: { r: headerRow1Start + 1, c: 7 } },
+  ]
+
+  worksheet['!cols'] = [
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 35 },
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 12 },
+  ]
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'So Tien Gui NH')
+
+  const filename = `So_Tien_Gui_NH_${accountNumber}_${period.replace(/\//g, '-')}.xlsx`
+  XLSX.writeFile(workbook, filename)
 }
 
 /**

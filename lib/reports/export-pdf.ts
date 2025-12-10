@@ -18,6 +18,7 @@ import autoTable, { type RowInput, type CellDef } from 'jspdf-autotable'
 export interface PDFExportOptions {
   filename: string
   title: string
+  subtitle?: string
   storeName: string
   storeAddress?: string
   storeTaxCode?: string
@@ -28,6 +29,7 @@ export interface PDFExportOptions {
   orientation?: 'portrait' | 'landscape'
   columnAligns?: ('left' | 'center' | 'right')[]
   columnWidths?: number[]
+  footerNote?: string
 }
 
 /**
@@ -85,6 +87,7 @@ export function exportToPDF(options: PDFExportOptions): void {
   const {
     filename,
     title,
+    subtitle,
     storeName,
     storeAddress,
     storeTaxCode,
@@ -95,6 +98,7 @@ export function exportToPDF(options: PDFExportOptions): void {
     orientation = 'portrait',
     columnAligns,
     columnWidths,
+    footerNote,
   } = options
 
   // Create PDF document (A4 size)
@@ -144,6 +148,18 @@ export function exportToPDF(options: PDFExportOptions): void {
   doc.setFont('helvetica', 'bold')
   doc.text(normalizeVietnamese(title), pageWidth / 2, yPos, { align: 'center' })
   yPos += 7
+
+  // Subtitle (e.g., bank name, account number)
+  if (subtitle) {
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    const subtitleLines = subtitle.split('\n')
+    subtitleLines.forEach(line => {
+      doc.text(normalizeVietnamese(line), pageWidth / 2, yPos, { align: 'center' })
+      yPos += 5
+    })
+    yPos += 2
+  }
 
   // Period
   doc.setFontSize(11)
@@ -260,6 +276,16 @@ export function exportToPDF(options: PDFExportOptions): void {
         marginLeft,
         pageHeight - 10
       )
+
+      // Footer note (center, e.g., "Mẫu số S7-HKD")
+      if (footerNote) {
+        doc.text(
+          normalizeVietnamese(footerNote),
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        )
+      }
     },
   })
 

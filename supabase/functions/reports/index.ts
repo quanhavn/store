@@ -460,37 +460,71 @@ serve(async (req: Request) => {
       case 'bank_book': {
         const { date_from, date_to, bank_account_id } = body
 
-        let query = supabase
-          .from('bank_book')
-          .select('*, bank_accounts(bank_name, account_number)')
-          .eq('store_id', store_id)
-          .gte('transaction_date', date_from)
-          .lte('transaction_date', date_to)
-          .order('created_at')
-
-        if (bank_account_id) {
-          query = query.eq('bank_account_id', bank_account_id)
+        if (!bank_account_id) {
+          return errorResponse('bank_account_id is required', 400)
         }
 
-        const { data: transactions } = await query
+        const { data: bankAccount } = await supabase
+          .from('bank_accounts')
+          .select('id, bank_name, account_number, account_name')
+          .eq('id', bank_account_id)
+          .eq('store_id', store_id)
+          .single()
 
-        const entries = (transactions || []).map((t, index) => ({
-          stt: index + 1,
-          date: t.transaction_date,
-          bank_name: (t.bank_accounts as { bank_name: string })?.bank_name,
-          account_number: (t.bank_accounts as { account_number: string })?.account_number,
-          description: t.description,
-          debit: t.debit,
-          credit: t.credit,
-          bank_ref: t.bank_ref,
-        }))
+        if (!bankAccount) {
+          return errorResponse('Bank account not found', 404)
+        }
+
+        const { data: openingTxns } = await supabase
+          .from('bank_book')
+          .select('debit, credit')
+          .eq('store_id', store_id)
+          .eq('bank_account_id', bank_account_id)
+          .lt('transaction_date', date_from)
+
+        const opening_balance = (openingTxns || []).reduce(
+          (sum, t) => sum + (t.debit || 0) - (t.credit || 0),
+          0
+        )
+
+        const { data: transactions } = await supabase
+          .from('bank_book')
+          .select('*')
+          .eq('store_id', store_id)
+          .eq('bank_account_id', bank_account_id)
+          .gte('transaction_date', date_from)
+          .lte('transaction_date', date_to)
+          .order('transaction_date')
+          .order('created_at')
+
+        let runningBalance = opening_balance
+        const entries = (transactions || []).map((t, index) => {
+          runningBalance = runningBalance + (t.debit || 0) - (t.credit || 0)
+          return {
+            stt: index + 1,
+            record_date: t.transaction_date,
+            voucher_no: t.voucher_no,
+            voucher_date: t.transaction_date,
+            description: t.description,
+            debit: t.debit || 0,
+            credit: t.credit || 0,
+            balance: runningBalance,
+            note: t.bank_ref,
+          }
+        })
+
+        const total_debit = entries.reduce((sum, e) => sum + e.debit, 0)
+        const total_credit = entries.reduce((sum, e) => sum + e.credit, 0)
 
         return successResponse({
           period: { from: date_from, to: date_to },
+          bank_account: bankAccount,
+          opening_balance,
           entries,
           totals: {
-            total_debit: entries.reduce((sum, e) => sum + e.debit, 0),
-            total_credit: entries.reduce((sum, e) => sum + e.credit, 0),
+            total_debit,
+            total_credit,
+            closing_balance: opening_balance + total_debit - total_credit,
           },
         })
       }

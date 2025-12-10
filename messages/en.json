@@ -698,7 +698,8 @@
     "confirmBankOut": "Confirm Withdrawal",
     "bankReference": "Bank reference",
     "accountCount": "{count} accounts",
-    "addFirstExpense": "Add first expense"
+    "addFirstExpense": "Add first expense",
+    "selectBankAccount": "Select bank account"
   },
   "reports": {
     "title": "Reports",
@@ -735,7 +736,33 @@
     "salesReport": "Sales Report",
     "financeReport": "Finance Report",
     "totalIn": "Total In",
-    "totalOut": "Total Out"
+    "totalOut": "Total Out",
+    "bankBook": {
+      "title": "BANK DEPOSIT BOOK",
+      "templateCode": "Form S7-HKD",
+      "recordDate": "Record Date",
+      "voucherNo": "Voucher No.",
+      "voucherDate": "Voucher Date",
+      "description": "Description",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "balance": "Balance",
+      "note": "Note",
+      "openingBalance": "Opening Balance",
+      "totalMovement": "Total Movement",
+      "closingBalance": "Closing Balance",
+      "bankLocation": "Bank Location",
+      "accountNumber": "Account Number",
+      "unit": "Unit",
+      "unitVND": "VND",
+      "selectAccountPrompt": "Please select a bank account to view the book",
+      "noTransactions": "No transactions in this period",
+      "preparedBy": "Prepared by",
+      "signName": "(Sign, Full name)",
+      "dateSignature": "Date ... Month ... Year ...",
+      "businessOwner": "Business Owner/Individual",
+      "signNameStamp": "(Sign, Full name, Stamp)"
+    }
   },
   "pos": {
     "title": "Point of Sale",

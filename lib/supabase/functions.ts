@@ -819,19 +819,28 @@ export interface CashBookReport {
 
 export interface BankBookReport {
   period: { from: string; to: string }
-  entries: Array<{
-    stt: number
-    date: string
+  bank_account?: {
+    id: string
     bank_name: string
     account_number: string
+    account_name: string
+  }
+  opening_balance: number
+  entries: Array<{
+    stt: number
+    record_date: string
+    voucher_no: string | null
+    voucher_date: string
     description: string
     debit: number
     credit: number
-    bank_ref: string | null
+    balance: number
+    note?: string
   }>
   totals: {
     total_debit: number
     total_credit: number
+    closing_balance: number
   }
 }
 

@@ -693,7 +693,8 @@
     "confirmBankOut": "Xác nhận rút tiền",
     "bankReference": "Mã giao dịch ngân hàng",
     "accountCount": "{count} tài khoản",
-    "addFirstExpense": "Thêm chi phí đầu tiên"
+    "addFirstExpense": "Thêm chi phí đầu tiên",
+    "selectBankAccount": "Chọn tài khoản ngân hàng"
   },
   "reports": {
     "title": "Báo cáo",
@@ -733,7 +734,33 @@
     "salesReport": "Báo cáo bán hàng",
     "financeReport": "Báo cáo tài chính",
     "totalIn": "Tổng nhập",
-    "totalOut": "Tổng xuất"
+    "totalOut": "Tổng xuất",
+    "bankBook": {
+      "title": "SỔ TIỀN GỬI NGÂN HÀNG",
+      "templateCode": "Mẫu số S7-HKD",
+      "recordDate": "Ghi sổ",
+      "voucherNo": "Số hiệu",
+      "voucherDate": "Ngày CT",
+      "description": "Diễn giải",
+      "deposit": "Thu (Gửi vào)",
+      "withdraw": "Chi (Rút ra)",
+      "balance": "Còn lại",
+      "note": "Ghi chú",
+      "openingBalance": "Số dư đầu kỳ",
+      "totalMovement": "Cộng số phát sinh trong kỳ",
+      "closingBalance": "Số dư cuối kỳ",
+      "bankLocation": "Nơi mở tài khoản giao dịch",
+      "accountNumber": "Số hiệu tài khoản tại nơi gửi",
+      "unit": "ĐVT",
+      "unitVND": "Đồng",
+      "selectAccountPrompt": "Vui lòng chọn tài khoản ngân hàng để xem sổ",
+      "noTransactions": "Không có giao dịch trong kỳ",
+      "preparedBy": "Người lập biểu",
+      "signName": "(Ký, họ tên)",
+      "dateSignature": "Ngày … tháng … năm …",
+      "businessOwner": "Người đại diện hộ kinh doanh/cá nhân kinh doanh",
+      "signNameStamp": "(Ký, họ tên, đóng dấu)"
+    }
   },
   "pos": {
     "title": "Bán hàng",
