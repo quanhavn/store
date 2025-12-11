@@ -158,37 +158,48 @@ export function StockAdjustment() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      for (const item of adjustmentItems) {
-        const baseQuantity = item.conversion_rate 
-          ? Math.round(item.adjustment_quantity * item.conversion_rate) 
-          : item.adjustment_quantity
-        
-        if (adjustmentType === 'import') {
-          await api.inventory.import({
+      if (adjustmentType === 'import') {
+        const items = adjustmentItems.map(item => {
+          const baseQuantity = item.conversion_rate 
+            ? Math.round(item.adjustment_quantity * item.conversion_rate) 
+            : item.adjustment_quantity
+          return {
             product_id: item.product_id,
             variant_id: item.variant_id,
             quantity: baseQuantity,
             unit_cost: item.unit_cost ?? undefined,
-            note: item.note || adjustmentNote,
-            record_expense: (item.unit_cost ?? 0) > 0,
-            payment_method: paymentMethod,
-            bank_account_id: paymentMethod === 'bank_transfer' ? bankAccountId || undefined : undefined,
-            supplier_name: supplierName || undefined,
-          })
-        } else if (adjustmentType === 'export') {
-          await api.inventory.export({
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: baseQuantity,
-            note: item.note || adjustmentNote,
-          })
-        } else {
-          await api.inventory.adjust({
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            new_quantity: item.current_quantity + baseQuantity,
-            note: item.note || adjustmentNote,
-          })
+          }
+        })
+        
+        await api.inventory.batchImport({
+          items,
+          note: adjustmentNote || undefined,
+          record_expense: getTotalValue() > 0,
+          payment_method: paymentMethod,
+          bank_account_id: paymentMethod === 'bank_transfer' ? bankAccountId || undefined : undefined,
+          supplier_name: supplierName || undefined,
+        })
+      } else {
+        for (const item of adjustmentItems) {
+          const baseQuantity = item.conversion_rate 
+            ? Math.round(item.adjustment_quantity * item.conversion_rate) 
+            : item.adjustment_quantity
+          
+          if (adjustmentType === 'export') {
+            await api.inventory.export({
+              product_id: item.product_id,
+              variant_id: item.variant_id,
+              quantity: baseQuantity,
+              note: item.note || adjustmentNote,
+            })
+          } else {
+            await api.inventory.adjust({
+              product_id: item.product_id,
+              variant_id: item.variant_id,
+              new_quantity: item.current_quantity + baseQuantity,
+              note: item.note || adjustmentNote,
+            })
+          }
         }
       }
       return true

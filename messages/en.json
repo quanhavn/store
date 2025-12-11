@@ -1315,5 +1315,28 @@
     "using": "Using",
     "notUsing": "Not using",
     "completeSetup": "Complete Setup"
+  },
+  "orders": {
+    "orderDetail": "Order Details",
+    "orderNumber": "Order Number",
+    "orderNotFound": "Order not found",
+    "orderItems": "Order Items",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusPending": "Pending",
+    "statusRefunded": "Refunded",
+    "customerInfo": "Customer Info",
+    "customerName": "Customer Name",
+    "customerPhone": "Phone",
+    "taxCode": "Tax Code",
+    "product": "Product",
+    "qty": "Qty",
+    "price": "Price",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "vatAmount": "VAT",
+    "discount": "Discount",
+    "grandTotal": "Grand Total",
+    "paymentInfo": "Payment Info"
   }
 }

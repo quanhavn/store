@@ -21,6 +21,23 @@ interface ImportStockRequest {
   supplier_name?: string
 }
 
+interface BatchImportItem {
+  product_id: string
+  variant_id?: string
+  quantity: number
+  unit_cost?: number
+}
+
+interface BatchImportStockRequest {
+  action: 'batch_import'
+  items: BatchImportItem[]
+  note?: string
+  record_expense?: boolean
+  payment_method?: 'cash' | 'bank_transfer'
+  bank_account_id?: string
+  supplier_name?: string
+}
+
 interface ExportStockRequest {
   action: 'export'
   product_id: string
@@ -99,6 +116,7 @@ interface CancelStockCheckRequest {
 
 type InventoryRequest =
   | ImportStockRequest
+  | BatchImportStockRequest
   | ExportStockRequest
   | AdjustStockRequest
   | GetLogsRequest
@@ -159,6 +177,49 @@ serve(async (req: Request) => {
         return successResponse({ 
           log: { id: result.inventory_log_id },
           new_quantity: result.new_quantity,
+          success: result.success
+        })
+      }
+
+      case 'batch_import': {
+        const { 
+          items,
+          note, 
+          record_expense = false,
+          payment_method = 'cash',
+          bank_account_id,
+          supplier_name
+        } = body
+
+        // Transform items to the format expected by the RPC
+        const rpcItems = items.map(item => ({
+          product_id: item.product_id,
+          variant_id: item.variant_id || null,
+          quantity: item.quantity,
+          unit_cost: item.unit_cost || 0,
+        }))
+
+        // Use RPC for atomic batch transaction with single finance entry
+        const { data: result, error: rpcError } = await supabase.rpc('batch_import_stock', {
+          p_store_id: store_id,
+          p_user_id: user.id,
+          p_items: rpcItems,
+          p_note: note || null,
+          p_record_expense: record_expense,
+          p_payment_method: payment_method,
+          p_bank_account_id: bank_account_id || null,
+          p_supplier_name: supplier_name || null,
+        })
+
+        if (rpcError) {
+          console.error('RPC error:', rpcError)
+          return errorResponse(rpcError.message || 'Lỗi nhập kho', 400)
+        }
+
+        return successResponse({ 
+          batch_id: result.batch_id,
+          total_cost: result.total_cost,
+          items: result.items,
           success: result.success
         })
       }

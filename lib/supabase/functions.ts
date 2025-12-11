@@ -127,6 +127,31 @@ export const api = {
         new_quantity: number
         success?: boolean
       }>('inventory', { action: 'import', ...data }),
+    batchImport: (data: {
+      items: Array<{
+        product_id: string
+        variant_id?: string
+        quantity: number
+        unit_cost?: number
+      }>
+      note?: string
+      record_expense?: boolean
+      payment_method?: 'cash' | 'bank_transfer'
+      bank_account_id?: string
+      supplier_name?: string
+    }) =>
+      callFunction<{
+        batch_id: string
+        total_cost: number
+        items: Array<{
+          product_id: string
+          variant_id?: string
+          quantity: number
+          new_quantity: number
+          inventory_log_id: string
+        }>
+        success: boolean
+      }>('inventory', { action: 'batch_import', ...data }),
     export: (data: { product_id: string; variant_id?: string; quantity: number; note?: string }) =>
       callFunction<{ log: InventoryLog; new_quantity: number; success?: boolean }>('inventory', { action: 'export', ...data }),
     adjust: (data: { product_id: string; variant_id?: string; new_quantity: number; note?: string }) =>
@@ -167,7 +192,9 @@ export const api = {
       note?: string
     }) => callFunction<{ sale: Database['public']['Tables']['sales']['Row']; invoice_no: string }>('pos/create-sale', data),
     getSale: (id: string) =>
-      callFunction<{ sale: Database['public']['Tables']['sales']['Row'] & { items: Database['public']['Tables']['sale_items']['Row'][]; payments: Database['public']['Tables']['payments']['Row'][] } }>('pos/get-sale', { id }),
+      callFunction<{ sale: SaleWithDetails }>('pos', { action: 'get', id }),
+    listSales: (params: { page?: number; limit?: number; status?: string; date_from?: string; date_to?: string }) =>
+      callFunction<{ sales: SaleWithDetails[]; pagination: Pagination }>('pos', { action: 'list', ...params }),
   },
 
   finance: {
@@ -1044,6 +1071,54 @@ export interface InvoiceDetail extends Invoice {
       total: number
     }>
   } | null
+}
+
+// Sale types with details
+export interface SaleItem {
+  id: string
+  sale_id: string
+  product_id: string
+  product_name: string
+  quantity: number
+  unit_price: number
+  vat_rate: number
+  vat_amount: number
+  discount: number
+  total: number
+  variant_id?: string
+  variant_name?: string
+  unit_id?: string
+  unit_name?: string
+}
+
+export interface SalePayment {
+  id: string
+  sale_id: string
+  method: 'cash' | 'bank_transfer' | 'momo' | 'zalopay' | 'vnpay'
+  amount: number
+  bank_account_id?: string
+  bank_ref?: string
+  paid_at: string
+}
+
+export interface SaleWithDetails {
+  id: string
+  store_id: string
+  user_id: string
+  invoice_no: string
+  subtotal: number
+  vat_amount: number
+  discount: number
+  total: number
+  status: 'pending' | 'completed' | 'cancelled' | 'refunded'
+  customer_name?: string
+  customer_phone?: string
+  customer_tax_code?: string
+  note?: string
+  created_at: string
+  completed_at?: string
+  sale_items: SaleItem[]
+  payments: SalePayment[]
 }
 
 // Product Units and Variants types

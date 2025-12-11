@@ -138,7 +138,7 @@ export function CreateInvoiceSheet({ saleId, open, onClose, onSuccess }: CreateI
               </div>
 
               <Table
-                dataSource={sale.items}
+                dataSource={sale.sale_items}
                 columns={itemColumns}
                 rowKey="product_id"
                 pagination={false}

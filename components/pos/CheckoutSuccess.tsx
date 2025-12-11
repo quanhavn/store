@@ -20,6 +20,7 @@ export interface InvoiceItem {
 }
 
 export interface InvoiceData {
+  saleId?: string
   invoiceNo: string
   total: number
   subtotal: number
@@ -39,6 +40,7 @@ interface CheckoutSuccessProps {
   onNewSale: () => void
   onPrint?: () => void
   onShare?: () => void
+  onViewDetails?: () => void
 }
 
 function formatCurrency(amount: number): string {
@@ -114,6 +116,7 @@ export function CheckoutSuccess({
   onNewSale,
   onPrint,
   onShare,
+  onViewDetails,
 }: CheckoutSuccessProps) {
   const t = useTranslations('pos')
   const tCommon = useTranslations('common')
@@ -246,6 +249,16 @@ export function CheckoutSuccess({
 
         {/* Action Buttons - hidden when printing */}
         <div className="max-w-md mx-auto mt-4 space-y-3 no-print">
+          {onViewDetails && (
+            <Button
+              icon={<CheckCircleFilled />}
+              size="large"
+              block
+              onClick={onViewDetails}
+            >
+              {tCommon('viewDetails')}
+            </Button>
+          )}
           {onPrint && (
             <Button
               icon={<PrinterOutlined />}

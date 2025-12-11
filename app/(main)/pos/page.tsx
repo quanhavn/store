@@ -14,6 +14,7 @@ import { MultiOrderCartSheet } from '@/components/pos/MultiOrderCartSheet'
 import { PaymentMethods, type PaymentInfo, type DebtInfo, type DebtPaymentInfo } from '@/components/pos/PaymentMethods'
 import { CustomerQuickAdd } from '@/components/customers'
 import { CheckoutSuccess, type InvoiceData } from '@/components/pos/CheckoutSuccess'
+import { OrderDetailScreen } from '@/components/orders'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 import { VariantSelectorModal, type ProductWithVariants, type ProductVariant } from '@/components/pos/VariantSelectorModal'
 import { UnitSelectorModal, type ProductWithUnits, type ProductUnit as ModalProductUnit } from '@/components/pos/UnitSelectorModal'
@@ -71,6 +72,7 @@ export default function POSPage() {
   const [step, setStep] = useState<CheckoutStep>('pos')
   const [cartOpen, setCartOpen] = useState(false)
   const [completedSale, setCompletedSale] = useState<InvoiceData>()
+  const [orderDetailOpen, setOrderDetailOpen] = useState(false)
   const [showCustomerQuickAdd, setShowCustomerQuickAdd] = useState(false)
   const [variantModalOpen, setVariantModalOpen] = useState(false)
   const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null)
@@ -306,6 +308,7 @@ export default function POSPage() {
       })
 
       return {
+        sale_id: result.sale.id,
         invoice_no: result.invoice_no,
         total: orderSnapshot.total,
         offline: false,
@@ -317,6 +320,7 @@ export default function POSPage() {
     onSuccess: (data) => {
       const store = storeData?.store
       const invoiceData: InvoiceData = {
+        saleId: data.sale_id,
         invoiceNo: data.invoice_no,
         total: data.orderSnapshot.total,
         subtotal: data.orderSnapshot.subtotal,
@@ -502,11 +506,19 @@ export default function POSPage() {
 
   if (step === 'success' && completedSale) {
     return (
-      <CheckoutSuccess
-        invoiceData={completedSale}
-        onNewSale={handleNewSale}
-        onPrint={() => window.print()}
-      />
+      <>
+        <CheckoutSuccess
+          invoiceData={completedSale}
+          onNewSale={handleNewSale}
+          onPrint={() => window.print()}
+          onViewDetails={completedSale.saleId ? () => setOrderDetailOpen(true) : undefined}
+        />
+        <OrderDetailScreen
+          saleId={completedSale.saleId || null}
+          open={orderDetailOpen}
+          onClose={() => setOrderDetailOpen(false)}
+        />
+      </>
     )
   }
 

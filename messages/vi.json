@@ -1342,5 +1342,28 @@
     "using": "Có sử dụng",
     "notUsing": "Không sử dụng",
     "completeSetup": "Hoàn tất thiết lập"
+  },
+  "orders": {
+    "orderDetail": "Chi tiết đơn hàng",
+    "orderNumber": "Số đơn hàng",
+    "orderNotFound": "Không tìm thấy đơn hàng",
+    "orderItems": "Sản phẩm trong đơn",
+    "statusCompleted": "Hoàn thành",
+    "statusCancelled": "Đã hủy",
+    "statusPending": "Chờ xử lý",
+    "statusRefunded": "Đã hoàn tiền",
+    "customerInfo": "Thông tin khách hàng",
+    "customerName": "Tên khách hàng",
+    "customerPhone": "Số điện thoại",
+    "taxCode": "Mã số thuế",
+    "product": "Sản phẩm",
+    "qty": "SL",
+    "price": "Đơn giá",
+    "total": "Thành tiền",
+    "subtotal": "Tạm tính",
+    "vatAmount": "Thuế GTGT",
+    "discount": "Giảm giá",
+    "grandTotal": "Tổng cộng",
+    "paymentInfo": "Thông tin thanh toán"
   }
 }
