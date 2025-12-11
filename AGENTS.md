@@ -114,7 +114,7 @@ store-management-pwa/
 - Validate: starts with 03, 05, 07, 08, 09
 
 ### Tax Code (MST)
-- Individual: 10 digits
+- Individual: 10 digits (legacy) or 12 digits (CCCD-based, per Circular 86/2024/TT-BTC)
 - Business: 13 digits (10 + 3 branch code)
 
 ## Environment Variables

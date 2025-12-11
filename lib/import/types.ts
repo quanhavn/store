@@ -1,5 +1,7 @@
 // CSV Import Types and Interfaces
 
+import { TAX_CODE_REGEX } from '@/lib/utils/vietnamese-validation'
+
 export type ImportEntityType = 'category' | 'customer' | 'product' | 'employee'
 
 export interface CSVColumn {
@@ -86,8 +88,8 @@ export const CUSTOMER_FIELDS: FieldDefinition[] = [
     labelVi: 'Mã số thuế',
     required: false,
     type: 'string',
-    pattern: /^\d{10}(\d{3})?$/,
-    patternMessage: 'Mã số thuế phải có 10 hoặc 13 số'
+    pattern: TAX_CODE_REGEX,
+    patternMessage: 'Mã số thuế phải có 10, 12 hoặc 13 số'
   },
   { key: 'notes', label: 'Notes', labelVi: 'Ghi chú', required: false, type: 'string' },
 ]

@@ -167,14 +167,14 @@ export function EInvoiceSettingsForm() {
             rules={[
               { required: true, message: t('eInvoice.taxCodeRequired') },
               {
-                pattern: /^[0-9]{10,13}$/,
+                pattern: /^[0-9]{10}([0-9]{2,3})?$/,
                 message: t('eInvoice.taxCodeInvalid'),
               },
             ]}
           >
             <Input
               placeholder={t('eInvoice.taxCodePlaceholder')}
-              maxLength={13}
+              maxLength={14}
             />
           </Form.Item>
 

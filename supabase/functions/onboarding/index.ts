@@ -26,11 +26,12 @@ function validateVietnamesePhone(phone: string): boolean {
 }
 
 // Validate Vietnamese tax code (MST)
+// - Individual: 10 digits (legacy) or 12 digits (CCCD-based, per Circular 86/2024/TT-BTC)
+// - Business: 13 digits (10 digits + 3-digit branch code)
 function validateTaxCode(taxCode: string): boolean {
   if (!taxCode) return true // Optional field
   const cleanCode = taxCode.replace(/[^0-9]/g, '')
-  // Individual: 10 digits, Business: 13 digits (10 + 3 branch code)
-  return cleanCode.length === 10 || cleanCode.length === 13
+  return cleanCode.length === 10 || cleanCode.length === 12 || cleanCode.length === 13
 }
 
 serve(async (req) => {
@@ -66,7 +67,7 @@ serve(async (req) => {
 
     // Validate tax code if provided
     if (data.tax_code && !validateTaxCode(data.tax_code)) {
-      return errorResponse('Invalid tax code. Must be 10 digits (individual) or 13 digits (business)', 400)
+      return errorResponse('Invalid tax code. Must be 10, 12, or 13 digits', 400)
     }
 
     // Validate email format if provided

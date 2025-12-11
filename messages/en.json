@@ -260,7 +260,7 @@
     "address": "Address",
     "addressPlaceholder": "123 ABC Street, XYZ Ward, District 1, HCMC",
     "taxCode": "Tax code",
-    "taxCodeInvalid": "Tax code must be 10 or 13 digits",
+    "taxCodeInvalid": "Tax code must be 10, 12, or 13 digits",
     "language": "Language",
     "selectLanguage": "Select language",
     "vietnamese": "Vietnamese",
@@ -284,7 +284,7 @@
       "taxCode": "Tax code",
       "taxCodePlaceholder": "e.g. 0102345678",
       "taxCodeRequired": "Please enter tax code",
-      "taxCodeInvalid": "Tax code must be 10-13 digits",
+      "taxCodeInvalid": "Tax code must be 10, 12, or 13 digits",
       "templateCode": "Invoice template code",
       "templateCodePlaceholder": "e.g. 1/001",
       "templateCodeRequired": "Please enter template code",
@@ -996,7 +996,7 @@
     "nextPage": "Next",
     "validation": {
       "buyerNameRequired": "Please enter buyer name",
-      "taxCodeInvalid": "Tax code must be 10 or 13 digits",
+      "taxCodeInvalid": "Tax code must be 10, 12, or 13 digits",
       "phoneInvalid": "Invalid phone number",
       "emailInvalid": "Invalid email"
     }

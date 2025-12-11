@@ -152,7 +152,7 @@ export function StoreInfoForm() {
             name="tax_code"
             label={t('taxCode')}
             rules={[
-              { pattern: /^[0-9]{10}([0-9]{3})?$/, message: t('taxCodeInvalid') },
+              { pattern: /^[0-9]{10}([0-9]{2,3})?$/, message: t('taxCodeInvalid') },
             ]}
           >
             <Input prefix={<IdcardOutlined />} placeholder="0123456789" />

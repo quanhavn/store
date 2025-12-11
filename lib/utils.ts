@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { isValidTaxCode } from './utils/vietnamese-validation'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -42,13 +43,11 @@ export function validateVietnamesePhone(phone: string): boolean {
 
 /**
  * Validates Vietnamese tax code (MST)
- * - 10 digits: Legacy individual tax code
- * - 12 digits: CCCD-based individual tax code (per Circular 86/2024/TT-BTC)
- * - 13 digits: Business with branch code
+ * Delegates to isValidTaxCode from vietnamese-validation.ts
+ * @see isValidTaxCode
  */
 export function validateTaxCode(taxCode: string): boolean {
-  const cleaned = taxCode.replace(/\D/g, '')
-  return cleaned.length === 10 || cleaned.length === 12 || cleaned.length === 13
+  return isValidTaxCode(taxCode)
 }
 
 export function formatDate(date: Date | string): string {

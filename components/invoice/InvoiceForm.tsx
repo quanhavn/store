@@ -30,8 +30,7 @@ export function InvoiceForm({ initialValues, onSubmit, loading, submitText }: In
     if (!value || value.trim() === '') {
       return Promise.resolve()
     }
-    const cleaned = value.replace(/\D/g, '')
-    if (cleaned.length !== 10 && cleaned.length !== 13) {
+    if (!validateTaxCode(value)) {
       return Promise.reject(new Error(t('validation.taxCodeInvalid')))
     }
     return Promise.resolve()
