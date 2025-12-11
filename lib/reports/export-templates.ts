@@ -2,6 +2,7 @@ import {
   exportToExcel,
   formatCurrencyForExcel,
   formatDateForExcel,
+  formatShortDateForExcel,
 } from './export-excel'
 import type {
   RevenueBookReport,
@@ -154,51 +155,106 @@ export function exportRevenueBook(
 }
 
 /**
- * Export Cash Book (So Tien Mat) to Excel
+ * Export Cash Book (Sổ Quỹ Tiền Mặt - Mẫu S6-HKD) to Excel
+ * Following Vietnamese Tax 2026 format with 3-row header structure
  */
 export function exportCashBook(
   data: CashBookReport,
   storeName: string,
   period: string
 ): void {
-  const headers = [
-    'STT',
-    'Ngày',
-    'Dien giai',
-    'Thu',
-    'Chi',
-    'Ton quy',
-  ]
+  const XLSX = require('xlsx')
 
-  const rows = data.entries.map(entry => [
-    entry.stt,
-    formatDateForExcel(entry.date),
-    entry.description,
-    entry.debit > 0 ? formatCurrencyForExcel(entry.debit) : '',
-    entry.credit > 0 ? formatCurrencyForExcel(entry.credit) : '',
-    formatCurrencyForExcel(entry.balance),
+  const workbook = XLSX.utils.book_new()
+  const rows: (string | number | null | undefined)[][] = []
+
+  rows.push([`HỘ, CÁ NHÂN KINH DOANH: ${storeName}`])
+  rows.push([`Địa chỉ: `])
+  rows.push([])
+  rows.push([])
+  rows.push(['SỔ QUỸ TIỀN MẶT'])
+  rows.push(['Loại quỹ: Tiền mặt'])
+  rows.push(['', '', '', '', '', '', '', '', 'ĐVT: Đồng'])
+  rows.push([])
+
+  const headerRow1Start = rows.length
+  rows.push([
+    'GHI SỔ',
+    'CHỨNG TỪ', '',
+    'DIỄN GIẢI',
+    'SỐ TIỀN', '', '',
+    'GHI CHÚ'
   ])
+  rows.push([
+    '', 'SỐ HIỆU', 'NGÀY, THÁNG', '', 'THU', 'CHI', 'TỒN', ''
+  ])
+  rows.push(['A', 'B', 'C', 'D', '1', '2', '3', 'E'])
 
-  const totals = [
-    'TONG CONG',
-    '',
-    '',
-    formatCurrencyForExcel(data.totals.total_debit),
-    formatCurrencyForExcel(data.totals.total_credit),
-    formatCurrencyForExcel(data.totals.closing_balance),
+  rows.push(['', '', '', '- Số dư đầu kỳ', '', '', formatCurrencyForExcel(data.opening_balance || 0), ''])
+  rows.push(['', '', '', '- Số phát sinh trong kỳ', '', '', '', ''])
+
+  data.entries.forEach(entry => {
+    const voucherNo = entry.voucher_no_in || entry.voucher_no_out || ''
+    rows.push([
+      entry.record_date ? formatShortDateForExcel(entry.record_date) : '',
+      voucherNo,
+      entry.voucher_date ? formatShortDateForExcel(entry.voucher_date) : '',
+      entry.description,
+      entry.debit > 0 ? formatCurrencyForExcel(entry.debit) : '',
+      entry.credit > 0 ? formatCurrencyForExcel(entry.credit) : '',
+      formatCurrencyForExcel(entry.balance),
+      entry.note || '',
+    ])
+  })
+
+  rows.push(['', '', '', '- Cộng số phát sinh trong kỳ', formatCurrencyForExcel(data.totals.total_debit), formatCurrencyForExcel(data.totals.total_credit), '', ''])
+  rows.push(['', '', '', '- Số dư cuối kỳ', '', '', formatCurrencyForExcel(data.totals.closing_balance), ''])
+
+  rows.push([])
+  rows.push(['- Sổ này có ... trang, đánh số từ trang 01 đến trang ...'])
+  rows.push(['- Ngày mở sổ: ...'])
+  rows.push([])
+  rows.push([])
+
+  const signatureRow = rows.length
+  rows.push(['Người lập biểu', '', '', '', '', 'Ngày ... tháng ... năm ...'])
+  rows.push(['(Ký, họ tên)', '', '', '', '', 'Người đại diện HKD/Cá nhân KD'])
+  rows.push(['', '', '', '', '', '(Ký, họ tên, đóng dấu)'])
+
+  const worksheet = XLSX.utils.aoa_to_sheet(rows)
+
+  worksheet['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+    { s: { r: 4, c: 0 }, e: { r: 4, c: 7 } },
+    { s: { r: 5, c: 0 }, e: { r: 5, c: 7 } },
+    { s: { r: headerRow1Start, c: 0 }, e: { r: headerRow1Start + 1, c: 0 } },
+    { s: { r: headerRow1Start, c: 1 }, e: { r: headerRow1Start, c: 2 } },
+    { s: { r: headerRow1Start, c: 3 }, e: { r: headerRow1Start + 1, c: 3 } },
+    { s: { r: headerRow1Start, c: 4 }, e: { r: headerRow1Start, c: 6 } },
+    { s: { r: headerRow1Start, c: 7 }, e: { r: headerRow1Start + 1, c: 7 } },
+    { s: { r: signatureRow, c: 0 }, e: { r: signatureRow, c: 2 } },
+    { s: { r: signatureRow, c: 5 }, e: { r: signatureRow, c: 7 } },
+    { s: { r: signatureRow + 1, c: 0 }, e: { r: signatureRow + 1, c: 2 } },
+    { s: { r: signatureRow + 1, c: 5 }, e: { r: signatureRow + 1, c: 7 } },
+    { s: { r: signatureRow + 2, c: 5 }, e: { r: signatureRow + 2, c: 7 } },
   ]
 
-  exportToExcel({
-    filename: `So_Tien_Mat_${period.replace(/\//g, '-')}`,
-    sheetName: 'So Tien Mat',
-    title: 'SO TIEN MAT',
-    storeName,
-    period,
-    headers,
-    data: rows,
-    totals,
-    columnWidths: [6, 12, 35, 15, 15, 15],
-  })
+  worksheet['!cols'] = [
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 35 },
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 12 },
+  ]
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Mẫu số S6-HKD')
+
+  const filename = `So_Quy_Tien_Mat_${period.replace(/\//g, '-')}.xlsx`
+  XLSX.writeFile(workbook, filename)
 }
 
 /**
@@ -218,25 +274,37 @@ export function exportBankBook(
   const workbook = XLSX.utils.book_new()
   const rows: (string | number | null | undefined)[][] = []
 
-  rows.push([storeName])
+  rows.push([`HỘ, CÁ NHÂN KINH DOANH: ${storeName}`])
+  rows.push([`Địa chỉ: `])
+  rows.push([])
+  rows.push([])
   rows.push(['SỔ TIỀN GỬI NGÂN HÀNG'])
   rows.push([`Nơi mở tài khoản giao dịch: ${bankName}`])
   rows.push([`Số hiệu tài khoản tại nơi gửi: ${accountNumber}`])
-  rows.push([`Kỳ: ${period}`, '', '', '', '', '', '', 'ĐVT: Đồng'])
+  rows.push(['', '', '', '', '', '', '', 'ĐVT: Đồng'])
   rows.push([])
 
   const headerRow1Start = rows.length
-  rows.push(['GHI SỔ', 'CHỨNG TỪ', '', 'DIỄN GIẢI', 'SỐ TIỀN', '', '', 'GHI CHÚ'])
-  rows.push(['', 'SỐ HIỆU', 'NGÀY, THÁNG', '', 'THU\n(GỬI VÀO)', 'CHI\n(RÚT RA)', 'CÒN LẠI', ''])
+  rows.push([
+    'GHI SỔ',
+    'CHỨNG TỪ', '',
+    'DIỄN GIẢI',
+    'SỐ TIỀN', '', '',
+    'GHI CHÚ'
+  ])
+  rows.push([
+    '', 'SỐ HIỆU', 'NGÀY, THÁNG', '', 'THU\n(GỬI VÀO)', 'CHI\n(RÚT RA)', 'CÒN LẠI', ''
+  ])
   rows.push(['A', 'B', 'C', 'D', '1', '2', '3', 'F'])
 
   rows.push(['', '', '', '- Số dư đầu kỳ', '', '', formatCurrencyForExcel(data.opening_balance), ''])
+  rows.push(['', '', '', '- Số phát sinh trong kỳ', '', '', '', ''])
 
   data.entries.forEach(entry => {
     rows.push([
-      entry.record_date ? formatDateForExcel(entry.record_date) : '',
+      entry.record_date ? formatShortDateForExcel(entry.record_date) : '',
       entry.voucher_no || '',
-      entry.voucher_date ? formatDateForExcel(entry.voucher_date) : '',
+      entry.voucher_date ? formatShortDateForExcel(entry.voucher_date) : '',
       entry.description,
       entry.debit > 0 ? formatCurrencyForExcel(entry.debit) : '',
       entry.credit > 0 ? formatCurrencyForExcel(entry.credit) : '',
@@ -246,28 +314,43 @@ export function exportBankBook(
   })
 
   rows.push(['', '', '', '- Cộng số phát sinh trong kỳ', formatCurrencyForExcel(data.totals.total_debit), formatCurrencyForExcel(data.totals.total_credit), '', ''])
-  rows.push(['', '', '', '- Số dư cuối kỳ', 'x', 'x', formatCurrencyForExcel(data.totals.closing_balance), 'x'])
+  rows.push(['', '', '', '- Số dư cuối kỳ', '', '', formatCurrencyForExcel(data.totals.closing_balance), ''])
 
   rows.push([])
+  rows.push(['- Sổ này có ... trang, đánh số từ trang 01 đến trang ...'])
+  rows.push(['- Ngày mở sổ: ...'])
   rows.push([])
-  rows.push(['Người lập biểu', '', '', '', '', 'Ngày ... tháng ... năm ...', '', ''])
-  rows.push(['(Ký, họ tên)', '', '', '', '', 'Người đại diện HKD/Cá nhân KD', '', ''])
-  rows.push(['', '', '', '', '', '(Ký, họ tên, đóng dấu)', '', ''])
+  rows.push([])
+
+  const signatureRow = rows.length
+  rows.push(['Người lập biểu', '', '', '', '', 'Ngày ... tháng ... năm ...'])
+  rows.push(['(Ký, họ tên)', '', '', '', '', 'Người đại diện HKD/Cá nhân KD'])
+  rows.push(['', '', '', '', '', '(Ký, họ tên, đóng dấu)'])
 
   const worksheet = XLSX.utils.aoa_to_sheet(rows)
 
   worksheet['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+    { s: { r: 4, c: 0 }, e: { r: 4, c: 7 } },
+    { s: { r: 5, c: 0 }, e: { r: 5, c: 7 } },
+    { s: { r: 6, c: 0 }, e: { r: 6, c: 7 } },
     { s: { r: headerRow1Start, c: 0 }, e: { r: headerRow1Start + 1, c: 0 } },
     { s: { r: headerRow1Start, c: 1 }, e: { r: headerRow1Start, c: 2 } },
     { s: { r: headerRow1Start, c: 3 }, e: { r: headerRow1Start + 1, c: 3 } },
     { s: { r: headerRow1Start, c: 4 }, e: { r: headerRow1Start, c: 6 } },
     { s: { r: headerRow1Start, c: 7 }, e: { r: headerRow1Start + 1, c: 7 } },
+    { s: { r: signatureRow, c: 0 }, e: { r: signatureRow, c: 2 } },
+    { s: { r: signatureRow, c: 5 }, e: { r: signatureRow, c: 7 } },
+    { s: { r: signatureRow + 1, c: 0 }, e: { r: signatureRow + 1, c: 2 } },
+    { s: { r: signatureRow + 1, c: 5 }, e: { r: signatureRow + 1, c: 7 } },
+    { s: { r: signatureRow + 2, c: 5 }, e: { r: signatureRow + 2, c: 7 } },
   ]
 
   worksheet['!cols'] = [
+    { wch: 10 },
+    { wch: 10 },
     { wch: 12 },
-    { wch: 12 },
-    { wch: 14 },
     { wch: 35 },
     { wch: 15 },
     { wch: 15 },
@@ -275,7 +358,7 @@ export function exportBankBook(
     { wch: 12 },
   ]
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'So Tien Gui NH')
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Mẫu số S7-HKD')
 
   const filename = `So_Tien_Gui_NH_${accountNumber}_${period.replace(/\//g, '-')}.xlsx`
   XLSX.writeFile(workbook, filename)

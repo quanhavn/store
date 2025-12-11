@@ -520,31 +520,54 @@ serve(async (req: Request) => {
       case 'cash_book': {
         const { date_from, date_to } = body
 
+        // Get opening balance from transactions before date_from
+        const { data: openingTxns } = await supabase
+          .from('cash_book')
+          .select('debit, credit')
+          .eq('store_id', store_id)
+          .lt('transaction_date', date_from)
+
+        const opening_balance = (openingTxns || []).reduce(
+          (sum, t) => sum + (t.debit || 0) - (t.credit || 0),
+          0
+        )
+
         const { data: transactions } = await supabase
           .from('cash_book')
           .select('*')
           .eq('store_id', store_id)
           .gte('transaction_date', date_from)
           .lte('transaction_date', date_to)
+          .order('transaction_date')
           .order('created_at')
 
-        const entries = (transactions || []).map((t, index) => ({
-          stt: index + 1,
-          date: t.transaction_date,
-          description: t.description,
-          debit: t.debit,
-          credit: t.credit,
-          balance: t.balance,
-          reference_type: t.reference_type,
-        }))
+        let runningBalance = opening_balance
+        const entries = (transactions || []).map((t, index) => {
+          runningBalance += (t.debit || 0) - (t.credit || 0)
+          const isIncome = t.debit > 0
+          return {
+            stt: index + 1,
+            record_date: t.transaction_date,
+            voucher_date: t.transaction_date,
+            voucher_no_in: isIncome ? t.voucher_no || `PT${String(index + 1).padStart(3, '0')}` : '',
+            voucher_no_out: !isIncome ? t.voucher_no || `PC${String(index + 1).padStart(3, '0')}` : '',
+            description: t.description,
+            debit: t.debit || 0,
+            credit: t.credit || 0,
+            balance: runningBalance,
+            note: '',
+            reference_type: t.reference_type,
+          }
+        })
 
         return successResponse({
           period: { from: date_from, to: date_to },
+          opening_balance,
           entries,
           totals: {
             total_debit: entries.reduce((sum, e) => sum + e.debit, 0),
             total_credit: entries.reduce((sum, e) => sum + e.credit, 0),
-            closing_balance: entries.length > 0 ? entries[entries.length - 1].balance : 0,
+            closing_balance: entries.length > 0 ? entries[entries.length - 1].balance : opening_balance,
           },
         })
       }

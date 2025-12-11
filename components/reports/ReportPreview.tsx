@@ -37,6 +37,8 @@ import {
 } from '@/lib/reports/inventory-book-detail'
 import { trackReportExported } from '@/lib/analytics'
 import { useTranslations } from 'next-intl'
+import { CashBookPreview } from './CashBookPreview'
+import { BankBookPreview } from './BankBookPreview'
 
 const { Title, Text } = Typography
 
@@ -118,8 +120,9 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         ]
       case 'cash':
         return [
-          { title: '#', dataIndex: 'stt', key: 'stt', width: 50 },
-          { title: tCommon('date'), dataIndex: 'date', key: 'date', width: 100 },
+          { title: t('recordDate'), dataIndex: 'record_date', key: 'record_date', width: 90 },
+          { title: t('voucherNo'), dataIndex: 'voucher_no_in', key: 'voucher_no', width: 80, render: (_: string, r: { voucher_no_in?: string; voucher_no_out?: string }) => r.voucher_no_in || r.voucher_no_out || '-' },
+          { title: t('voucherDate'), dataIndex: 'voucher_date', key: 'voucher_date', width: 90 },
           { title: tCommon('description'), dataIndex: 'description', key: 'description', ellipsis: true },
           {
             title: tFinance('income'),
@@ -306,7 +309,7 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
           await exportRevenueBookPDF(data as RevenueBookReport, storeInfo)
           break
         case 'cash':
-          exportCashBookPDF(data as CashBookReport, storeInfo)
+          await exportCashBookPDF(data as CashBookReport, storeInfo)
           break
         case 'bank':
           exportBankBookPDF(data as BankBookReport, storeInfo)
@@ -372,7 +375,11 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         </Text>
       </div>
 
-      {isLoading ? (
+      {reportType === 'cash' ? (
+        <CashBookPreview storeInfo={{ name: 'Cửa hàng' }} />
+      ) : reportType === 'bank' ? (
+        <BankBookPreview data={data as BankBookReport} storeName="Cửa hàng" />
+      ) : isLoading ? (
         <div className="flex justify-center py-8">
           <Spin size="large" />
         </div>

@@ -821,14 +821,19 @@ export interface RevenueBookReport {
 
 export interface CashBookReport {
   period: { from: string; to: string }
+  opening_balance: number
   entries: Array<{
     stt: number
-    date: string
+    record_date: string
+    voucher_date?: string
+    voucher_no_in?: string
+    voucher_no_out?: string
     description: string
     debit: number
     credit: number
     balance: number
-    reference_type: string | null
+    note?: string
+    reference_type?: string | null
   }>
   totals: {
     total_debit: number

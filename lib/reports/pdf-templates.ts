@@ -145,55 +145,167 @@ export async function exportRevenueBookPDF(
 }
 
 /**
- * 2. Cash Book (So Tien Mat)
- * Exports cash inflow/outflow with running balance
+ * 2. Cash Book (Sổ Quỹ Tiền Mặt - Mẫu S6-HKD)
+ * Exports cash inflow/outflow with running balance following Vietnam Tax 2026 format
  */
-export function exportCashBookPDF(
+export async function exportCashBookPDF(
   data: CashBookReport,
   storeInfo: StoreInfo
-): void {
-  const { entries, totals, period } = data
+): Promise<void> {
+  const { entries, totals, period, opening_balance } = data
 
-  const headers = [
-    'STT',
-    'Ngày',
-    'Dien giai',
-    'Thu (No)',
-    'Chi (Co)',
-    'Ton',
-  ]
+  const { loadVietnameseFonts, addVietnameseFonts } = await import('./pdf-fonts')
+  const jsPDF = (await import('jspdf')).default
+  const autoTable = (await import('jspdf-autotable')).default
 
-  const tableData = entries.map((entry) => [
-    entry.stt,
-    entry.date,
-    entry.description,
-    entry.debit,
-    entry.credit,
-    entry.balance,
-  ])
+  await loadVietnameseFonts()
 
-  const totalsRow = [
-    '',
-    '',
-    'TONG CONG',
-    totals.total_debit,
-    totals.total_credit,
-    totals.closing_balance,
-  ]
-
-  exportToPDF({
-    filename: `so-tien-mat-${period.from}-${period.to}`,
-    title: 'SO TIEN MAT',
-    storeName: storeInfo.name,
-    storeAddress: storeInfo.address,
-    storeTaxCode: storeInfo.taxCode,
-    period: `${period.from} - ${period.to}`,
-    headers,
-    data: tableData,
-    totals: totalsRow,
+  const doc = new jsPDF({
     orientation: 'portrait',
-    columnAligns: ['center', 'center', 'left', 'right', 'right', 'right'],
+    unit: 'mm',
+    format: 'a4',
   })
+
+  const hasVietnameseFont = addVietnameseFonts(doc)
+  const fontName = hasVietnameseFont ? 'Roboto' : 'helvetica'
+
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const marginLeft = 14
+  let yPos = 15
+
+  doc.setFontSize(11)
+  doc.setFont(fontName, 'bold')
+  doc.text(`HỘ, CÁ NHÂN KINH DOANH: ${storeInfo.name}`, marginLeft, yPos)
+  yPos += 5
+
+  if (storeInfo.address) {
+    doc.setFontSize(10)
+    doc.setFont(fontName, 'normal')
+    doc.text(`Địa chỉ: ${storeInfo.address}`, marginLeft, yPos)
+    yPos += 5
+  }
+
+  yPos += 8
+  doc.setFontSize(14)
+  doc.setFont(fontName, 'bold')
+  doc.text('SỔ QUỸ TIỀN MẶT', pageWidth / 2, yPos, { align: 'center' })
+  yPos += 6
+
+  doc.setFontSize(10)
+  doc.setFont(fontName, 'normal')
+  doc.text('Loại quỹ: Tiền mặt', pageWidth / 2, yPos, { align: 'center' })
+  yPos += 6
+
+  doc.setFontSize(9)
+  doc.text(`Kỳ: ${period.from} - ${period.to}`, marginLeft, yPos)
+  doc.text('ĐVT: Đồng', pageWidth - marginLeft, yPos, { align: 'right' })
+  yPos += 6
+
+  const formatAmount = (amount: number) => {
+    if (amount === 0) return '-'
+    return amount.toLocaleString('vi-VN')
+  }
+
+  const formatShortDate = (dateStr: string | undefined) => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      return `${day}/${month}`
+    } catch {
+      return dateStr
+    }
+  }
+
+  const tableBody: (string | number)[][] = []
+
+  tableBody.push(['', '', '', '- Số dư đầu kỳ', '', '', formatAmount(opening_balance || 0), ''])
+  tableBody.push(['', '', '', '- Số phát sinh trong kỳ', '', '', '', ''])
+
+  entries.forEach(entry => {
+    const voucherNo = entry.voucher_no_in || entry.voucher_no_out || ''
+    tableBody.push([
+      formatShortDate(entry.record_date),
+      voucherNo,
+      formatShortDate(entry.voucher_date),
+      entry.description,
+      entry.debit > 0 ? formatAmount(entry.debit) : '-',
+      entry.credit > 0 ? formatAmount(entry.credit) : '-',
+      formatAmount(entry.balance),
+      entry.note || '',
+    ])
+  })
+
+  tableBody.push(['', '', '', '- Cộng số phát sinh trong kỳ', formatAmount(totals.total_debit), formatAmount(totals.total_credit), '', ''])
+  tableBody.push(['', '', '', '- Số dư cuối kỳ', '', '', formatAmount(totals.closing_balance), ''])
+
+  autoTable(doc, {
+    startY: yPos,
+    head: [
+      [
+        { content: 'GHI SỔ', rowSpan: 2 },
+        { content: 'CHỨNG TỪ', colSpan: 2 },
+        { content: 'DIỄN GIẢI', rowSpan: 2 },
+        { content: 'SỐ TIỀN', colSpan: 3 },
+        { content: 'GHI CHÚ', rowSpan: 2 },
+      ],
+      [
+        { content: 'SỐ HIỆU' },
+        { content: 'NGÀY, THÁNG' },
+        { content: 'THU' },
+        { content: 'CHI' },
+        { content: 'TỒN' },
+      ],
+      ['A', 'B', 'C', 'D', '1', '2', '3', 'E'],
+    ],
+    body: tableBody,
+    styles: {
+      font: fontName,
+      fontSize: 8,
+      cellPadding: 1.5,
+      lineWidth: 0.1,
+      lineColor: [0, 0, 0],
+    },
+    headStyles: {
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      halign: 'center',
+      valign: 'middle',
+    },
+    columnStyles: {
+      0: { cellWidth: 18, halign: 'center' },
+      1: { cellWidth: 16, halign: 'center' },
+      2: { cellWidth: 18, halign: 'center' },
+      3: { cellWidth: 50 },
+      4: { cellWidth: 24, halign: 'right' },
+      5: { cellWidth: 24, halign: 'right' },
+      6: { cellWidth: 24, halign: 'right' },
+      7: { cellWidth: 16 },
+    },
+    theme: 'grid',
+  })
+
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15
+
+  doc.setFontSize(9)
+  doc.setFont(fontName, 'normal')
+  doc.text('- Sổ này có ... trang, đánh số từ trang 01 đến trang ...', marginLeft, finalY)
+  doc.text('- Ngày mở sổ: ...', marginLeft, finalY + 5)
+
+  doc.setFont(fontName, 'bold')
+  doc.text('Người lập biểu', marginLeft + 20, finalY + 20, { align: 'center' })
+  doc.setFont(fontName, 'normal')
+  doc.text('(Ký, họ tên)', marginLeft + 20, finalY + 26, { align: 'center' })
+
+  doc.text('Ngày ... tháng ... năm ...', pageWidth - 50, finalY + 15, { align: 'center' })
+  doc.setFont(fontName, 'bold')
+  doc.text('Người đại diện HKD/Cá nhân KD', pageWidth - 50, finalY + 20, { align: 'center' })
+  doc.setFont(fontName, 'normal')
+  doc.text('(Ký, họ tên, đóng dấu)', pageWidth - 50, finalY + 26, { align: 'center' })
+
+  doc.save(`so-quy-tien-mat-${period.from}-${period.to}.pdf`)
 }
 
 /**
@@ -217,7 +329,7 @@ export async function exportBankBookPDF(
   await loadVietnameseFonts()
 
   const doc = new jsPDF({
-    orientation: 'landscape',
+    orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   })
@@ -229,19 +341,19 @@ export async function exportBankBookPDF(
   const marginLeft = 14
   let yPos = 15
 
-  doc.setFontSize(12)
+  doc.setFontSize(11)
   doc.setFont(fontName, 'bold')
-  doc.text(storeInfo.name, pageWidth / 2, yPos, { align: 'center' })
+  doc.text(`HỘ, CÁ NHÂN KINH DOANH: ${storeInfo.name}`, marginLeft, yPos)
   yPos += 5
 
   if (storeInfo.address) {
     doc.setFontSize(10)
     doc.setFont(fontName, 'normal')
-    doc.text(storeInfo.address, pageWidth / 2, yPos, { align: 'center' })
-    yPos += 4
+    doc.text(`Địa chỉ: ${storeInfo.address}`, marginLeft, yPos)
+    yPos += 5
   }
 
-  yPos += 5
+  yPos += 8
   doc.setFontSize(14)
   doc.setFont(fontName, 'bold')
   doc.text('SỔ TIỀN GỬI NGÂN HÀNG', pageWidth / 2, yPos, { align: 'center' })
@@ -252,102 +364,116 @@ export async function exportBankBookPDF(
   doc.text(`Nơi mở tài khoản giao dịch: ${bankName}`, pageWidth / 2, yPos, { align: 'center' })
   yPos += 5
   doc.text(`Số hiệu tài khoản tại nơi gửi: ${accountNumber}`, pageWidth / 2, yPos, { align: 'center' })
-  yPos += 5
+  yPos += 6
   
   doc.setFontSize(9)
-  doc.text(`Kỳ: ${period.from} - ${period.to}`, pageWidth - marginLeft, yPos, { align: 'right' })
-  doc.text('ĐVT: Đồng', pageWidth - marginLeft, yPos + 4, { align: 'right' })
-  yPos += 8
+  doc.text(`Kỳ: ${period.from} - ${period.to}`, marginLeft, yPos)
+  doc.text('ĐVT: Đồng', pageWidth - marginLeft, yPos, { align: 'right' })
+  yPos += 6
 
-  const openingRow = ['', '', '', '- Số dư đầu kỳ', '', '', formatPDFCurrency(opening_balance), '']
+  const formatAmount = (amount: number) => {
+    if (amount === 0) return '-'
+    return amount.toLocaleString('vi-VN')
+  }
 
-  const tableData = entries.map((entry) => [
-    entry.record_date || '',
-    entry.voucher_no || '',
-    entry.voucher_date || '',
-    entry.description || '',
-    entry.debit > 0 ? formatPDFCurrency(entry.debit) : '',
-    entry.credit > 0 ? formatPDFCurrency(entry.credit) : '',
-    formatPDFCurrency(entry.balance),
-    entry.note || '',
-  ])
+  const formatShortDate = (dateStr: string | undefined) => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      return `${day}/${month}`
+    } catch {
+      return dateStr
+    }
+  }
 
-  const summaryRow = ['', '', '', '- Cộng số phát sinh trong kỳ', formatPDFCurrency(totals.total_debit), formatPDFCurrency(totals.total_credit), '', '']
-  const closingRow = ['', '', '', '- Số dư cuối kỳ', 'x', 'x', formatPDFCurrency(totals.closing_balance), 'x']
+  const tableBody: (string | number)[][] = []
 
-  const allData = [openingRow, ...tableData, summaryRow, closingRow]
+  tableBody.push(['', '', '', '- Số dư đầu kỳ', '', '', formatAmount(opening_balance), ''])
+  tableBody.push(['', '', '', '- Số phát sinh trong kỳ', '', '', '', ''])
+
+  entries.forEach(entry => {
+    tableBody.push([
+      formatShortDate(entry.record_date),
+      entry.voucher_no || '',
+      formatShortDate(entry.voucher_date),
+      entry.description || '',
+      entry.debit > 0 ? formatAmount(entry.debit) : '-',
+      entry.credit > 0 ? formatAmount(entry.credit) : '-',
+      formatAmount(entry.balance),
+      entry.note || '',
+    ])
+  })
+
+  tableBody.push(['', '', '', '- Cộng số phát sinh trong kỳ', formatAmount(totals.total_debit), formatAmount(totals.total_credit), '', ''])
+  tableBody.push(['', '', '', '- Số dư cuối kỳ', '', '', formatAmount(totals.closing_balance), ''])
 
   autoTable(doc, {
     startY: yPos,
     head: [
       [
-        { content: 'GHI SỔ', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
-        { content: 'CHỨNG TỪ', colSpan: 2, styles: { halign: 'center' } },
-        { content: 'DIỄN GIẢI', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
-        { content: 'SỐ TIỀN', colSpan: 3, styles: { halign: 'center' } },
-        { content: 'CHÚ', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+        { content: 'GHI SỔ', rowSpan: 2 },
+        { content: 'CHỨNG TỪ', colSpan: 2 },
+        { content: 'DIỄN GIẢI', rowSpan: 2 },
+        { content: 'SỐ TIỀN', colSpan: 3 },
+        { content: 'GHI CHÚ', rowSpan: 2 },
       ],
       [
-        { content: 'SỐ HIỆU', styles: { halign: 'center' } },
-        { content: 'NGÀY, THÁNG', styles: { halign: 'center' } },
-        { content: 'THU\n(GỬI VÀO)', styles: { halign: 'center' } },
-        { content: 'CHI\n(RÚT RA)', styles: { halign: 'center' } },
-        { content: 'CÒN LẠI', styles: { halign: 'center' } },
+        { content: 'SỐ HIỆU' },
+        { content: 'NGÀY, THÁNG' },
+        { content: 'THU\n(GỬI VÀO)' },
+        { content: 'CHI\n(RÚT RA)' },
+        { content: 'CÒN LẠI' },
       ],
-      [
-        { content: 'A', styles: { halign: 'center' } },
-        { content: 'B', styles: { halign: 'center' } },
-        { content: 'C', styles: { halign: 'center' } },
-        { content: 'D', styles: { halign: 'center' } },
-        { content: '1', styles: { halign: 'center' } },
-        { content: '2', styles: { halign: 'center' } },
-        { content: '3', styles: { halign: 'center' } },
-        { content: 'F', styles: { halign: 'center' } },
-      ],
+      ['A', 'B', 'C', 'D', '1', '2', '3', 'F'],
     ],
-    body: allData,
+    body: tableBody,
     theme: 'grid',
     styles: {
       font: fontName,
-      fontSize: 9,
-      cellPadding: 2,
+      fontSize: 8,
+      cellPadding: 1.5,
+      lineWidth: 0.1,
+      lineColor: [0, 0, 0],
     },
     headStyles: {
-      fillColor: [240, 240, 240],
+      fillColor: [255, 255, 255],
       textColor: [0, 0, 0],
       fontStyle: 'bold',
+      halign: 'center',
+      valign: 'middle',
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 22 },
-      1: { halign: 'center', cellWidth: 22 },
-      2: { halign: 'center', cellWidth: 28 },
-      3: { halign: 'left', cellWidth: 'auto' },
-      4: { halign: 'right', cellWidth: 28 },
-      5: { halign: 'right', cellWidth: 28 },
-      6: { halign: 'right', cellWidth: 28 },
-      7: { halign: 'left', cellWidth: 22 },
+      0: { cellWidth: 18, halign: 'center' },
+      1: { cellWidth: 16, halign: 'center' },
+      2: { cellWidth: 18, halign: 'center' },
+      3: { cellWidth: 50 },
+      4: { cellWidth: 24, halign: 'right' },
+      5: { cellWidth: 24, halign: 'right' },
+      6: { cellWidth: 24, halign: 'right' },
+      7: { cellWidth: 16 },
     },
     margin: { left: marginLeft, right: marginLeft },
-    didDrawPage: () => {
-      doc.setFontSize(8)
-      doc.setFont(fontName, 'normal')
-      doc.text('Mẫu số S7-HKD', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' })
-    },
   })
 
-  const finalY = (doc as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || yPos + 50
-  
-  doc.setFontSize(10)
-  doc.setFont(fontName, 'normal')
-  doc.text('Người lập biểu', marginLeft + 30, finalY + 15, { align: 'center' })
-  doc.setFontSize(8)
-  doc.text('(Ký, họ tên)', marginLeft + 30, finalY + 20, { align: 'center' })
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15
 
-  doc.setFontSize(10)
-  doc.text('Ngày ... tháng ... năm ...', pageWidth - marginLeft - 50, finalY + 10, { align: 'center' })
-  doc.text('Người đại diện HKD/Cá nhân KD', pageWidth - marginLeft - 50, finalY + 15, { align: 'center' })
-  doc.setFontSize(8)
-  doc.text('(Ký, họ tên, đóng dấu)', pageWidth - marginLeft - 50, finalY + 20, { align: 'center' })
+  doc.setFontSize(9)
+  doc.setFont(fontName, 'normal')
+  doc.text('- Sổ này có ... trang, đánh số từ trang 01 đến trang ...', marginLeft, finalY)
+  doc.text('- Ngày mở sổ: ...', marginLeft, finalY + 5)
+
+  doc.setFont(fontName, 'bold')
+  doc.text('Người lập biểu', marginLeft + 20, finalY + 20, { align: 'center' })
+  doc.setFont(fontName, 'normal')
+  doc.text('(Ký, họ tên)', marginLeft + 20, finalY + 26, { align: 'center' })
+
+  doc.text('Ngày ... tháng ... năm ...', pageWidth - 50, finalY + 15, { align: 'center' })
+  doc.setFont(fontName, 'bold')
+  doc.text('Người đại diện HKD/Cá nhân KD', pageWidth - 50, finalY + 20, { align: 'center' })
+  doc.setFont(fontName, 'normal')
+  doc.text('(Ký, họ tên, đóng dấu)', pageWidth - 50, finalY + 26, { align: 'center' })
 
   doc.save(`so-tien-gui-ngan-hang-${accountNumber}-${period.from}-${period.to}.pdf`)
 }
