@@ -652,7 +652,8 @@
       "accountNumberRequired": "Please enter account number",
       "accountNumberInvalid": "Account number must be 6-20 digits",
       "accountHolderRequired": "Please enter account holder name",
-      "selectAccount": "Please select account"
+      "selectAccount": "Please select account",
+      "selectCategory": "Please select category"
     },
     "placeholders": {
       "description": "e.g. Pay for goods, office expenses...",
@@ -703,6 +704,14 @@
     "supplierName": "Supplier name",
     "saveExpense": "Save expense",
     "expenseSuccess": "Expense recorded successfully",
+    "paymentOut": "Payment Out",
+    "paymentOutSuccess": "Payment successful",
+    "paymentSource": "Payment source",
+    "invoiceDetails": "Invoice details (optional)",
+    "confirmPayment": "Confirm Payment",
+    "skipExpense": "Don't record as expense",
+    "skipExpenseHint": "Only records cash/bank outflow, not as a business expense. Use for: withdrawals, internal transfers, balance adjustments. Business expenses (utilities, rent, salaries...) should be recorded in the expense book for accounting and tax purposes.",
+    "balanceWarning": "Amount exceeds current balance",
     "overview": "Overview",
     "revenue": "Revenue",
     "profit": "Profit",

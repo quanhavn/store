@@ -11,7 +11,7 @@ import {
   CashBalanceCard,
   CashTransactionList,
   CashInForm,
-  CashOutForm,
+  PaymentOutForm,
   FinanceSummaryCard,
   BankAccountList,
   ExpenseList
@@ -26,7 +26,21 @@ export default function FinancePage() {
   const [activeTab, setActiveTab] = useState<FinanceTab>('cash')
   const [period, setPeriod] = useState<Period>('month')
   const [cashInOpen, setCashInOpen] = useState(false)
-  const [cashOutOpen, setCashOutOpen] = useState(false)
+  const [paymentOutOpen, setPaymentOutOpen] = useState(false)
+  const [paymentOutMethod, setPaymentOutMethod] = useState<'cash' | 'bank_transfer'>('cash')
+  const [paymentOutBankId, setPaymentOutBankId] = useState<string | undefined>()
+
+  const handleCashOut = () => {
+    setPaymentOutMethod('cash')
+    setPaymentOutBankId(undefined)
+    setPaymentOutOpen(true)
+  }
+
+  const handleBankOut = (bankAccountId?: string) => {
+    setPaymentOutMethod('bank_transfer')
+    setPaymentOutBankId(bankAccountId)
+    setPaymentOutOpen(true)
+  }
 
   const tabItems = [
     {
@@ -41,7 +55,7 @@ export default function FinancePage() {
         <div>
           <CashBalanceCard
             onCashIn={() => setCashInOpen(true)}
-            onCashOut={() => setCashOutOpen(true)}
+            onCashOut={handleCashOut}
           />
 
           <div className="bg-white rounded-lg p-4">
@@ -61,7 +75,7 @@ export default function FinancePage() {
           Ngân hàng
         </span>
       ),
-      children: <BankAccountList />,
+      children: <BankAccountList onBankOut={handleBankOut} />,
     },
     {
       key: 'expenses',
@@ -105,9 +119,11 @@ export default function FinancePage() {
         open={cashInOpen}
         onClose={() => setCashInOpen(false)}
       />
-      <CashOutForm
-        open={cashOutOpen}
-        onClose={() => setCashOutOpen(false)}
+      <PaymentOutForm
+        open={paymentOutOpen}
+        onClose={() => setPaymentOutOpen(false)}
+        defaultPaymentMethod={paymentOutMethod}
+        defaultBankAccountId={paymentOutBankId}
       />
     </div>
   )

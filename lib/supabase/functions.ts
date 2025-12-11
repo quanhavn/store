@@ -875,6 +875,7 @@ export interface ExpenseBookReport {
     stt: number
     date: string
     category: string
+    category_code?: string
     description: string
     amount: number
     vat_amount: number

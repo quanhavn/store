@@ -5,7 +5,7 @@ import { Typography, Tabs, Drawer } from 'antd'
 import { DashboardOutlined, FileTextOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
-import { DashboardSummary, ReportsHub, ReportPreview, BankDepositBook } from '@/components/reports'
+import { DashboardSummary, ReportsHub, ReportPreview, BankDepositBook, ExpenseBookPreview } from '@/components/reports'
 import { api } from '@/lib/supabase/functions'
 
 const { Title } = Typography
@@ -15,6 +15,7 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [previewOpen, setPreviewOpen] = useState(false)
   const [bankBookOpen, setBankBookOpen] = useState(false)
+  const [expenseBookOpen, setExpenseBookOpen] = useState(false)
   const [previewReport, setPreviewReport] = useState({
     type: '',
     dateFrom: '',
@@ -36,6 +37,8 @@ export default function ReportsPage() {
   const handleViewReport = (reportType: string, dateFrom: string, dateTo: string) => {
     if (reportType === 'bank') {
       setBankBookOpen(true)
+    } else if (reportType === 'expense') {
+      setExpenseBookOpen(true)
     } else {
       setPreviewReport({ type: reportType, dateFrom, dateTo })
       setPreviewOpen(true)
@@ -91,6 +94,17 @@ export default function ReportsPage() {
         destroyOnClose
       >
         <BankDepositBook storeInfo={storeInfo} />
+      </Drawer>
+
+      <Drawer
+        open={expenseBookOpen}
+        onClose={() => setExpenseBookOpen(false)}
+        title={t('expenseBook.title')}
+        placement="bottom"
+        height="95%"
+        destroyOnClose
+      >
+        <ExpenseBookPreview storeInfo={storeInfo} />
       </Drawer>
     </div>
   )

@@ -18,16 +18,18 @@ import { api, type BankAccount } from '@/lib/supabase/functions'
 import { formatCurrency } from '@/lib/utils'
 import { BankAccountForm } from './BankAccountForm'
 import { BankInForm } from './BankInForm'
-import { BankOutForm } from './BankOutForm'
 import { BankBalanceCard } from './BankBalanceCard'
 
-const { Text, Title } = Typography
+const { Title } = Typography
 
-export function BankAccountList() {
+interface BankAccountListProps {
+  onBankOut?: (bankAccountId?: string) => void
+}
+
+export function BankAccountList({ onBankOut }: BankAccountListProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null)
   const [bankInOpen, setBankInOpen] = useState(false)
-  const [bankOutOpen, setBankOutOpen] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>()
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
@@ -79,13 +81,13 @@ export function BankAccountList() {
   }
 
   const handleBankOut = (accountId?: string) => {
-    setSelectedAccountId(accountId)
-    setBankOutOpen(true)
+    if (onBankOut) {
+      onBankOut(accountId)
+    }
   }
 
   const handleBankFormClose = () => {
     setBankInOpen(false)
-    setBankOutOpen(false)
     setSelectedAccountId(undefined)
   }
 
@@ -209,12 +211,6 @@ export function BankAccountList() {
 
       <BankInForm
         open={bankInOpen}
-        onClose={handleBankFormClose}
-        bankAccountId={selectedAccountId}
-      />
-
-      <BankOutForm
-        open={bankOutOpen}
         onClose={handleBankFormClose}
         bankAccountId={selectedAccountId}
       />

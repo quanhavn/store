@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { api, type Expense } from '@/lib/supabase/functions'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { ExpenseForm } from './ExpenseForm'
+import { PaymentOutForm } from './PaymentOutForm'
 
 const { Text } = Typography
 
@@ -21,7 +21,6 @@ interface ExpenseListProps {
 export function ExpenseList({ dateFrom, dateTo, categoryId, limit = 20 }: ExpenseListProps) {
   const [formOpen, setFormOpen] = useState(false)
   const t = useTranslations('finance')
-  const tCommon = useTranslations('common')
 
   const { data, isLoading } = useQuery({
     queryKey: ['expenses', dateFrom, dateTo, categoryId, limit],
@@ -116,7 +115,7 @@ export function ExpenseList({ dateFrom, dateTo, categoryId, limit = 20 }: Expens
         />
       )}
 
-      <ExpenseForm
+      <PaymentOutForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
       />

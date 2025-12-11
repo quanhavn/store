@@ -649,7 +649,7 @@ serve(async (req: Request) => {
 
         const { data: expenses } = await supabase
           .from('expenses')
-          .select('*, expense_categories(name)')
+          .select('*, expense_categories(name, code)')
           .eq('store_id', store_id)
           .gte('expense_date', date_from)
           .lte('expense_date', date_to)
@@ -658,7 +658,8 @@ serve(async (req: Request) => {
         const entries = (expenses || []).map((e, index) => ({
           stt: index + 1,
           date: e.expense_date,
-          category: (e.expense_categories as { name: string })?.name || 'Khac',
+          category: (e.expense_categories as { name: string; code: string })?.name || 'Khác',
+          category_code: (e.expense_categories as { name: string; code: string })?.code || 'OTHER',
           description: e.description,
           amount: e.amount,
           vat_amount: e.vat_amount,

@@ -769,7 +769,6 @@ serve(async (req: Request) => {
           .from('expense_categories')
           .select('*')
           .eq('store_id', store_id)
-          .order('sort_order')
           .order('name')
 
         if (error) throw error
