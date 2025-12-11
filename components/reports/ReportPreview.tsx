@@ -39,6 +39,7 @@ import { trackReportExported } from '@/lib/analytics'
 import { useTranslations } from 'next-intl'
 import { CashBookPreview } from './CashBookPreview'
 import { BankBookPreview } from './BankBookPreview'
+import { RevenueBookPreview } from './RevenueBookPreview'
 
 const { Title, Text } = Typography
 
@@ -375,7 +376,9 @@ export function ReportPreview({ open, onClose, reportType, dateFrom, dateTo }: R
         </Text>
       </div>
 
-      {reportType === 'cash' ? (
+      {reportType === 'revenue' ? (
+        <RevenueBookPreview storeInfo={{ name: 'Cửa hàng' }} />
+      ) : reportType === 'cash' ? (
         <CashBookPreview storeInfo={{ name: 'Cửa hàng' }} />
       ) : reportType === 'bank' ? (
         <BankBookPreview data={data as BankBookReport} storeName="Cửa hàng" />
