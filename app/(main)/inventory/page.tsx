@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Tabs, Typography, Button, Modal, message, Spin, Alert, Dropdown } from 'antd'
 import {
   UnorderedListOutlined,
@@ -45,7 +46,10 @@ interface StockCheck {
 }
 
 export default function InventoryPage() {
-  const [activeTab, setActiveTab] = useState('stock-check')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'stock-check')
   const [stockCheckModalOpen, setStockCheckModalOpen] = useState(false)
   const [stockCheckStep, setStockCheckStep] = useState<StockCheckStep>('form')
   const [currentStockCheck, setCurrentStockCheck] = useState<StockCheck | null>(null)
@@ -55,6 +59,12 @@ export default function InventoryPage() {
   const supabase = createClient()
   const queryClient = useQueryClient()
   const { shouldNavigateToAdjustment, setShouldNavigateToAdjustment } = useInventoryStore()
+
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [tabFromUrl])
 
   useEffect(() => {
     if (shouldNavigateToAdjustment) {

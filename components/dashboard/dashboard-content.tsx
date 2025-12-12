@@ -175,7 +175,7 @@ export function DashboardContent({ storeName }: DashboardContentProps) {
             </Link>
           </Col>
           <Col span={12}>
-            <Link href="/inventory">
+            <Link href="/inventory?tab=adjustment">
               <Card hoverable size="small" className="cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
