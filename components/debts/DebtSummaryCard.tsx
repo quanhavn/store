@@ -81,7 +81,7 @@ export function DebtSummaryCard() {
                   {summary?.overdue_debts || 0} {tCommon('items')}
                 </div>
                 <div className="text-sm text-red-500">
-                  {(summary?.overdue_amount || 0).toLocaleString('vi-VN')}d
+                  {(summary?.overdue_amount || 0).toLocaleString('vi-VN')}đ
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@ export function DebtSummaryCard() {
                 <Text type="secondary">{tCommon('collectedThisMonth')}</Text>
               </div>
               <div className="text-lg font-semibold text-green-600">
-                {(summary?.collected_this_month || 0).toLocaleString('vi-VN')}d
+                {(summary?.collected_this_month || 0).toLocaleString('vi-VN')}đ
               </div>
             </div>
           </div>

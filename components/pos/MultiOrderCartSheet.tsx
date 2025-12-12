@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Drawer, List, InputNumber, Button, Typography, Divider, Empty, Popconfirm, Space, Tag } from 'antd'
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMultiOrderStore } from '@/lib/stores/multiOrder'
+import { useEffect, useState } from 'react'
 
 const { Text, Title } = Typography
 
@@ -16,6 +17,15 @@ interface MultiOrderCartSheetProps {
 export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCartSheetProps) {
   const t = useTranslations('pos')
   const tCommon = useTranslations('common')
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+  
   const {
     getActiveOrder,
     updateQuantity,
@@ -38,12 +48,17 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
       title={activeOrder ? `${activeOrder.label} (${items.length})` : t('cart')}
       open={open}
       onClose={onClose}
-      styles={{ wrapper: { width: 400 } }}
+      placement={isMobile ? 'bottom' : 'right'}
+      height={isMobile ? '85vh' : undefined}
+      styles={{ 
+        wrapper: isMobile ? undefined : { width: 400 },
+        body: { paddingBottom: 0 }
+      }}
       footer={
         <div className="space-y-3">
           <div className="flex justify-between">
             <Text>{t('subtotal')}:</Text>
-            <Text>{subtotal.toLocaleString('vi-VN')}d</Text>
+            <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
           </div>
           <div className="flex justify-between items-center">
             <Text>{t('discount')}:</Text>
@@ -57,13 +72,13 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
               />
-              <Space.Addon>d</Space.Addon>
+              <Space.Addon>đ</Space.Addon>
             </Space.Compact>
           </div>
           <Divider className="my-2" />
           <div className="flex justify-between">
             <Title level={4} className="!m-0">{t('total')}:</Title>
-            <Title level={4} className="!m-0 text-blue-600">{total.toLocaleString('vi-VN')}d</Title>
+            <Title level={4} className="!m-0 text-blue-600">{total.toLocaleString('vi-VN')}đ</Title>
           </div>
           <div className="flex gap-2 pt-2">
             <Popconfirm
@@ -117,6 +132,9 @@ export function MultiOrderCartSheet({ open, onClose, onCheckout }: MultiOrderCar
                 }
                 description={
                   <div className="space-y-2 mt-2">
+                    <Text type="secondary" className="text-xs">
+                      {item.unit_price.toLocaleString('vi-VN')}đ × {item.quantity}
+                    </Text>
                     <div className="flex items-center gap-2">
                       <Button
                         size="small"

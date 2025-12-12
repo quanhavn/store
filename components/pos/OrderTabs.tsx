@@ -99,7 +99,7 @@ export function OrderTabs() {
                 <span className="text-sm">{order.label}</span>
               </Badge>
               <EditOutlined
-                className="text-gray-400 hover:text-blue-500 text-xs cursor-pointer"
+                className="text-gray-400 hover:text-blue-500 text-sm cursor-pointer p-1"
                 onClick={(e) => handleStartEdit(order, e)}
               />
             </>
@@ -114,7 +114,7 @@ export function OrderTabs() {
               cancelText={tCommon('cancel')}
             >
               <CloseOutlined
-                className="text-gray-400 hover:text-red-500 text-xs cursor-pointer"
+                className="text-gray-400 hover:text-red-500 text-sm cursor-pointer p-1"
                 onClick={(e) => e.stopPropagation()}
               />
             </Popconfirm>

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { FloatButton, Badge, message } from 'antd'
 import { ShoppingCartOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { callFunction, api } from '@/lib/supabase/functions'
 import { ProductGrid } from '@/components/products/ProductGrid'
@@ -70,6 +71,7 @@ interface Category {
 type CheckoutStep = 'pos' | 'payment' | 'success'
 
 export default function POSPage() {
+  const t = useTranslations('pos')
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<string>()
   const [step, setStep] = useState<CheckoutStep>('pos')
@@ -103,7 +105,7 @@ export default function POSPage() {
     enabled: true,
     onSyncComplete: (result) => {
       if (result.sales.synced > 0) {
-        message.success(`Da dong bo ${result.sales.synced} don hang offline`)
+        message.success(t('syncedOrders', { count: result.sales.synced }))
       }
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
@@ -421,14 +423,14 @@ export default function POSPage() {
       multiOrder.clearActiveOrder()
 
       if (data.offline) {
-        message.info('Don hang da duoc luu offline. Se dong bo khi co mang.')
+        message.info(t('offlineSaved'))
       }
       if (data.debt_paid) {
-        message.success(`Da tru ${data.debt_paid.toLocaleString('vi-VN')}đ vao no cu`)
+        message.success(t('debtDeducted', { amount: data.debt_paid.toLocaleString('vi-VN') }))
       }
     },
     onError: (error) => {
-      message.error(error instanceof Error ? error.message : 'Co loi xay ra')
+      message.error(error instanceof Error ? error.message : t('errorOccurred'))
     },
   })
 
@@ -445,7 +447,7 @@ export default function POSPage() {
       )
       if (product) {
         if (product.quantity <= 0) {
-          message.warning('San pham da het hang')
+          message.warning(t('productOutOfStock'))
           return
         }
         multiOrder.addItem({
@@ -455,10 +457,10 @@ export default function POSPage() {
           vat_rate: product.vat_rate,
           image_url: product.image_url,
         })
-        message.success(`Da them ${product.name}`)
+        message.success(t('productAdded', { name: product.name }))
       }
     }
-  }, [productsData, multiOrder])
+  }, [productsData, multiOrder, t])
 
   const handleProductClick = (product: Product) => {
     // If product has both variants and units, show variant-unit selector
@@ -483,7 +485,7 @@ export default function POSPage() {
     }
 
     if (product.quantity <= 0) {
-      message.warning('San pham da het hang')
+      message.warning(t('productOutOfStock'))
       return
     }
 
@@ -499,7 +501,7 @@ export default function POSPage() {
       unit_name: defaultUnit?.unit_name || product.unit,
       conversion_rate: defaultUnit?.conversion_rate || 1,
     })
-    message.success(`Da them ${product.name}`)
+    message.success(t('productAdded', { name: product.name }))
   }
 
   const handleVariantSelect = (product: ProductWithVariants, variant: ProductVariant) => {
@@ -512,12 +514,12 @@ export default function POSPage() {
       variant_id: variant.id,
       variant_name: variant.name,
     })
-    message.success(`Da them ${product.name} - ${variant.name}`)
+    message.success(t('productAddedWithVariant', { name: product.name, variant: variant.name }))
   }
 
   const handleUnitSelect = (product: ProductWithUnits, unit: ModalProductUnit, calculatedPrice: number) => {
     if (product.quantity <= 0) {
-      message.warning('San pham da het hang')
+      message.warning(t('productOutOfStock'))
       return
     }
 
@@ -531,12 +533,12 @@ export default function POSPage() {
       unit_name: unit.unit_name,
       conversion_rate: unit.conversion_rate,
     })
-    message.success(`Da them ${product.name} (${unit.unit_name})`)
+    message.success(t('productAddedWithUnit', { name: product.name, unit: unit.unit_name }))
   }
 
   const handleVariantUnitSelect = (product: ProductWithVariantUnits, combination: VariantUnitCombination) => {
     if (combination.variant_quantity <= 0) {
-      message.warning('San pham da het hang')
+      message.warning(t('productOutOfStock'))
       return
     }
 
@@ -552,7 +554,7 @@ export default function POSPage() {
       unit_name: combination.unit_name,
       conversion_rate: combination.conversion_rate,
     })
-    message.success(`Da them ${combination.display_name}`)
+    message.success(t('productAdded', { name: combination.display_name }))
   }
 
   const handleCheckout = () => {

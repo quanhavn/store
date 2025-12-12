@@ -1,8 +1,7 @@
 'use client'
 
-import { Card, Typography, Tag, Image } from 'antd'
-import { ShoppingCartOutlined } from '@ant-design/icons'
-import { useCartStore } from '@/lib/stores/cart'
+import { Card, Typography, Tag, Image, message } from 'antd'
+import { ShoppingCartOutlined, PlusOutlined } from '@ant-design/icons'
 import { useTranslations } from 'next-intl'
 
 const { Text } = Typography
@@ -37,98 +36,122 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onClick, showAddToCart = false }: ProductCardProps) {
-  const addItem = useCartStore((state) => state.addItem)
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    addItem({
-      id: product.id,
-      name: product.name,
-      sell_price: product.sell_price,
-      vat_rate: product.vat_rate,
-      image_url: product.image_url,
-    })
-  }
+  const t = useTranslations('products')
 
   const hasVariants = product.has_variants && product.variants && product.variants.length > 0
-  const totalVariantStock = hasVariants 
-    ? product.variants!.reduce((sum, v) => sum + v.quantity, 0)
-    : product.quantity
-  const displayQuantity = hasVariants ? totalVariantStock : product.quantity
+  const hasUnits = product.has_units
+  
+  // Calculate display quantity based on variants/units
+  let displayQuantity = product.quantity
+  if (hasVariants && product.variants) {
+    displayQuantity = product.variants.reduce((sum, v) => sum + v.quantity, 0)
+  }
   
   const isLowStock = displayQuantity <= product.min_stock
   const isOutOfStock = displayQuantity === 0
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (isOutOfStock) {
+      message.warning(t('outOfStock'))
+      return
+    }
+    
+    onClick?.()
+  }
+
   return (
-    <Card
-      hoverable
+    <div 
       onClick={onClick}
-      className="h-full"
-      cover={
-        product.image_url ? (
+      className={`
+        relative bg-white rounded-lg border border-gray-200 overflow-hidden
+        active:bg-gray-50 cursor-pointer transition-colors
+        ${isOutOfStock ? 'opacity-60' : ''}
+      `}
+    >
+      {/* Compact image */}
+      <div className="relative h-20 bg-gray-100">
+        {product.image_url ? (
           <Image
             alt={product.name}
             src={product.image_url}
-            className="h-32 object-cover"
+            className="w-full h-20 object-cover"
             preview={false}
             fallback="/icons/icon-96x96.png"
           />
         ) : (
-          <div className="h-32 bg-gray-100 flex items-center justify-center">
-            <ShoppingCartOutlined className="text-4xl text-gray-300" />
+          <div className="w-full h-20 flex items-center justify-center">
+            <ShoppingCartOutlined className="text-2xl text-gray-300" />
           </div>
-        )
-      }
-      actions={
-        showAddToCart
-          ? [
-              <div
-                key="add"
-                onClick={handleAddToCart}
-                className={`text-blue-500 ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <ShoppingCartOutlined /> Thêm
-              </div>,
-            ]
-          : undefined
-      }
-    >
-      <Card.Meta
-        title={
-          <Text ellipsis={{ tooltip: product.name }} className="text-sm font-medium">
-            {product.name}
+        )}
+        
+        {/* Stock badge - top right corner */}
+        <div className="absolute top-1 right-1">
+          {isOutOfStock ? (
+            <Tag color="red" className="!m-0 !text-[10px] !px-1 !py-0">{t('outOfStock')}</Tag>
+          ) : isLowStock ? (
+            <Tag color="orange" className="!m-0 !text-[10px] !px-1 !py-0">{displayQuantity}</Tag>
+          ) : (
+            <Tag color="green" className="!m-0 !text-[10px] !px-1 !py-0">{displayQuantity}</Tag>
+          )}
+        </div>
+
+        {/* Variant/Unit badge - top left corner */}
+        {hasVariants && (
+          <div className="absolute top-1 left-1">
+            <Tag color="purple" className="!m-0 !text-[10px] !px-1 !py-0">
+              {product.variants!.length} {t('variantBadge')}
+            </Tag>
+          </div>
+        )}
+        {!hasVariants && hasUnits && (
+          <div className="absolute top-1 left-1">
+            <Tag color="cyan" className="!m-0 !text-[10px] !px-1 !py-0">
+              {t('multiUnit')}
+            </Tag>
+          </div>
+        )}
+      </div>
+
+      {/* Content - more compact */}
+      <div className="p-2">
+        <Text 
+          ellipsis={{ tooltip: product.name }} 
+          className="!text-xs font-medium leading-tight block mb-1"
+        >
+          {product.name}
+        </Text>
+        
+        <div className="flex items-center justify-between">
+          <Text strong className="text-blue-600 !text-sm">
+            {product.sell_price.toLocaleString('vi-VN')}đ
           </Text>
-        }
-        description={
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Text strong className="text-blue-600">
-                {product.sell_price.toLocaleString('vi-VN')}đ
-              </Text>
-              <Text type="secondary" className="text-xs">
-                /{product.unit}
-              </Text>
-            </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              {hasVariants && (
-                <Tag color="purple">{product.variants!.length} biến thể</Tag>
-              )}
-              {isOutOfStock ? (
-                <Tag color="red">Hết hàng</Tag>
-              ) : isLowStock ? (
-                <Tag color="orange">Sắp hết ({displayQuantity})</Tag>
-              ) : (
-                <Tag color="green">Còn {displayQuantity}</Tag>
-              )}
-            </div>
-            {product.categories && (
-              <Text type="secondary" className="text-xs block">
-                {product.categories.name}
-              </Text>
-            )}
-          </div>
-        }
-      />
-    </Card>
+          {product.unit && (
+            <Text type="secondary" className="!text-[10px]">
+              /{product.unit}
+            </Text>
+          )}
+        </div>
+      </div>
+
+      {/* Add to cart button - floating on bottom right */}
+      {showAddToCart && (
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          className={`
+            absolute bottom-2 right-2 w-7 h-7 rounded-full 
+            flex items-center justify-center text-white text-sm
+            ${isOutOfStock 
+              ? 'bg-gray-300 cursor-not-allowed' 
+              : 'bg-blue-500 active:bg-blue-600 shadow-md'
+            }
+          `}
+        >
+          <PlusOutlined />
+        </button>
+      )}
+    </div>
   )
 }

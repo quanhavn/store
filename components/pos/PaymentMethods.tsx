@@ -231,7 +231,7 @@ export function PaymentMethods({
       <div className="text-center mb-6">
         <Text type="secondary">{t('amountToPay')}</Text>
         <Title level={2} className="!m-0 text-blue-600">
-          {total.toLocaleString('vi-VN')}d
+          {total.toLocaleString('vi-VN')}đ
         </Title>
       </div>
 
@@ -280,7 +280,7 @@ export function PaymentMethods({
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
             />
-            <Space.Addon>d</Space.Addon>
+            <Space.Addon>đ</Space.Addon>
           </Space.Compact>
           <div className="grid grid-cols-5 gap-2 mt-2">
             {[0, 0.25, 0.5, 0.75, 0.9].map((ratio) => (
@@ -340,7 +340,7 @@ export function PaymentMethods({
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
                   />
-                  <Space.Addon>d</Space.Addon>
+                  <Space.Addon>đ</Space.Addon>
                 </Space.Compact>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -390,7 +390,7 @@ export function PaymentMethods({
                       formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as unknown as number}
                     />
-                    <Space.Addon>d</Space.Addon>
+                    <Space.Addon>đ</Space.Addon>
                   </Space.Compact>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <Button
@@ -422,7 +422,7 @@ export function PaymentMethods({
             <div className="bg-green-50 p-4 rounded-lg text-center">
               <Text type="secondary">{t('change')}:</Text>
               <Title level={3} className="!m-0 text-green-600">
-                {actualChange.toLocaleString('vi-VN')}d
+                {actualChange.toLocaleString('vi-VN')}đ
               </Title>
               {applyExtraToDebt && debtPaymentAmount > 0 && (
                 <Text type="secondary" className="text-xs">
@@ -500,31 +500,49 @@ export function PaymentMethods({
         </>
       )}
 
-      <div className="flex gap-2 mt-4">
-        {onBack && (
-          <Button
-            size="large"
-            onClick={onBack}
-            disabled={loading}
-          >
-            {t('back')}
-          </Button>
+      <div className="flex flex-col gap-2 mt-4">
+        {!isValid && (
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              !isPartialPaymentValid && isPartialPayment && !customer
+                ? t('selectCustomerForPartial')
+                : !isPartialPaymentValid && isPartialPayment && (partialAmount < 0 || partialAmount >= total)
+                  ? t('invalidPartialAmount')
+                  : !isPaymentValid && method === 'cash'
+                    ? t('insufficientCash')
+                    : t('checkPaymentInfo')
+            }
+            className="mb-2"
+          />
         )}
-        <Button
-          type="primary"
-          size="large"
-          block
-          onClick={handleConfirm}
-          loading={loading}
-          disabled={!isValid}
-        >
-          {isPartialPayment && debtAmount > 0
-            ? t('confirmPartialPayment', { payAmount: formatCurrency(partialAmount), debtAmount: formatCurrency(debtAmount) })
-            : applyExtraToDebt && debtPaymentAmount > 0
-              ? t('confirmAndDeductDebt', { amount: formatCurrency(debtPaymentAmount) })
-              : t('confirmPayment')
-          }
-        </Button>
+        <div className="flex gap-2">
+          {onBack && (
+            <Button
+              size="large"
+              onClick={onBack}
+              disabled={loading}
+            >
+              {t('back')}
+            </Button>
+          )}
+          <Button
+            type="primary"
+            size="large"
+            block
+            onClick={handleConfirm}
+            loading={loading}
+            disabled={!isValid}
+          >
+            {isPartialPayment && debtAmount > 0
+              ? t('confirmPartialPayment', { payAmount: formatCurrency(partialAmount), debtAmount: formatCurrency(debtAmount) })
+              : applyExtraToDebt && debtPaymentAmount > 0
+                ? t('confirmAndDeductDebt', { amount: formatCurrency(debtPaymentAmount) })
+                : t('confirmPayment')
+            }
+          </Button>
+        </div>
       </div>
     </div>
   )
