@@ -55,7 +55,7 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev, onSkip }: TaxInf
           extra={tTax('taxCodeExtra')}
           rules={[
             {
-              pattern: /^[0-9]{10}$|^[0-9]{13}$/,
+              pattern: /^[0-9]{10}$|^[0-9]{12}$|^[0-9]{10}-[0-9]{3}$/,
               message: tTax('validation.taxCodeInvalid'),
             },
           ]}
@@ -64,7 +64,7 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev, onSkip }: TaxInf
             prefix={<FileTextOutlined className="text-gray-400" />}
             placeholder={tTax('taxCodePlaceholder')}
             size="large"
-            maxLength={13}
+            maxLength={14}
           />
         </Form.Item>
 

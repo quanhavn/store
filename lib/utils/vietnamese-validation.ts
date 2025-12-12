@@ -16,9 +16,9 @@ const VALID_PHONE_PREFIXES = ['03', '05', '07', '08', '09']
  * Regex for validating Vietnamese tax code (MST)
  * - 10 digits: Legacy individual tax code
  * - 12 digits: CCCD-based individual tax code (per Circular 86/2024/TT-BTC)
- * - 13 digits: Business with branch code (10 + 3)
+ * - 13 digits with dash: Business with branch code (10-3 format)
  */
-export const TAX_CODE_REGEX = /^\d{10}(\d{2,3})?$/
+export const TAX_CODE_REGEX = /^\d{10}$|^\d{12}$|^\d{10}-\d{3}$/
 
 /**
  * Valid tax code lengths
@@ -67,8 +67,7 @@ export function toInternationalPhone(phone: string): string {
  */
 export function isValidTaxCode(taxCode: string | null | undefined): boolean {
   if (!taxCode) return true // Optional field
-  const cleanCode = taxCode.replace(/[^0-9]/g, '')
-  return (VALID_TAX_CODE_LENGTHS as readonly number[]).includes(cleanCode.length)
+  return TAX_CODE_REGEX.test(taxCode)
 }
 
 /**

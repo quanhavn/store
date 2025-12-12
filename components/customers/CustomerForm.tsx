@@ -142,7 +142,7 @@ export function CustomerForm({ open, onClose, customer }: CustomerFormProps) {
           label={t('taxCode')}
           rules={[
             {
-              pattern: /^\d{10}(\d{3})?$/,
+              pattern: /^\d{10}$|^\d{12}$|^\d{10}-\d{3}$/,
               message: t('validation.taxCodeInvalid')
             },
           ]}

@@ -167,7 +167,7 @@ export function EInvoiceSettingsForm() {
             rules={[
               { required: true, message: t('eInvoice.taxCodeRequired') },
               {
-                pattern: /^[0-9]{10}([0-9]{2,3})?$/,
+                pattern: /^[0-9]{10}$|^[0-9]{12}$|^[0-9]{10}-[0-9]{3}$/,
                 message: t('eInvoice.taxCodeInvalid'),
               },
             ]}
