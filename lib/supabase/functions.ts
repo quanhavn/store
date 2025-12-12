@@ -133,6 +133,7 @@ export const api = {
         variant_id?: string
         quantity: number
         unit_cost?: number
+        item_total?: number
       }>
       note?: string
       record_expense?: boolean
@@ -1133,6 +1134,13 @@ export interface ProductUnitInput {
   is_default: boolean
 }
 
+export interface VariantUnitPriceInput {
+  unit_id: string
+  sell_price?: number
+  cost_price?: number
+  barcode?: string
+}
+
 export interface ProductVariantInput {
   id?: string
   sku?: string
@@ -1143,6 +1151,7 @@ export interface ProductVariantInput {
   quantity: number
   min_stock?: number
   attribute_values?: { attribute_id: string; value_id: string }[]
+  unit_prices?: VariantUnitPriceInput[]
 }
 
 export interface ProductAttribute {
@@ -1167,6 +1176,8 @@ export interface InventoryLog {
   id: string
   store_id: string
   product_id: string
+  variant_id?: string | null
+  unit_id?: string | null
   type: 'import' | 'export' | 'sale' | 'return' | 'adjustment'
   quantity: number
   unit_cost: number | null
@@ -1176,7 +1187,9 @@ export interface InventoryLog {
   reference_id: string | null
   created_by: string | null
   created_at: string
-  products?: { id: string; name: string } | null
+  products?: { id: string; name: string; unit: string } | null
+  product_variants?: { id: string; name: string } | null
+  product_units?: { id: string; unit_name: string } | null
 }
 
 export interface LowStockProduct {

@@ -10,7 +10,7 @@ export interface ProductVariant {
   name: string
   sku?: string
   barcode?: string
-  sell_price: number
+  sell_price?: number
   cost_price?: number
   quantity: number
   min_stock?: number
@@ -95,7 +95,7 @@ export function VariantSelectorModal({
                   }
                 />
                 <Text strong className="text-blue-600">
-                  {variant.sell_price.toLocaleString('vi-VN')}đ
+                  {(variant.sell_price ?? 0).toLocaleString('vi-VN')}đ
                 </Text>
               </List.Item>
             )

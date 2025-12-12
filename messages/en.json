@@ -336,7 +336,21 @@
     "tabs": {
       "stock": "Stock",
       "adjustment": "In/Out",
-      "lowStock": "Alerts"
+      "lowStock": "Alerts",
+      "history": "History"
+    },
+    "history": {
+      "title": "Import/Export History",
+      "sale": "Sale",
+      "return": "Return",
+      "filterByType": "Filter by type",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "clearFilters": "Clear filters",
+      "noLogs": "No inventory history yet",
+      "unknownProduct": "Unknown product",
+      "products": "products",
+      "info": "Shows all inventory movements including imports, exports, sales, returns, and adjustments."
     },
     "continueStockCheck": "Continue stock check",
     "startStockCheck": "Start stock check",
@@ -493,7 +507,11 @@
       "selectAttributes": "Select attributes for variants",
       "attributes": "Attributes",
       "noAttributesWarning": "Please add attributes first to create variants",
-      "selectVariant": "Select variant"
+      "selectVariant": "Select variant",
+      "selectVariantUnit": "Select variant and unit",
+      "noVariantUnits": "No variant/unit combinations",
+      "unitPrices": "Unit Pricing",
+      "unitPricesHint": "Leave empty to use default prices (calculated from variant price × conversion rate)"
     },
     "noProducts": "No products yet",
     "scanBarcode": "Scan barcode",

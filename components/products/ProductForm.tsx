@@ -465,6 +465,15 @@ export function ProductForm({
                         baseSellPrice={formValues?.sell_price || 0}
                         baseMinStock={formValues?.min_stock || 10}
                         onCreateAttribute={() => setAttributeModalOpen(true)}
+                        hasUnits={hasUnits}
+                        units={units.map(u => ({
+                          id: u.id || '',
+                          unit_name: u.unit_name,
+                          conversion_rate: u.conversion_rate,
+                          is_base_unit: u.is_base_unit,
+                          sell_price: u.sell_price,
+                          cost_price: u.cost_price,
+                        }))}
                       />
                     )}
                   </div>

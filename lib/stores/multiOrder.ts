@@ -73,6 +73,9 @@ export interface MultiOrderStore {
     image_url?: string
     variant_id: string
     variant_name: string
+    unit_id?: string
+    unit_name?: string
+    conversion_rate?: number
   }) => void
   removeItem: (productId: string, variantId?: string, unitId?: string) => void
   updateQuantity: (productId: string, quantity: number, variantId?: string, unitId?: string) => void
@@ -227,7 +230,7 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
             return key
           }
 
-          const itemKey = buildItemKey(product.id, product.variant_id)
+          const itemKey = buildItemKey(product.id, product.variant_id, product.unit_id)
           const existingItem = activeOrder.items.find((item) => {
             const existingKey = buildItemKey(item.product_id, item.variant_id, item.unit_id)
             return existingKey === itemKey
@@ -252,6 +255,9 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
                   image_url: product.image_url,
                   variant_id: product.variant_id,
                   variant_name: product.variant_name,
+                  unit_id: product.unit_id,
+                  unit_name: product.unit_name,
+                  conversion_rate: product.conversion_rate || 1,
                 },
               ]
 

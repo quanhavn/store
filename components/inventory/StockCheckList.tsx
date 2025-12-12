@@ -27,7 +27,7 @@ interface Product {
     id: string
     name: string
     quantity: number
-    sell_price: number
+    sell_price?: number
     cost_price?: number
   }>
 }

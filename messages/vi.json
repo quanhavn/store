@@ -320,7 +320,21 @@
     "tabs": {
       "stock": "Tồn kho",
       "adjustment": "Nhập/Xuất",
-      "lowStock": "Cảnh báo"
+      "lowStock": "Cảnh báo",
+      "history": "Lịch sử"
+    },
+    "history": {
+      "title": "Lịch sử nhập/xuất kho",
+      "sale": "Bán hàng",
+      "return": "Trả hàng",
+      "filterByType": "Lọc theo loại",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "clearFilters": "Xóa bộ lọc",
+      "noLogs": "Chưa có lịch sử kho",
+      "unknownProduct": "Sản phẩm không xác định",
+      "products": "sản phẩm",
+      "info": "Hiển thị tất cả các giao dịch kho bao gồm nhập, xuất, bán hàng, trả hàng và điều chỉnh."
     },
     "continueStockCheck": "Tiếp tục kiểm kho",
     "startStockCheck": "Bắt đầu kiểm kho",
@@ -483,7 +497,11 @@
       "selectAttributes": "Chọn thuộc tính cho biến thể",
       "attributes": "Thuộc tính",
       "noAttributesWarning": "Vui lòng thêm thuộc tính trước khi tạo biến thể",
-      "selectVariant": "Chọn biến thể"
+      "selectVariant": "Chọn biến thể",
+      "selectVariantUnit": "Chọn biến thể và đơn vị",
+      "noVariantUnits": "Không có tổ hợp biến thể/đơn vị",
+      "unitPrices": "Giá theo đơn vị tính",
+      "unitPricesHint": "Để trống nếu sử dụng giá mặc định (tính từ giá biến thể × hệ số quy đổi)"
     },
     "noProducts": "Chưa có sản phẩm nào",
     "scanBarcode": "Quét mã vạch",

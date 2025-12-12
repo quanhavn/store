@@ -18,6 +18,8 @@ import { OrderDetailScreen } from '@/components/orders'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 import { VariantSelectorModal, type ProductWithVariants, type ProductVariant } from '@/components/pos/VariantSelectorModal'
 import { UnitSelectorModal, type ProductWithUnits, type ProductUnit as ModalProductUnit } from '@/components/pos/UnitSelectorModal'
+import { VariantUnitSelectorModal, type ProductWithVariantUnits } from '@/components/pos/VariantUnitSelectorModal'
+import type { VariantUnitCombination } from '@/types/database'
 import { useMultiOrderStore, type CartItem } from '@/lib/stores/multiOrder'
 import { useOnlineStatus, useAutoSync } from '@/lib/offline/hooks'
 import {
@@ -57,6 +59,7 @@ interface Product {
   has_units?: boolean
   variants?: ProductVariant[]
   units?: ProductUnit[]
+  variant_unit_combinations?: VariantUnitCombination[]
 }
 
 interface Category {
@@ -78,6 +81,8 @@ export default function POSPage() {
   const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null)
   const [unitModalOpen, setUnitModalOpen] = useState(false)
   const [selectedProductForUnit, setSelectedProductForUnit] = useState<Product | null>(null)
+  const [variantUnitModalOpen, setVariantUnitModalOpen] = useState(false)
+  const [selectedProductForVariantUnit, setSelectedProductForVariantUnit] = useState<Product | null>(null)
 
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -122,7 +127,7 @@ export default function POSPage() {
         try {
           let query = supabase
             .from('products')
-            .select('*, categories(id, name), product_variants(*), product_units(*)')
+            .select('*, categories(id, name), product_variants(*, variant_units(*)), product_units(*)')
             .eq('active', true)
             .order('name')
 
@@ -136,6 +141,14 @@ export default function POSPage() {
 
           const { data, error } = await query.limit(100)
           if (error) throw error
+          
+          interface VariantUnitRow {
+            unit_id: string
+            sell_price?: number
+            cost_price?: number
+            barcode?: string
+            active?: boolean
+          }
           
           interface ProductRow {
             id: string
@@ -152,15 +165,75 @@ export default function POSPage() {
             has_variants?: boolean
             has_units?: boolean
             categories?: { id: string; name: string }
-            product_variants?: (ProductVariant & { active?: boolean })[]
+            product_variants?: (ProductVariant & { active?: boolean; variant_units?: VariantUnitRow[] })[]
             product_units?: (ProductUnit & { active?: boolean })[]
           }
           
-          return (data as ProductRow[] || []).map((p) => ({
-            ...p,
-            variants: p.product_variants?.filter((v) => v.active !== false) || [],
-            units: p.product_units?.filter((u) => u.active !== false) || [],
-          })) as Product[]
+          return (data as ProductRow[] || []).map((p) => {
+            const units = p.product_units?.filter((u) => u.active !== false) || []
+            const baseUnit = units.find(u => u.is_base_unit)
+            
+            // Process variants and extract base unit prices from variant_units
+            const variants = (p.product_variants?.filter((v) => v.active !== false) || []).map(variant => {
+              // Find base unit entry in variant_units to extract prices
+              const baseUnitEntry = variant.variant_units?.find(vu => 
+                vu.active !== false && (baseUnit ? vu.unit_id === baseUnit.id : true)
+              )
+              return {
+                ...variant,
+                // Extract prices from variant_units for backwards compatibility
+                sell_price: baseUnitEntry?.sell_price ?? variant.sell_price,
+                cost_price: baseUnitEntry?.cost_price ?? variant.cost_price,
+              }
+            })
+            
+            let variant_unit_combinations: VariantUnitCombination[] | undefined
+            if (p.has_variants && p.has_units && variants.length > 0 && units.length > 0) {
+              variant_unit_combinations = []
+              for (const variant of variants) {
+                // Get base unit price for this variant (from variant_units or fallback to product)
+                const variantBasePrice = variant.sell_price ?? p.sell_price
+                const variantBaseCost = variant.cost_price ?? p.cost_price
+                
+                for (const unit of units) {
+                  const variantUnit = variant.variant_units?.find(vu => vu.unit_id === unit.id && vu.active !== false)
+                  // Priority: variant_units entry > unit price > calculated from base * conversion
+                  const effectiveSellPrice = variantUnit?.sell_price ?? 
+                    unit.sell_price ?? 
+                    Math.round(variantBasePrice * unit.conversion_rate)
+                  const effectiveCostPrice = variantUnit?.cost_price ?? 
+                    unit.cost_price ?? 
+                    Math.round(variantBaseCost * unit.conversion_rate)
+                  
+                  variant_unit_combinations.push({
+                    product_id: p.id,
+                    product_name: p.name,
+                    variant_id: variant.id,
+                    variant_name: variant.name || '',
+                    variant_quantity: variant.quantity,
+                    variant_sell_price: variantBasePrice,
+                    variant_cost_price: variantBaseCost,
+                    unit_id: unit.id,
+                    unit_name: unit.unit_name,
+                    conversion_rate: unit.conversion_rate,
+                    is_base_unit: unit.is_base_unit,
+                    variant_unit_id: null,
+                    effective_sell_price: effectiveSellPrice,
+                    effective_cost_price: effectiveCostPrice,
+                    effective_barcode: variantUnit?.barcode ?? null,
+                    display_name: `${variant.name} (${unit.unit_name})`,
+                  })
+                }
+              }
+            }
+            
+            return {
+              ...p,
+              variants,
+              units,
+              variant_unit_combinations,
+            }
+          }) as Product[]
         } catch (error) {
           console.error('Online products fetch failed, using cache:', error)
         }
@@ -388,12 +461,21 @@ export default function POSPage() {
   }, [productsData, multiOrder])
 
   const handleProductClick = (product: Product) => {
+    // If product has both variants and units, show variant-unit selector
+    if (product.has_variants && product.has_units && product.variants && product.variants.length > 0 && product.units && product.units.length > 0) {
+      setSelectedProductForVariantUnit(product)
+      setVariantUnitModalOpen(true)
+      return
+    }
+
+    // If product only has variants (no units)
     if (product.has_variants && product.variants && product.variants.length > 0) {
       setSelectedProductForVariant(product)
       setVariantModalOpen(true)
       return
     }
 
+    // If product only has units (no variants)
     if (product.has_units && product.units && product.units.length > 1) {
       setSelectedProductForUnit(product)
       setUnitModalOpen(true)
@@ -424,7 +506,7 @@ export default function POSPage() {
     multiOrder.addItemWithVariant({
       id: product.id,
       name: product.name,
-      sell_price: variant.sell_price,
+      sell_price: variant.sell_price ?? product.sell_price,
       vat_rate: product.vat_rate,
       image_url: product.image_url,
       variant_id: variant.id,
@@ -450,6 +532,27 @@ export default function POSPage() {
       conversion_rate: unit.conversion_rate,
     })
     message.success(`Da them ${product.name} (${unit.unit_name})`)
+  }
+
+  const handleVariantUnitSelect = (product: ProductWithVariantUnits, combination: VariantUnitCombination) => {
+    if (combination.variant_quantity <= 0) {
+      message.warning('San pham da het hang')
+      return
+    }
+
+    multiOrder.addItemWithVariant({
+      id: product.id,
+      name: product.name,
+      sell_price: combination.effective_sell_price,
+      vat_rate: product.vat_rate,
+      image_url: product.image_url,
+      variant_id: combination.variant_id,
+      variant_name: combination.display_name,
+      unit_id: combination.unit_id,
+      unit_name: combination.unit_name,
+      conversion_rate: combination.conversion_rate,
+    })
+    message.success(`Da them ${combination.display_name}`)
   }
 
   const handleCheckout = () => {
@@ -633,6 +736,16 @@ export default function POSPage() {
         }}
         product={selectedProductForUnit}
         onSelectUnit={handleUnitSelect}
+      />
+
+      <VariantUnitSelectorModal
+        open={variantUnitModalOpen}
+        onClose={() => {
+          setVariantUnitModalOpen(false)
+          setSelectedProductForVariantUnit(null)
+        }}
+        product={selectedProductForVariantUnit as ProductWithVariantUnits}
+        onSelectVariantUnit={handleVariantUnitSelect}
       />
     </div>
   )

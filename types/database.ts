@@ -1285,11 +1285,7 @@ export interface ProductAttributeValue {
 export interface ProductVariant {
   id: string
   product_id: string
-  sku: string | null
-  barcode: string | null
   name: string | null
-  cost_price: number | null
-  sell_price: number | null
   quantity: number
   min_stock: number | null
   image_url: string | null
@@ -1297,6 +1293,40 @@ export interface ProductVariant {
   created_at: string
   updated_at: string
   attributes?: ProductVariantAttribute[]
+  variant_units?: VariantUnit[]
+}
+
+export interface VariantUnit {
+  id: string
+  variant_id: string
+  unit_id: string
+  sell_price: number | null
+  cost_price: number | null
+  barcode: string | null
+  sku: string | null
+  active: boolean
+  created_at: string
+  unit?: ProductUnit
+}
+
+export interface VariantUnitCombination {
+  product_id: string
+  product_name: string
+  variant_id: string
+  variant_name: string
+  variant_quantity: number
+  variant_sell_price: number | null
+  variant_cost_price: number | null
+  unit_id: string
+  unit_name: string
+  conversion_rate: number
+  is_base_unit: boolean
+  variant_unit_id: string | null
+  effective_sell_price: number
+  effective_cost_price: number
+  effective_barcode: string | null
+  effective_sku?: string | null
+  display_name: string
 }
 
 export interface ProductVariantAttribute {
@@ -1331,6 +1361,7 @@ export interface ProductWithVariants {
   categories?: { id: string; name: string }
   variants?: ProductVariant[]
   units?: ProductUnit[]
+  variant_unit_combinations?: VariantUnitCombination[]
 }
 
 // Stock check types

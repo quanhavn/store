@@ -806,7 +806,9 @@ serve(async (req: Request) => {
             const isIn = ['import', 'return'].includes(log.type)
             const qty = Math.abs(log.quantity)
             const unitPrice = log.unit_cost || costPrice
-            const amount = qty * unitPrice
+            // Use total_value from log if available (avoids rounding issues with unit conversions)
+            // Otherwise calculate from qty * unitPrice
+            const amount = log.total_value != null ? log.total_value : qty * unitPrice
 
             if (isIn) {
               runningQty += qty

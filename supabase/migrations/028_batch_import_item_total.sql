@@ -1,10 +1,7 @@
--- ============================================================================
--- BATCH IMPORT STOCK WITH SINGLE FINANCE ENTRY
--- ============================================================================
--- Import multiple products atomically with a single cash/bank book entry
--- This fixes the issue where each product in a batch creates separate entries
--- Updated: Use item_total if provided to avoid rounding issues with unit conversions
--- ============================================================================
+-- Migration: Update batch_import_stock to accept item_total
+-- This fixes rounding issues when importing with unit conversions
+-- Example: 1 thùng (24 cái) @ 100,000đ should record exactly 100,000đ, not 100,008đ
+-- The item_total field takes precedence over unit_cost * quantity calculation
 
 CREATE OR REPLACE FUNCTION batch_import_stock(
     p_store_id UUID,
@@ -64,7 +61,6 @@ BEGIN
             -- Update variant stock
             UPDATE product_variants
             SET quantity = quantity + v_quantity,
-                cost_price = COALESCE(NULLIF(v_unit_cost, 0), cost_price),
                 updated_at = NOW()
             WHERE id = v_variant_id
               AND product_id = v_product_id
@@ -180,6 +176,3 @@ BEGIN
     );
 END;
 $$;
-
--- Grant execute permission
-GRANT EXECUTE ON FUNCTION batch_import_stock(UUID, UUID, JSONB, TEXT, BOOLEAN, VARCHAR, UUID, VARCHAR) TO authenticated;

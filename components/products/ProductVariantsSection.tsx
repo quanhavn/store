@@ -1,11 +1,19 @@
 'use client'
 
-import { Button, Input, InputNumber, Table, Space, Popconfirm, Select, Tag, Modal, Form, message } from 'antd'
+import { Button, Input, InputNumber, Table, Space, Popconfirm, Select, Tag, Modal, Form, message, Divider } from 'antd'
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProductAttribute, ProductAttributeValue } from '@/lib/supabase/functions'
+
+export interface VariantUnitPrice {
+  unit_id: string
+  unit_name?: string
+  sell_price?: number
+  cost_price?: number
+  barcode?: string
+}
 
 export interface ProductVariantInput {
   id?: string
@@ -17,6 +25,16 @@ export interface ProductVariantInput {
   quantity: number
   min_stock?: number
   attribute_values?: { attribute_id: string; value_id: string }[]
+  unit_prices?: VariantUnitPrice[]
+}
+
+interface ProductUnit {
+  id: string
+  unit_name: string
+  conversion_rate: number
+  is_base_unit: boolean
+  sell_price?: number
+  cost_price?: number
 }
 
 interface ProductVariantsSectionProps {
@@ -28,6 +46,8 @@ interface ProductVariantsSectionProps {
   baseMinStock?: number
   disabled?: boolean
   onCreateAttribute?: () => void
+  hasUnits?: boolean
+  units?: ProductUnit[]
 }
 
 export function ProductVariantsSection({
@@ -39,6 +59,8 @@ export function ProductVariantsSection({
   baseMinStock = 10,
   disabled = false,
   onCreateAttribute,
+  hasUnits = false,
+  units = [],
 }: ProductVariantsSectionProps) {
   const t = useTranslations('products')
   const tCommon = useTranslations('common')
@@ -71,10 +93,16 @@ export function ProductVariantsSection({
     variant.attribute_values?.forEach(av => {
       attributeValues[av.attribute_id] = av.value_id
     })
+
+    const unitPrices: Record<string, { sell_price?: number; cost_price?: number }> = {}
+    variant.unit_prices?.forEach(up => {
+      unitPrices[up.unit_id] = { sell_price: up.sell_price, cost_price: up.cost_price }
+    })
     
     form.setFieldsValue({
       ...variant,
       attributes: attributeValues,
+      unit_prices: unitPrices,
     })
     setIsModalOpen(true)
   }
@@ -85,7 +113,7 @@ export function ProductVariantsSection({
 
   const handleSaveVariant = () => {
     form.validateFields().then(values => {
-      const { attributes: attrValues, ...variantData } = values
+      const { attributes: attrValues, unit_prices: unitPricesValues, ...variantData } = values
       
       const attributeValuesList = Object.entries(attrValues || {})
         .filter(([_, valueId]) => valueId)
@@ -94,6 +122,20 @@ export function ProductVariantsSection({
           value_id: valueId as string,
         }))
 
+      const unitPricesList: VariantUnitPrice[] = hasUnits && unitPricesValues
+        ? Object.entries(unitPricesValues as Record<string, { sell_price?: number; cost_price?: number }>)
+            .filter(([_, prices]) => prices.sell_price !== undefined || prices.cost_price !== undefined)
+            .map(([unitId, prices]) => {
+              const unit = units.find(u => u.id === unitId)
+              return {
+                unit_id: unitId,
+                unit_name: unit?.unit_name,
+                sell_price: prices.sell_price,
+                cost_price: prices.cost_price,
+              }
+            })
+        : []
+
       const generatedName = generateVariantName(attributeValuesList)
       
       const updatedVariant: ProductVariantInput = {
@@ -101,6 +143,7 @@ export function ProductVariantsSection({
         ...variantData,
         name: variantData.name || generatedName,
         attribute_values: attributeValuesList,
+        unit_prices: unitPricesList.length > 0 ? unitPricesList : undefined,
       }
 
       if (editingVariant?.id?.startsWith('temp-')) {
@@ -361,6 +404,61 @@ export function ProductVariantsSection({
               />
             </Form.Item>
           </div>
+
+          {hasUnits && units.length > 0 && (
+            <>
+              <Divider className="!mt-6">
+                <span className="text-sm">{t('variants.unitPrices')}</span>
+              </Divider>
+              <p className="text-xs text-gray-500 mb-4">
+                {t('variants.unitPricesHint')}
+              </p>
+              <div className="space-y-4">
+                {units.map((unit) => (
+                  <div key={unit.id} className="border rounded-lg p-3">
+                    <div className="font-medium mb-2 flex items-center gap-2">
+                      <Tag color={unit.is_base_unit ? 'green' : 'blue'}>{unit.unit_name}</Tag>
+                      {!unit.is_base_unit && (
+                        <span className="text-xs text-gray-500">
+                          = {unit.conversion_rate} {units.find(u => u.is_base_unit)?.unit_name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Form.Item
+                        name={['unit_prices', unit.id, 'cost_price']}
+                        label={t('costPrice')}
+                        className="!mb-0"
+                      >
+                        <InputNumber<number>
+                          className="!w-full"
+                          min={0}
+                          placeholder={unit.cost_price ? `${unit.cost_price.toLocaleString('vi-VN')}` : undefined}
+                          formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+                          addonAfter="đ"
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        name={['unit_prices', unit.id, 'sell_price']}
+                        label={t('sellPrice')}
+                        className="!mb-0"
+                      >
+                        <InputNumber<number>
+                          className="!w-full"
+                          min={0}
+                          placeholder={unit.sell_price ? `${unit.sell_price.toLocaleString('vi-VN')}` : undefined}
+                          formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={(v) => (v ? Number(v.replace(/,/g, '')) : 0) as number}
+                          addonAfter="đ"
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </Form>
       </Modal>
     </div>

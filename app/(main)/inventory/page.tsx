@@ -10,11 +10,13 @@ import {
   PlusOutlined,
   ShoppingOutlined,
   DownOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { StockCheckList } from '@/components/inventory/StockCheckList'
 import { StockAdjustment } from '@/components/inventory/StockAdjustment'
 import { LowStockAlerts } from '@/components/inventory/LowStockAlerts'
+import { InventoryHistory } from '@/components/inventory/InventoryHistory'
 import { StockCheckForm, StockCheckItem } from '@/components/inventory/StockCheckForm'
 import { StockCheckSummary } from '@/components/inventory/StockCheckSummary'
 import { ProductForm } from '@/components/products/ProductForm'
@@ -376,6 +378,16 @@ export default function InventoryPage() {
         </span>
       ),
       children: <StockAdjustment />,
+    },
+    {
+      key: 'history',
+      label: (
+        <span className="flex items-center gap-1">
+          <HistoryOutlined />
+          Lịch sử
+        </span>
+      ),
+      children: <InventoryHistory />,
     },
     {
       key: 'low-stock',

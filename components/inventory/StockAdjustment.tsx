@@ -32,6 +32,9 @@ import { useInventoryStore, AdjustmentType } from '@/lib/stores/inventory'
 import { formatCurrency } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
+import { VariantUnitSelectorModal, type ProductWithVariantUnits } from '@/components/pos/VariantUnitSelectorModal'
+import type { VariantUnitCombination } from '@/types/database'
+
 const { Text } = Typography
 const { TextArea } = Input
 
@@ -40,7 +43,7 @@ interface ProductVariant {
   name: string
   sku?: string
   barcode?: string
-  sell_price: number
+  sell_price?: number
   cost_price?: number
   quantity: number
   min_stock?: number
@@ -65,11 +68,15 @@ interface Product {
   sku: string | null
   quantity: number
   cost_price: number
+  sell_price: number
+  vat_rate: number
   unit: string
+  image_url?: string
   has_variants?: boolean
   has_units?: boolean
   variants?: ProductVariant[]
   units?: ProductUnit[]
+  variant_unit_combinations?: VariantUnitCombination[]
 }
 
 export function StockAdjustment() {
@@ -77,6 +84,7 @@ export function StockAdjustment() {
   const [searchTerm, setSearchTerm] = useState('')
   const [variantSelectProduct, setVariantSelectProduct] = useState<Product | null>(null)
   const [unitSelectProduct, setUnitSelectProduct] = useState<Product | null>(null)
+  const [variantUnitSelectProduct, setVariantUnitSelectProduct] = useState<Product | null>(null)
   const queryClient = useQueryClient()
   const supabase = createClient()
   const t = useTranslations('inventory')
@@ -127,12 +135,21 @@ export function StockAdjustment() {
       
       const { data, error } = await supabase
         .from('products')
-        .select('*, product_variants(*), product_units(*)')
+        .select('*, product_variants(*, variant_units(*)), product_units(*)')
         .eq('active', true)
         .or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%`)
         .limit(20)
       
       if (error) throw error
+      
+      interface VariantUnitRow {
+        unit_id: string
+        sell_price?: number
+        cost_price?: number
+        sku?: string
+        barcode?: string
+        active?: boolean
+      }
       
       interface ProductRow {
         id: string
@@ -140,18 +157,76 @@ export function StockAdjustment() {
         sku: string | null
         quantity: number
         cost_price: number
+        sell_price: number
+        vat_rate: number
         unit: string
+        image_url?: string
         has_variants?: boolean
         has_units?: boolean
-        product_variants?: ProductVariant[]
+        product_variants?: (ProductVariant & { variant_units?: VariantUnitRow[] })[]
         product_units?: ProductUnit[]
       }
       
-      return (data as ProductRow[] || []).map((p) => ({
-        ...p,
-        variants: p.product_variants?.filter((v) => v.active !== false) || [],
-        units: p.product_units?.filter((u) => u.active !== false) || [],
-      })) as Product[]
+      return (data as ProductRow[] || []).map((p) => {
+        const units = p.product_units?.filter((u) => u.active !== false) || []
+        
+        // Process variants and extract base unit prices from variant_units
+        const variants = (p.product_variants?.filter((v) => v.active !== false) || []).map(variant => {
+          // Find base unit entry in variant_units to extract prices
+          const baseUnit = units.find(u => u.is_base_unit)
+          const baseUnitEntry = variant.variant_units?.find(vu => 
+            vu.active !== false && (baseUnit ? vu.unit_id === baseUnit.id : true)
+          )
+          return {
+            ...variant,
+            // Extract prices from variant_units for backwards compatibility
+            sell_price: baseUnitEntry?.sell_price ?? variant.sell_price,
+            cost_price: baseUnitEntry?.cost_price ?? variant.cost_price,
+            sku: baseUnitEntry?.sku ?? variant.sku,
+            barcode: baseUnitEntry?.barcode ?? variant.barcode,
+          }
+        })
+        
+        let variant_unit_combinations: VariantUnitCombination[] | undefined
+        if (p.has_variants && p.has_units && variants.length > 0 && units.length > 0) {
+          variant_unit_combinations = []
+          for (const variant of variants) {
+            for (const unit of units) {
+              const variantUnit = variant.variant_units?.find(vu => vu.unit_id === unit.id && vu.active !== false)
+              const effectiveSellPrice = variantUnit?.sell_price ?? 
+                (unit.sell_price ?? Math.round((variant.sell_price || p.sell_price) * unit.conversion_rate))
+              const effectiveCostPrice = variantUnit?.cost_price ?? 
+                (unit.cost_price ?? Math.round((variant.cost_price || p.cost_price) * unit.conversion_rate))
+              
+              variant_unit_combinations.push({
+                product_id: p.id,
+                product_name: p.name,
+                variant_id: variant.id,
+                variant_name: variant.name || '',
+                variant_quantity: variant.quantity,
+                variant_sell_price: variant.sell_price ?? null,
+                variant_cost_price: variant.cost_price ?? null,
+                unit_id: unit.id,
+                unit_name: unit.unit_name,
+                conversion_rate: unit.conversion_rate,
+                is_base_unit: unit.is_base_unit,
+                variant_unit_id: null,
+                effective_sell_price: effectiveSellPrice,
+                effective_cost_price: effectiveCostPrice,
+                effective_barcode: variantUnit?.barcode ?? variant.barcode ?? null,
+                display_name: `${variant.name} (${unit.unit_name})`,
+              })
+            }
+          }
+        }
+        
+        return {
+          ...p,
+          variants,
+          units,
+          variant_unit_combinations,
+        }
+      }) as Product[]
     },
     enabled: searchTerm.length > 0,
   })
@@ -160,14 +235,19 @@ export function StockAdjustment() {
     mutationFn: async () => {
       if (adjustmentType === 'import') {
         const items = adjustmentItems.map(item => {
+          // Convert quantity to base units for stock update
           const baseQuantity = item.conversion_rate 
             ? Math.round(item.adjustment_quantity * item.conversion_rate) 
             : item.adjustment_quantity
+          // Calculate exact item total to avoid rounding issues
+          // Total = adjustment_quantity (in selected unit) * unit_cost (per selected unit)
+          const itemTotal = item.adjustment_quantity * (item.unit_cost || 0)
           return {
             product_id: item.product_id,
             variant_id: item.variant_id,
             quantity: baseQuantity,
             unit_cost: item.unit_cost ?? undefined,
+            item_total: itemTotal,  // Send exact total to avoid rounding
           }
         })
         
@@ -225,12 +305,21 @@ export function StockAdjustment() {
   })
 
   const handleAddProduct = (product: Product) => {
+    // If product has both variants and units
+    if (product.has_variants && product.has_units && product.variants && product.variants.length > 0 && product.units && product.units.length > 0) {
+      setVariantUnitSelectProduct(product)
+      setProductSearchOpen(false)
+      return
+    }
+
+    // If product only has variants
     if (product.has_variants && product.variants && product.variants.length > 0) {
       setVariantSelectProduct(product)
       setProductSearchOpen(false)
       return
     }
 
+    // If product only has units
     if (product.has_units && product.units && product.units.length > 1) {
       setUnitSelectProduct(product)
       setProductSearchOpen(false)
@@ -276,6 +365,22 @@ export function StockAdjustment() {
       conversion_rate: unit.conversion_rate,
     })
     setUnitSelectProduct(null)
+    setSearchTerm('')
+  }
+
+  const handleSelectVariantUnit = (product: ProductWithVariantUnits, combination: VariantUnitCombination) => {
+    addAdjustmentItemWithVariant({
+      id: product.id,
+      name: product.name,
+      quantity: combination.variant_quantity,
+      cost_price: combination.effective_cost_price,
+      variant_id: combination.variant_id,
+      variant_name: combination.display_name,
+      unit_id: combination.unit_id,
+      unit_name: combination.unit_name,
+      conversion_rate: combination.conversion_rate,
+    })
+    setVariantUnitSelectProduct(null)
     setSearchTerm('')
   }
 
@@ -333,7 +438,11 @@ export function StockAdjustment() {
                         <Tag color="blue" className="mt-1">{item.variant_name}</Tag>
                       )}
                       <div className="text-xs text-gray-500 mt-1">
-                        {t('currentStock')}: {item.current_quantity}
+                        {t('currentStock')}: {
+                          item.conversion_rate && item.conversion_rate > 1
+                            ? Math.floor(item.current_quantity / item.conversion_rate)
+                            : item.current_quantity
+                        }
                         {item.unit_name && ` ${item.unit_name}`}
                       </div>
                     </div>
@@ -341,7 +450,7 @@ export function StockAdjustment() {
                       type="text"
                       danger
                       icon={<DeleteOutlined />}
-                      onClick={() => removeAdjustmentItem(item.product_id, item.variant_id)}
+                      onClick={() => removeAdjustmentItem(item.product_id, item.variant_id, item.unit_id)}
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -353,7 +462,8 @@ export function StockAdjustment() {
                           updateAdjustmentQuantity(
                             item.product_id,
                             item.adjustment_quantity - 1,
-                            item.variant_id
+                            item.variant_id,
+                            item.unit_id
                           )
                         }
                       />
@@ -361,7 +471,7 @@ export function StockAdjustment() {
                         min={1}
                         value={item.adjustment_quantity}
                         onChange={(value) =>
-                          updateAdjustmentQuantity(item.product_id, value || 1, item.variant_id)
+                          updateAdjustmentQuantity(item.product_id, value || 1, item.variant_id, item.unit_id)
                         }
                         controls={false}
                         className="w-16 text-center border-0"
@@ -373,7 +483,8 @@ export function StockAdjustment() {
                           updateAdjustmentQuantity(
                             item.product_id,
                             item.adjustment_quantity + 1,
-                            item.variant_id
+                            item.variant_id,
+                            item.unit_id
                           )
                         }
                       />
@@ -386,7 +497,7 @@ export function StockAdjustment() {
                         placeholder={t('costPrice')}
                         value={item.unit_cost}
                         onChange={(value) =>
-                          updateAdjustmentCost(item.product_id, value, item.variant_id)
+                          updateAdjustmentCost(item.product_id, value, item.variant_id, item.unit_id)
                         }
                         formatter={(value) =>
                           `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -538,10 +649,13 @@ export function StockAdjustment() {
           <List
             dataSource={searchResults}
             renderItem={(product) => {
-              const isAdded = adjustmentItems.some(
+              // For products with units but no variants, don't block at product level
+              // The unit selector modal will show which units are already added
+              const hasUnitsOnly = product.has_units && product.units && product.units.length > 1 && !product.has_variants
+              const hasVariants = product.has_variants && product.variants && product.variants.length > 0
+              const isAdded = !hasUnitsOnly && !hasVariants && adjustmentItems.some(
                 (item) => item.product_id === product.id && !item.variant_id
               )
-              const hasVariants = product.has_variants && product.variants && product.variants.length > 0
               return (
                 <List.Item
                   className="cursor-pointer hover:bg-gray-50"
@@ -631,6 +745,7 @@ export function StockAdjustment() {
                 (item) => item.product_id === unitSelectProduct.id && item.unit_id === unit.id
               )
               const price = unit.cost_price ?? unitSelectProduct.cost_price
+              const baseUnitName = unitSelectProduct.units?.find(u => u.is_base_unit)?.unit_name || unitSelectProduct.unit
               return (
                 <List.Item
                   className="cursor-pointer hover:bg-gray-50"
@@ -640,15 +755,9 @@ export function StockAdjustment() {
                     <div>
                       <div className="font-medium flex items-center gap-2">
                         {unit.unit_name}
-                        {unit.is_base_unit && (
-                          <Tag color="blue">{tProducts('units.baseUnit')}</Tag>
-                        )}
-                        {unit.is_default && (
-                          <Tag color="green">{tProducts('units.default')}</Tag>
-                        )}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {unit.conversion_rate > 1 && `x${unit.conversion_rate} ${tProducts('units.baseUnit').toLowerCase()}`}
+                        {unit.conversion_rate > 1 && `= ${unit.conversion_rate} ${baseUnitName}`}
                       </div>
                     </div>
                     {isAdded ? (
@@ -665,6 +774,15 @@ export function StockAdjustment() {
           />
         )}
       </Modal>
+
+      <VariantUnitSelectorModal
+        open={!!variantUnitSelectProduct}
+        onClose={() => setVariantUnitSelectProduct(null)}
+        product={variantUnitSelectProduct as ProductWithVariantUnits}
+        onSelectVariantUnit={handleSelectVariantUnit}
+        checkStock={adjustmentType !== 'import'}
+        showCostPrice={adjustmentType === 'import'}
+      />
     </div>
   )
 }

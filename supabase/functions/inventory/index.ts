@@ -26,6 +26,7 @@ interface BatchImportItem {
   variant_id?: string
   quantity: number
   unit_cost?: number
+  item_total?: number  // Pre-calculated total to avoid rounding issues
 }
 
 interface BatchImportStockRequest {
@@ -197,6 +198,7 @@ serve(async (req: Request) => {
           variant_id: item.variant_id || null,
           quantity: item.quantity,
           unit_cost: item.unit_cost || 0,
+          item_total: item.item_total || null,  // Pass pre-calculated total
         }))
 
         // Use RPC for atomic batch transaction with single finance entry
@@ -284,7 +286,7 @@ serve(async (req: Request) => {
 
         let query = supabase
           .from('inventory_logs')
-          .select('*, products(id, name)', { count: 'exact' })
+          .select('*, products(id, name, unit), product_variants(id, name), product_units(id, unit_name)', { count: 'exact' })
           .eq('store_id', store_id)
           .order('created_at', { ascending: false })
 
@@ -324,9 +326,10 @@ serve(async (req: Request) => {
 
       case 'summary': {
         // Get inventory summary with variant support
+        // Note: variant cost_price is now in variant_units table, use product cost as fallback
         const { data: products, error } = await supabase
           .from('products')
-          .select('id, name, quantity, cost_price, min_stock, active, has_variants, product_variants(id, quantity, cost_price)')
+          .select('id, name, quantity, cost_price, min_stock, active, has_variants, product_variants(id, quantity)')
           .eq('store_id', store_id)
           .eq('active', true)
 
@@ -341,10 +344,8 @@ serve(async (req: Request) => {
 
           if (hasVariants) {
             const totalVariantQty = p.product_variants.reduce((sum: number, v: { quantity: number }) => sum + v.quantity, 0)
-            const variantValue = p.product_variants.reduce(
-              (sum: number, v: { quantity: number; cost_price?: number }) => sum + v.quantity * (v.cost_price ?? p.cost_price),
-              0
-            )
+            // Use product cost_price for all variants since variant-level cost is now in variant_units
+            const variantValue = totalVariantQty * p.cost_price
             totalValue += variantValue
             if (totalVariantQty <= 0) outOfStockCount++
             else if (totalVariantQty <= p.min_stock) lowStockCount++
@@ -366,10 +367,11 @@ serve(async (req: Request) => {
       }
 
       case 'low_stock': {
-        // Fetch products with their variants (including min_stock per variant)
+        // Fetch products with their variants
+        // Note: variant sku, barcode, cost_price are now in variant_units table
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, quantity, min_stock, unit, image_url, sku, cost_price, has_variants, categories(name), product_variants(id, name, sku, barcode, quantity, min_stock, cost_price)')
+          .select('id, name, quantity, min_stock, unit, image_url, sku, cost_price, has_variants, categories(name), product_variants(id, name, quantity, min_stock)')
           .eq('store_id', store_id)
           .eq('active', true)
           .order('quantity', { ascending: true })
@@ -379,21 +381,15 @@ serve(async (req: Request) => {
         interface VariantData {
           id: string
           name: string | null
-          sku: string | null
-          barcode: string | null
           quantity: number
           min_stock: number | null
-          cost_price: number | null
         }
 
         interface LowStockVariant {
           id: string
           name: string | null
-          sku: string | null
-          barcode: string | null
           quantity: number
           min_stock: number
-          cost_price: number | null
         }
 
         // Build list including per-variant low stock alerts
@@ -425,11 +421,8 @@ serve(async (req: Request) => {
               .map((v) => ({
                 id: v.id,
                 name: v.name,
-                sku: v.sku,
-                barcode: v.barcode,
                 quantity: v.quantity,
                 min_stock: v.min_stock ?? p.min_stock ?? 10,
-                cost_price: v.cost_price ?? p.cost_price,
               }))
               .sort((a, b) => a.quantity - b.quantity)
 

@@ -48,11 +48,14 @@ export interface InventoryStore {
     cost_price: number
     variant_id: string
     variant_name: string
+    unit_id?: string
+    unit_name?: string
+    conversion_rate?: number
   }) => void
-  removeAdjustmentItem: (productId: string, variantId?: string) => void
-  updateAdjustmentQuantity: (productId: string, quantity: number, variantId?: string) => void
-  updateAdjustmentCost: (productId: string, cost: number | null, variantId?: string) => void
-  updateAdjustmentUnit: (productId: string, unit: { unit_id: string; unit_name: string; conversion_rate: number }, variantId?: string) => void
+  removeAdjustmentItem: (productId: string, variantId?: string, unitId?: string) => void
+  updateAdjustmentQuantity: (productId: string, quantity: number, variantId?: string, unitId?: string) => void
+  updateAdjustmentCost: (productId: string, cost: number | null, variantId?: string, unitId?: string) => void
+  updateAdjustmentUnit: (productId: string, unit: { unit_id: string; unit_name: string; conversion_rate: number }, variantId?: string, unitId?: string) => void
   updateItemNote: (productId: string, note: string) => void
   setAdjustmentNote: (note: string) => void
   setRecordExpense: (record: boolean) => void
@@ -96,22 +99,24 @@ export const useInventoryStore = create<InventoryStore>()(
 
       addAdjustmentItem: (product) => {
         set((state) => {
-          const itemKey = product.variant_id 
-            ? `${product.id}-${product.variant_id}` 
-            : product.id
+          // Include unit_id in the key so same product with different units are treated as separate items
+          let itemKey = product.id
+          if (product.variant_id) itemKey += `-${product.variant_id}`
+          if (product.unit_id) itemKey += `-${product.unit_id}`
+          
           const existingItem = state.adjustmentItems.find((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            let existingKey = item.product_id
+            if (item.variant_id) existingKey += `-${item.variant_id}`
+            if (item.unit_id) existingKey += `-${item.unit_id}`
             return existingKey === itemKey
           })
 
           if (existingItem) {
             return {
               adjustmentItems: state.adjustmentItems.map((item) => {
-                const existingKey = item.variant_id 
-                  ? `${item.product_id}-${item.variant_id}` 
-                  : item.product_id
+                let existingKey = item.product_id
+                if (item.variant_id) existingKey += `-${item.variant_id}`
+                if (item.unit_id) existingKey += `-${item.unit_id}`
                 return existingKey === itemKey
                   ? { ...item, adjustment_quantity: item.adjustment_quantity + 1 }
                   : item
@@ -142,20 +147,22 @@ export const useInventoryStore = create<InventoryStore>()(
 
       addAdjustmentItemWithVariant: (product) => {
         set((state) => {
-          const itemKey = `${product.id}-${product.variant_id}`
+          const itemKey = product.unit_id 
+            ? `${product.id}-${product.variant_id}-${product.unit_id}`
+            : `${product.id}-${product.variant_id}`
           const existingItem = state.adjustmentItems.find((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            let existingKey = item.product_id
+            if (item.variant_id) existingKey += `-${item.variant_id}`
+            if (item.unit_id) existingKey += `-${item.unit_id}`
             return existingKey === itemKey
           })
 
           if (existingItem) {
             return {
               adjustmentItems: state.adjustmentItems.map((item) => {
-                const existingKey = item.variant_id 
-                  ? `${item.product_id}-${item.variant_id}` 
-                  : item.product_id
+                let existingKey = item.product_id
+                if (item.variant_id) existingKey += `-${item.variant_id}`
+                if (item.unit_id) existingKey += `-${item.unit_id}`
                 return existingKey === itemKey
                   ? { ...item, adjustment_quantity: item.adjustment_quantity + 1 }
                   : item
@@ -175,37 +182,44 @@ export const useInventoryStore = create<InventoryStore>()(
                 note: '',
                 variant_id: product.variant_id,
                 variant_name: product.variant_name,
+                unit_id: product.unit_id,
+                unit_name: product.unit_name,
+                conversion_rate: product.conversion_rate || 1,
               },
             ],
           }
         })
       },
 
-      removeAdjustmentItem: (productId, variantId) => {
-        const itemKey = variantId ? `${productId}-${variantId}` : productId
+      removeAdjustmentItem: (productId, variantId, unitId) => {
+        let itemKey = productId
+        if (variantId) itemKey += `-${variantId}`
+        if (unitId) itemKey += `-${unitId}`
         set((state) => ({
           adjustmentItems: state.adjustmentItems.filter((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            let existingKey = item.product_id
+            if (item.variant_id) existingKey += `-${item.variant_id}`
+            if (item.unit_id) existingKey += `-${item.unit_id}`
             return existingKey !== itemKey
           }),
         }))
       },
 
-      updateAdjustmentQuantity: (productId, quantity, variantId) => {
+      updateAdjustmentQuantity: (productId, quantity, variantId, unitId) => {
         if (quantity <= 0) {
-          get().removeAdjustmentItem(productId, variantId)
+          get().removeAdjustmentItem(productId, variantId, unitId)
           return
         }
 
-        const itemKey = variantId ? `${productId}-${variantId}` : productId
+        let itemKey = productId
+        if (variantId) itemKey += `-${variantId}`
+        if (unitId) itemKey += `-${unitId}`
 
         set((state) => ({
           adjustmentItems: state.adjustmentItems.map((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            let existingKey = item.product_id
+            if (item.variant_id) existingKey += `-${item.variant_id}`
+            if (item.unit_id) existingKey += `-${item.unit_id}`
             return existingKey === itemKey
               ? { ...item, adjustment_quantity: quantity }
               : item
@@ -213,25 +227,29 @@ export const useInventoryStore = create<InventoryStore>()(
         }))
       },
 
-      updateAdjustmentCost: (productId, cost, variantId) => {
-        const itemKey = variantId ? `${productId}-${variantId}` : productId
+      updateAdjustmentCost: (productId, cost, variantId, unitId) => {
+        let itemKey = productId
+        if (variantId) itemKey += `-${variantId}`
+        if (unitId) itemKey += `-${unitId}`
         set((state) => ({
           adjustmentItems: state.adjustmentItems.map((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            let existingKey = item.product_id
+            if (item.variant_id) existingKey += `-${item.variant_id}`
+            if (item.unit_id) existingKey += `-${item.unit_id}`
             return existingKey === itemKey ? { ...item, unit_cost: cost } : item
           }),
         }))
       },
 
-      updateAdjustmentUnit: (productId, unit, variantId) => {
-        const itemKey = variantId ? `${productId}-${variantId}` : productId
+      updateAdjustmentUnit: (productId, unit, variantId, unitId) => {
+        let itemKey = productId
+        if (variantId) itemKey += `-${variantId}`
+        if (unitId) itemKey += `-${unitId}`
         set((state) => ({
           adjustmentItems: state.adjustmentItems.map((item) => {
-            const existingKey = item.variant_id 
-              ? `${item.product_id}-${item.variant_id}` 
-              : item.product_id
+            let existingKey = item.product_id
+            if (item.variant_id) existingKey += `-${item.variant_id}`
+            if (item.unit_id) existingKey += `-${item.unit_id}`
             return existingKey === itemKey 
               ? { 
                   ...item, 
