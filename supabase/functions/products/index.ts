@@ -472,37 +472,27 @@ serve(async (req: Request) => {
 
         const productId = data.id
 
-        // Create units if provided
+        // Always create base unit for products with variants or units
         let baseUnitId: string | null = null
-        if (has_units) {
-          // First, ensure base unit exists in product_units
-          const hasBaseUnit = units.some((u: ProductUnit) => u.is_base_unit)
+        if (has_units || has_variants) {
+          const { data: baseUnitData } = await supabase
+            .from('product_units')
+            .insert({
+              product_id: productId,
+              unit_name: unit,
+              conversion_rate: 1,
+              is_base_unit: true,
+              is_default: true,
+              sell_price: sell_price,
+              cost_price: cost_price,
+            })
+            .select()
+            .single()
           
-          if (!hasBaseUnit) {
-            // Create base unit record
-            const { data: baseUnitData, error: baseUnitError } = await supabase
-              .from('product_units')
-              .insert({
-                product_id: productId,
-                unit_name: unit,
-                conversion_rate: 1,
-                is_base_unit: true,
-                is_default: true,
-                sell_price: sell_price,
-                cost_price: cost_price,
-              })
-              .select()
-              .single()
-            
-            if (baseUnitError) {
-              console.error('Failed to create base unit:', baseUnitError)
-            } else {
-              baseUnitId = baseUnitData.id
-            }
-          }
+          baseUnitId = baseUnitData?.id || null
           
-          // Insert additional units
-          if (units.length > 0) {
+          // Insert additional units (only if has_units)
+          if (has_units && units.length > 0) {
             const unitsToInsert = units.filter((u: ProductUnit) => !u.is_base_unit).map((u: ProductUnit) => ({
               product_id: productId,
               unit_name: u.unit_name,
@@ -515,27 +505,7 @@ serve(async (req: Request) => {
             }))
 
             if (unitsToInsert.length > 0) {
-              const { error: unitsError } = await supabase
-                .from('product_units')
-                .insert(unitsToInsert)
-
-              if (unitsError) {
-                console.error('Failed to create units:', unitsError)
-              }
-            }
-          }
-          
-          // Fetch base unit id if not created above
-          if (!baseUnitId) {
-            const { data: allUnits } = await supabase
-              .from('product_units')
-              .select('id, is_base_unit')
-              .eq('product_id', productId)
-              .eq('active', true)
-            
-            if (allUnits) {
-              const baseUnit = allUnits.find((u: { is_base_unit: boolean }) => u.is_base_unit)
-              baseUnitId = baseUnit?.id || null
+              await supabase.from('product_units').insert(unitsToInsert)
             }
           }
         }
@@ -554,48 +524,34 @@ serve(async (req: Request) => {
               .select()
               .single()
 
-            if (variantError) {
-              console.error('Failed to create variant:', variantError)
-              continue
-            }
+            if (variantError) continue
 
             // Create variant attribute associations
             if (v.attribute_values && v.attribute_values.length > 0) {
-              const attrsToInsert = v.attribute_values.map((av) => ({
-                variant_id: variantData.id,
-                attribute_id: av.attribute_id,
-                attribute_value_id: av.value_id,
-              }))
-
-              const { error: attrError } = await supabase
-                .from('product_variant_attributes')
-                .insert(attrsToInsert)
-
-              if (attrError) {
-                console.error('Failed to create variant attributes:', attrError)
-              }
+              await supabase.from('product_variant_attributes').insert(
+                v.attribute_values.map((av) => ({
+                  variant_id: variantData.id,
+                  attribute_id: av.attribute_id,
+                  attribute_value_id: av.value_id,
+                }))
+              )
             }
 
-            // Create variant unit prices if product has units
-            if (has_units) {
-              const variantUnitPrices: { variant_id: string; unit_id: string; sell_price?: number; cost_price?: number; barcode?: string; sku?: string }[] = []
+            // Create variant_units entry (base unit + additional units)
+            if (baseUnitId) {
+              const variantUnits = [{
+                variant_id: variantData.id,
+                unit_id: baseUnitId,
+                sell_price: v.sell_price ?? sell_price,
+                cost_price: v.cost_price ?? cost_price,
+                barcode: v.barcode,
+                sku: v.sku,
+              }]
               
-              // Always create base unit entry for variant
-              if (baseUnitId) {
-                variantUnitPrices.push({
-                  variant_id: variantData.id,
-                  unit_id: baseUnitId,
-                  sell_price: v.sell_price ?? sell_price,
-                  cost_price: v.cost_price ?? cost_price,
-                  barcode: v.barcode,
-                  sku: v.sku,
-                })
-              }
-              
-              // Add custom unit prices from form
-              if (v.unit_prices && v.unit_prices.length > 0) {
+              // Add additional units if has_units
+              if (has_units && v.unit_prices) {
                 v.unit_prices.forEach((up) => {
-                  variantUnitPrices.push({
+                  variantUnits.push({
                     variant_id: variantData.id,
                     unit_id: up.unit_id,
                     sell_price: up.sell_price,
@@ -606,17 +562,43 @@ serve(async (req: Request) => {
                 })
               }
               
-              if (variantUnitPrices.length > 0) {
-                const { error: vuError } = await supabase
-                  .from('variant_units')
-                  .insert(variantUnitPrices)
+              await supabase.from('variant_units').insert(variantUnits)
+            }
 
-                if (vuError) {
-                  console.error('Failed to create variant unit prices:', vuError)
-                }
-              }
+            // Log initial inventory
+            if (v.quantity > 0) {
+              await supabase.from('inventory_logs').insert({
+                store_id,
+                product_id: productId,
+                variant_id: variantData.id,
+                type: 'import',
+                quantity: v.quantity,
+                unit_cost: v.cost_price ?? cost_price,
+                total_value: v.quantity * (v.cost_price ?? cost_price),
+                note: 'Tồn kho ban đầu',
+                created_by: user.id,
+                reference_type: 'initial_stock',
+                reference_id: variantData.id,
+              })
             }
           }
+        }
+
+        // Log initial inventory for product without variants
+        if (!has_variants && quantity > 0) {
+          await supabase.from('inventory_logs').insert({
+            store_id,
+            product_id: productId,
+            variant_id: null,
+            type: 'import',
+            quantity: quantity,
+            unit_cost: cost_price,
+            total_value: quantity * cost_price,
+            note: 'Tồn kho ban đầu',
+            created_by: user.id,
+            reference_type: 'initial_stock',
+            reference_id: productId,
+          })
         }
 
         return successResponse({ product: data })
@@ -625,6 +607,14 @@ serve(async (req: Request) => {
       case 'update': {
         const { id, units, variants, ...updates } = body
         delete (updates as { action?: string }).action
+
+        // Get old product data to detect quantity changes
+        const { data: oldProduct } = await supabase
+          .from('products')
+          .select('quantity, cost_price, has_variants')
+          .eq('id', id)
+          .eq('store_id', store_id)
+          .single()
 
         const { data, error } = await supabase
           .from('products')
@@ -635,6 +625,28 @@ serve(async (req: Request) => {
           .single()
 
         if (error) throw error
+
+        // Log inventory if quantity changed for non-variant product
+        if (oldProduct && !oldProduct.has_variants && updates.quantity !== undefined) {
+          const oldQty = oldProduct.quantity || 0
+          const newQty = updates.quantity as number
+
+          if (newQty !== oldQty) {
+            // Use RPC to ensure WAC and inventory_costs are updated atomically
+            const { error: rpcError } = await supabase.rpc('adjust_stock_with_variant', {
+              p_store_id: store_id,
+              p_user_id: user.id,
+              p_product_id: id,
+              p_variant_id: null,
+              p_new_quantity: newQty,
+              p_note: `Điều chỉnh từ ${oldQty} thành ${newQty}`,
+            })
+
+            if (rpcError) {
+              console.error('RPC adjust_stock_with_variant error:', rpcError)
+            }
+          }
+        }
 
         // Handle units update if provided
         if (updates.has_units && units) {
@@ -691,18 +703,46 @@ serve(async (req: Request) => {
 
         // Handle variants update if provided
         if (updates.has_variants && variants) {
+          // Get or create base unit
+          let { data: baseUnitData } = await supabase
+            .from('product_units')
+            .select('id')
+            .eq('product_id', id)
+            .eq('is_base_unit', true)
+            .eq('active', true)
+            .single()
+          
+          if (!baseUnitData) {
+            const { data: newUnit } = await supabase
+              .from('product_units')
+              .insert({
+                product_id: id,
+                unit_name: data.unit || 'cái',
+                conversion_rate: 1,
+                is_base_unit: true,
+                is_default: true,
+                sell_price: data.sell_price,
+                cost_price: data.cost_price,
+              })
+              .select()
+              .single()
+            baseUnitData = newUnit
+          }
+          const baseUnitId = baseUnitData?.id
+
           // Get existing variants
           const { data: existingVariants } = await supabase
             .from('product_variants')
-            .select('id')
+            .select('id, quantity')
             .eq('product_id', id)
 
+          const existingMap = new Map((existingVariants || []).map((v: { id: string; quantity: number }) => [v.id, v]))
           const existingIds = new Set((existingVariants || []).map((v: { id: string }) => v.id))
           const newVariants = (variants as ProductVariant[]).filter(v => !v.id || v.id.startsWith('temp-'))
           const updateVariants = (variants as ProductVariant[]).filter(v => v.id && !v.id.startsWith('temp-'))
           const submittedIds = new Set(updateVariants.map(v => v.id))
 
-          // Soft delete variants that are no longer present
+          // Soft delete removed variants
           for (const existingId of existingIds) {
             if (!submittedIds.has(existingId)) {
               await supabase.from('product_variants').update({ active: false }).eq('id', existingId)
@@ -710,96 +750,57 @@ serve(async (req: Request) => {
           }
 
           // Update existing variants
-          for (const variant of updateVariants) {
+          for (const v of updateVariants) {
+            const oldQty = (existingMap.get(v.id!) as { quantity: number })?.quantity || 0
+            const newQty = v.quantity || 0
+
             await supabase
               .from('product_variants')
-              .update({
-                name: variant.name,
-                quantity: variant.quantity,
-                min_stock: variant.min_stock,
-                updated_at: new Date().toISOString(),
+              .update({ name: v.name, min_stock: v.min_stock, updated_at: new Date().toISOString() })
+              .eq('id', v.id)
+
+            // Use RPC for quantity changes to ensure WAC and inventory_costs are updated
+            if (newQty !== oldQty) {
+              const { error: rpcError } = await supabase.rpc('adjust_stock_with_variant', {
+                p_store_id: store_id,
+                p_user_id: user.id,
+                p_product_id: id,
+                p_variant_id: v.id,
+                p_new_quantity: newQty,
+                p_note: `Điều chỉnh từ ${oldQty} thành ${newQty}`,
               })
-              .eq('id', variant.id)
 
-            // Handle variant unit prices for existing variants
-            if (updates.has_units) {
-              // Get base unit id
-              const { data: baseUnitData } = await supabase
-                .from('product_units')
-                .select('id')
-                .eq('product_id', id)
-                .eq('is_base_unit', true)
-                .eq('active', true)
-                .single()
-              
-              const baseUnitId = baseUnitData?.id
-              
-              // Upsert base unit entry
-              if (baseUnitId) {
-                const { data: existingBaseVU } = await supabase
-                  .from('variant_units')
-                  .select('id')
-                  .eq('variant_id', variant.id)
-                  .eq('unit_id', baseUnitId)
-                  .single()
-                
-                if (existingBaseVU) {
-                  await supabase
-                    .from('variant_units')
-                    .update({
-                      sell_price: variant.sell_price,
-                      cost_price: variant.cost_price,
-                      barcode: variant.barcode,
-                      sku: variant.sku,
-                    })
-                    .eq('id', existingBaseVU.id)
-                } else {
-                  await supabase
-                    .from('variant_units')
-                    .insert({
-                      variant_id: variant.id,
-                      unit_id: baseUnitId,
-                      sell_price: variant.sell_price,
-                      cost_price: variant.cost_price,
-                      barcode: variant.barcode,
-                      sku: variant.sku,
-                    })
-                }
+              if (rpcError) {
+                console.error('RPC adjust_stock_with_variant error:', rpcError)
               }
-              
-              // Handle additional unit prices
-              if (variant.unit_prices && variant.unit_prices.length > 0) {
-                for (const up of variant.unit_prices) {
-                  // Upsert: try update first, then insert if not exists
-                  const { data: existingVU } = await supabase
-                    .from('variant_units')
-                    .select('id')
-                    .eq('variant_id', variant.id)
-                    .eq('unit_id', up.unit_id)
-                    .single()
+            }
 
-                  if (existingVU) {
-                    await supabase
-                      .from('variant_units')
-                      .update({
-                        sell_price: up.sell_price,
-                        cost_price: up.cost_price,
-                        barcode: up.barcode,
-                        sku: up.sku,
-                      })
-                      .eq('id', existingVU.id)
-                  } else {
-                    await supabase
-                      .from('variant_units')
-                      .insert({
-                        variant_id: variant.id,
-                        unit_id: up.unit_id,
-                        sell_price: up.sell_price,
-                        cost_price: up.cost_price,
-                        barcode: up.barcode,
-                        sku: up.sku,
-                      })
-                  }
+            // Upsert variant_units for base unit
+            if (baseUnitId) {
+              await supabase
+                .from('variant_units')
+                .upsert({
+                  variant_id: v.id,
+                  unit_id: baseUnitId,
+                  sell_price: v.sell_price,
+                  cost_price: v.cost_price,
+                  barcode: v.barcode,
+                  sku: v.sku,
+                }, { onConflict: 'variant_id,unit_id' })
+
+              // Additional units (only if has_units)
+              if (updates.has_units && v.unit_prices) {
+                for (const up of v.unit_prices) {
+                  await supabase
+                    .from('variant_units')
+                    .upsert({
+                      variant_id: v.id,
+                      unit_id: up.unit_id,
+                      sell_price: up.sell_price,
+                      cost_price: up.cost_price,
+                      barcode: up.barcode,
+                      sku: up.sku,
+                    }, { onConflict: 'variant_id,unit_id' })
                 }
               }
             }
@@ -809,54 +810,56 @@ serve(async (req: Request) => {
           for (const v of newVariants) {
             const { data: variantData, error: variantError } = await supabase
               .from('product_variants')
-              .insert({
-                product_id: id,
-                name: v.name,
-                quantity: v.quantity,
-                min_stock: v.min_stock,
-              })
+              .insert({ product_id: id, name: v.name, quantity: 0, min_stock: v.min_stock })
               .select()
               .single()
 
-            if (!variantError && v.attribute_values && v.attribute_values.length > 0) {
-              const attrsToInsert = v.attribute_values.map((av) => ({
-                variant_id: variantData.id,
-                attribute_id: av.attribute_id,
-                attribute_value_id: av.value_id,
-              }))
+            if (variantError) continue
 
-              await supabase.from('product_variant_attributes').insert(attrsToInsert)
+            // Use RPC for initial inventory to ensure inventory_costs is initialized
+            if (v.quantity > 0) {
+              const costPrice = v.cost_price ?? data.cost_price ?? 0
+              const { error: rpcError } = await supabase.rpc('import_stock_with_variant', {
+                p_store_id: store_id,
+                p_user_id: user.id,
+                p_product_id: id,
+                p_variant_id: variantData.id,
+                p_quantity: v.quantity,
+                p_unit_cost: costPrice,
+                p_note: 'Tồn kho ban đầu',
+                p_record_expense: false,
+              })
+
+              if (rpcError) {
+                console.error('RPC import_stock_with_variant error:', rpcError)
+              }
             }
 
-            // Handle variant unit prices for new variants
-            if (!variantError && updates.has_units) {
-              const variantUnitPrices: { variant_id: string; unit_id: string; sell_price?: number; cost_price?: number; barcode?: string; sku?: string }[] = []
-              
-              // Get base unit id
-              const { data: baseUnitData } = await supabase
-                .from('product_units')
-                .select('id')
-                .eq('product_id', id)
-                .eq('is_base_unit', true)
-                .eq('active', true)
-                .single()
-              
-              // Always create base unit entry for variant
-              if (baseUnitData) {
-                variantUnitPrices.push({
+            // Create attributes
+            if (v.attribute_values?.length) {
+              await supabase.from('product_variant_attributes').insert(
+                v.attribute_values.map((av) => ({
                   variant_id: variantData.id,
-                  unit_id: baseUnitData.id,
-                  sell_price: v.sell_price,
-                  cost_price: v.cost_price,
-                  barcode: v.barcode,
-                  sku: v.sku,
-                })
-              }
-              
-              // Add custom unit prices from form
-              if (v.unit_prices && v.unit_prices.length > 0) {
+                  attribute_id: av.attribute_id,
+                  attribute_value_id: av.value_id,
+                }))
+              )
+            }
+
+            // Create variant_units
+            if (baseUnitId) {
+              const variantUnits = [{
+                variant_id: variantData.id,
+                unit_id: baseUnitId,
+                sell_price: v.sell_price,
+                cost_price: v.cost_price,
+                barcode: v.barcode,
+                sku: v.sku,
+              }]
+
+              if (updates.has_units && v.unit_prices) {
                 v.unit_prices.forEach((up) => {
-                  variantUnitPrices.push({
+                  variantUnits.push({
                     variant_id: variantData.id,
                     unit_id: up.unit_id,
                     sell_price: up.sell_price,
@@ -866,16 +869,8 @@ serve(async (req: Request) => {
                   })
                 })
               }
-              
-              if (variantUnitPrices.length > 0) {
-                const { error: vuError } = await supabase
-                  .from('variant_units')
-                  .insert(variantUnitPrices)
 
-                if (vuError) {
-                  console.error('Failed to create variant unit prices:', vuError)
-                }
-              }
+              await supabase.from('variant_units').insert(variantUnits)
             }
           }
         }

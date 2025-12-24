@@ -6,7 +6,7 @@ import { Modal, Button, Typography, Alert, Spin, Space } from 'antd'
 import { CameraOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 interface BarcodeScannerProps {
   open: boolean
@@ -35,6 +35,15 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const isStartingRef = useRef(false)
+  // Use refs to avoid circular dependencies in useCallback
+  const onScanRef = useRef(onScan)
+  const onCloseRef = useRef(onClose)
+
+  // Keep refs up to date
+  useEffect(() => {
+    onScanRef.current = onScan
+    onCloseRef.current = onClose
+  }, [onScan, onClose])
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -55,8 +64,8 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     setLastScanned(null)
     setError(null)
     setLoading(true)
-    onClose()
-  }, [onClose, stopScanner])
+    onCloseRef.current()
+  }, [stopScanner])
 
   const startScanner = useCallback(async () => {
     if (isStartingRef.current || !containerRef.current) return
@@ -65,25 +74,46 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     setLoading(true)
     setError(null)
 
+    // Helper to get error messages (capture t at call time)
+    const getErrorMessage = (key: string) => {
+      const messages: Record<string, string> = {
+        noCameraFound: 'Không tìm thấy camera',
+        cameraStartError: 'Không thể khởi động camera',
+        cameraPermissionError: 'Vui lòng cho phép truy cập camera',
+        cameraInUseError: 'Camera đang được sử dụng bởi ứng dụng khác',
+        httpsRequiredError: 'Cần kết nối HTTPS để sử dụng camera',
+      }
+      return messages[key] || key
+    }
+
     try {
       // Stop any existing scanner
       await stopScanner()
 
-      // Check camera permission
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      // Check camera permission with higher resolution for better scanning
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        } 
+      })
       stream.getTracks().forEach(track => track.stop())
 
-      // Create scanner instance
+      // Create scanner instance with enhanced settings
       const scanner = new Html5Qrcode('barcode-scanner-container', {
         formatsToSupport: SUPPORTED_FORMATS,
         verbose: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true, // Use native BarcodeDetector API if available (faster)
+        },
       })
       scannerRef.current = scanner
 
       // Get available cameras
       const cameras = await Html5Qrcode.getCameras()
       if (cameras.length === 0) {
-        throw new Error(t('noCameraFound'))
+        throw new Error(getErrorMessage('noCameraFound'))
       }
 
       // Prefer back camera
@@ -94,25 +124,45 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
       )
       const cameraId = backCamera?.id || cameras[0].id
 
-      // Start scanning
+      // Get container dimensions for responsive qrbox
+      const containerWidth = containerRef.current?.clientWidth || 350
+      const qrboxWidth = Math.min(300, containerWidth - 40)
+      const qrboxHeight = Math.round(qrboxWidth * 0.5) // Wider aspect ratio for barcodes
+
+      // Start scanning with enhanced sensitivity settings
       await scanner.start(
         cameraId,
         {
-          fps: 10,
-          qrbox: { width: 250, height: 150 },
+          fps: 15, // Increased from 10 for faster detection
+          qrbox: { width: qrboxWidth, height: qrboxHeight },
           aspectRatio: 1.777778,
+          disableFlip: false, // Allow scanning flipped barcodes
         },
-        (decodedText) => {
+        async (decodedText) => {
           // Haptic feedback on successful scan
           if (navigator.vibrate) {
             navigator.vibrate(200)
           }
 
           setLastScanned(decodedText)
-          onScan(decodedText)
+          onScanRef.current(decodedText)
 
-          // Auto close after successful scan
-          handleClose()
+          // Stop and close after successful scan
+          if (scannerRef.current) {
+            try {
+              const state = scannerRef.current.getState()
+              if (state === 2) {
+                await scannerRef.current.stop()
+              }
+            } catch (e) {
+              console.error('Error stopping scanner after scan:', e)
+            }
+            scannerRef.current = null
+          }
+          setLastScanned(null)
+          setError(null)
+          setLoading(true)
+          onCloseRef.current()
         },
         () => {
           // Ignore scan failures (continuous scanning)
@@ -123,17 +173,17 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     } catch (err) {
       console.error('Scanner error:', err)
 
-      let errorMessage = t('cameraStartError')
+      let errorMessage = getErrorMessage('cameraStartError')
 
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
-          errorMessage = t('cameraPermissionError')
-        } else if (err.name === 'NotFoundError' || err.message.includes(t('noCameraFound'))) {
-          errorMessage = t('noCameraFound')
+          errorMessage = getErrorMessage('cameraPermissionError')
+        } else if (err.name === 'NotFoundError' || err.message.includes('camera')) {
+          errorMessage = getErrorMessage('noCameraFound')
         } else if (err.name === 'NotReadableError') {
-          errorMessage = t('cameraInUseError')
+          errorMessage = getErrorMessage('cameraInUseError')
         } else if (err.message.includes('secure context') || err.message.includes('HTTPS')) {
-          errorMessage = t('httpsRequiredError')
+          errorMessage = getErrorMessage('httpsRequiredError')
         }
       }
 
@@ -142,7 +192,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     } finally {
       isStartingRef.current = false
     }
-  }, [onScan, stopScanner, handleClose])
+  }, [stopScanner])
 
   const handleRetry = useCallback(() => {
     setError(null)

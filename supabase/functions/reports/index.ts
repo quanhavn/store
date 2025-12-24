@@ -693,37 +693,92 @@ serve(async (req: Request) => {
       case 'inventory_book': {
         const { date_from, date_to } = body
 
+        // Use RPC for efficient opening stock calculation (uses snapshots when available)
+        const { data: openingStockData, error: openingError } = await supabase.rpc('get_opening_stock', {
+          p_store_id: store_id,
+          p_date: date_from,
+        })
+
+        // Build opening stock map from RPC result
+        const openingStockMap = new Map<string, number>()
+        if (!openingError && openingStockData) {
+          for (const row of openingStockData) {
+            const key = `${row.product_id}:${row.variant_id || 'null'}`
+            openingStockMap.set(key, row.opening_quantity)
+          }
+        }
+
         const { data: logs } = await supabase
           .from('inventory_logs')
-          .select('*, products(name, sku, stock_quantity)')
+          .select('*, products(name, sku, stock_quantity), product_variants(name, sku)')
           .eq('store_id', store_id)
           .gte('created_at', date_from)
           .lte('created_at', date_to + 'T23:59:59')
           .order('created_at')
 
+        // Track running balance per product/variant
+        const runningBalanceMap = new Map<string, number>()
+
         const entries = (logs || []).map((log, index) => {
           const isIn = ['import', 'return'].includes(log.type)
+          const qty = Math.abs(log.quantity)
+          const key = `${log.product_id}:${log.variant_id || 'null'}`
+
+          // Get or initialize running balance from opening stock
+          if (!runningBalanceMap.has(key)) {
+            runningBalanceMap.set(key, openingStockMap.get(key) || 0)
+          }
+
+          const before_quantity = runningBalanceMap.get(key)!
+          const after_quantity = before_quantity + (isIn ? qty : -qty)
+          runningBalanceMap.set(key, after_quantity)
+
+          const product = log.products as { name: string; sku: string } | null
+          const variant = log.product_variants as { name: string; sku: string } | null
+          
+          // Build product/variant name
+          const productName = variant 
+            ? `${product?.name || 'Unknown'} - ${variant.name}`
+            : product?.name || 'Unknown'
+          const sku = variant?.sku || product?.sku || ''
+
           return {
             stt: index + 1,
             date: log.created_at.split('T')[0],
-            product_name: (log.products as { name: string })?.name,
-            sku: (log.products as { sku: string })?.sku,
+            product_name: productName,
+            sku: sku,
+            variant_id: log.variant_id || null,
             movement_type: isIn ? 'in' : 'out',
-            quantity: log.quantity,
-            before_quantity: 0,
-            after_quantity: (log.products as { stock_quantity: number })?.stock_quantity || 0,
+            quantity: qty,
+            before_quantity,
+            after_quantity,
             reason: log.note,
             reference_id: log.reference_id,
           }
         })
 
+        // Calculate total opening and closing balance across all products/variants
+        // Include items with opening stock but no movement in period
+        const allKeys = new Set([
+          ...openingStockMap.keys(),
+          ...runningBalanceMap.keys(),
+        ])
+
+        const totalOpeningBalance = Array.from(openingStockMap.values()).reduce((sum, qty) => sum + qty, 0)
+        const totalClosingBalance = Array.from(allKeys).reduce((sum, key) => {
+          // If has movement in period, use running balance; otherwise, use opening stock
+          return sum + (runningBalanceMap.get(key) ?? openingStockMap.get(key) ?? 0)
+        }, 0)
+
         return successResponse({
           period: { from: date_from, to: date_to },
+          opening_balance: totalOpeningBalance,
           entries,
           summary: {
             total_in: entries.filter(e => e.movement_type === 'in').reduce((sum, e) => sum + e.quantity, 0),
             total_out: entries.filter(e => e.movement_type === 'out').reduce((sum, e) => sum + e.quantity, 0),
             total_movements: entries.length,
+            closing_balance: totalClosingBalance,
           },
         })
       }
@@ -731,50 +786,87 @@ serve(async (req: Request) => {
       case 'inventory_detail_book': {
         const { date_from, date_to } = body
 
-        // Get all inventory logs in the period
-        const { data: logs } = await supabase
+        // Format dates with timezone for proper comparison (use start of day and end of day in UTC)
+        const dateFromISO = `${date_from}T00:00:00Z`
+        const dateToISO = `${date_to}T23:59:59.999Z`
+
+        // Get all inventory logs in the period with variant info
+        // Note: product_variants no longer has sku/cost_price (moved to variant_units)
+        // Use unit_cost from inventory_log itself, or product.cost_price as fallback
+        const { data: logs, error: logsError } = await supabase
           .from('inventory_logs')
-          .select('*, products(id, name, sku, unit, cost_price)')
+          .select('*, products(id, name, sku, unit, cost_price), product_variants(id, name)')
           .eq('store_id', store_id)
-          .gte('created_at', date_from)
-          .lte('created_at', date_to + 'T23:59:59')
+          .gte('created_at', dateFromISO)
+          .lte('created_at', dateToISO)
           .order('created_at')
 
-        // Get opening stock for each product by summing all logs before date_from
-        const { data: openingLogs } = await supabase
-          .from('inventory_logs')
-          .select('product_id, type, quantity')
-          .eq('store_id', store_id)
-          .lt('created_at', date_from)
+        if (logsError) {
+          console.error('Error fetching logs:', logsError)
+        }
 
-        // Calculate opening stock per product
-        const openingStockMap = new Map<string, number>()
+        // Get opening stock for each product/variant by summing all logs before date_from
+        const { data: openingLogs, error: openingError } = await supabase
+          .from('inventory_logs')
+          .select('product_id, variant_id, type, quantity, unit_cost, total_value, products(id, name, sku, unit, cost_price), product_variants(id, name)')
+          .eq('store_id', store_id)
+          .lt('created_at', dateFromISO)
+
+        if (openingError) {
+          console.error('Error fetching opening logs:', openingError)
+        }
+
+        // Calculate opening stock per product/variant (key = product_id:variant_id or product_id:null)
+        // Also store product info for items that have opening stock but no movements in period
+        const openingStockMap = new Map<string, { qty: number; amount: number; productInfo?: { id: string; name: string; sku: string; unit: string; cost_price: number }; variantInfo?: { id: string; name: string } | null }>()
         for (const log of openingLogs || []) {
-          const current = openingStockMap.get(log.product_id) || 0
+          const key = `${log.product_id}:${log.variant_id || 'null'}`
+          const current = openingStockMap.get(key) || { qty: 0, amount: 0 }
           const isIn = ['import', 'return'].includes(log.type)
           const qty = Math.abs(log.quantity)
-          openingStockMap.set(log.product_id, current + (isIn ? qty : -qty))
-        }
-
-        // Group logs by product
-        const productLogsMap = new Map<string, typeof logs>()
-        for (const log of logs || []) {
-          const productId = log.product_id
-          if (!productLogsMap.has(productId)) {
-            productLogsMap.set(productId, [])
+          const amount = log.total_value != null ? log.total_value : qty * (log.unit_cost || 0)
+          
+          if (isIn) {
+            current.qty += qty
+            current.amount += amount
+          } else {
+            current.qty -= qty
+            current.amount -= amount
           }
-          productLogsMap.get(productId)!.push(log)
+          
+          // Store product/variant info from opening logs (will be used if no movements in period)
+          if (!current.productInfo && log.products) {
+            current.productInfo = log.products as { id: string; name: string; sku: string; unit: string; cost_price: number }
+            current.variantInfo = log.product_variants as { id: string; name: string; sku: string; cost_price: number } | null
+          }
+          openingStockMap.set(key, current)
         }
 
-        // Build per-product report
+        // Group logs by product/variant
+        const itemLogsMap = new Map<string, typeof logs>()
+        for (const log of logs || []) {
+          const key = `${log.product_id}:${log.variant_id || 'null'}`
+          if (!itemLogsMap.has(key)) {
+            itemLogsMap.set(key, [])
+          }
+          itemLogsMap.get(key)!.push(log)
+        }
+
+        // Build per-product/variant report
         const productReports = []
 
-        for (const [productId, productLogs] of productLogsMap) {
-          const firstLog = productLogs[0]
+        // First, process products with movements in period
+        for (const [key, itemLogs] of itemLogsMap) {
+          const firstLog = itemLogs[0]
           const product = firstLog.products as { id: string; name: string; sku: string; unit: string; cost_price: number }
+          const variant = firstLog.product_variants as { id: string; name: string } | null
+          
+          // Use product cost_price (variant cost_price is now in variant_units, use unit_cost from log)
           const costPrice = product?.cost_price || 0
-          const openingQty = openingStockMap.get(productId) || 0
-          const openingAmount = openingQty * costPrice
+          const opening = openingStockMap.get(key) || { qty: 0, amount: 0 }
+          const openingQty = opening.qty
+          // Recalculate opening amount using current average cost if amount is 0 but qty > 0
+          const openingAmount = opening.amount !== 0 ? opening.amount : openingQty * costPrice
 
           let runningQty = openingQty
           let runningAmount = openingAmount
@@ -795,27 +887,29 @@ serve(async (req: Request) => {
             inUnitPrice: null,
             inAmount: null,
             outQty: null,
-            outUnitPrice: null,
             outAmount: null,
             balanceQty: openingQty,
             balanceAmount: openingAmount,
           })
 
           // Process each log
-          for (const log of productLogs) {
+          for (const log of itemLogs) {
             const isIn = ['import', 'return'].includes(log.type)
             const qty = Math.abs(log.quantity)
             const unitPrice = log.unit_cost || costPrice
-            // Use total_value from log if available (avoids rounding issues with unit conversions)
-            // Otherwise calculate from qty * unitPrice
-            const amount = log.total_value != null ? log.total_value : qty * unitPrice
-
+            
+            let amount: number
             if (isIn) {
+              // For IN: use total_value from log if available, otherwise qty * unitPrice
+              amount = log.total_value != null ? log.total_value : qty * unitPrice
               runningQty += qty
               runningAmount += amount
               totalInQty += qty
               totalInAmount += amount
             } else {
+              // For OUT: calculate amount using current average cost (runningAmount / runningQty before deduction)
+              const avgCost = runningQty > 0 ? Math.round(runningAmount / runningQty) : costPrice
+              amount = qty * avgCost
               runningQty -= qty
               runningAmount -= amount
               totalOutQty += qty
@@ -839,17 +933,23 @@ serve(async (req: Request) => {
               inUnitPrice: isIn ? unitPrice : null,
               inAmount: isIn ? amount : null,
               outQty: !isIn ? qty : null,
-              outUnitPrice: !isIn ? unitPrice : null,
               outAmount: !isIn ? amount : null,
               balanceQty: runningQty,
               balanceAmount: runningAmount,
             })
           }
 
+          // Build product/variant name (SKU is now in variant_units, not product_variants)
+          const itemName = variant 
+            ? `${product?.name || 'Unknown'} - ${variant.name}`
+            : product?.name || 'Unknown'
+          const itemSku = product?.sku || ''
+
           productReports.push({
-            productId: productId,
-            productName: product?.name || 'Unknown',
-            sku: product?.sku || '',
+            productId: firstLog.product_id,
+            variantId: firstLog.variant_id || null,
+            productName: itemName,
+            sku: itemSku,
             unit: product?.unit || 'cái',
             entries,
             totals: {
@@ -859,6 +959,62 @@ serve(async (req: Request) => {
               totalOutAmount,
               closingQty: runningQty,
               closingAmount: runningAmount,
+            },
+          })
+        }
+
+        // Second, add products with opening stock but no movements in period
+        for (const [key, opening] of openingStockMap) {
+          // Skip if already processed (has movements in period)
+          if (itemLogsMap.has(key)) continue
+          
+          // Skip if no stock and no product info
+          if (opening.qty === 0 && opening.amount === 0) continue
+          
+          const product = opening.productInfo
+          const variant = opening.variantInfo
+          
+          if (!product) continue // Skip if no product info available
+          
+          const costPrice = product.cost_price || 0
+          const openingAmount = opening.amount !== 0 ? opening.amount : opening.qty * costPrice
+          
+          // Parse the key to extract productId and variantId
+          const [productId, variantIdStr] = key.split(':')
+          const variantId = variantIdStr === 'null' ? null : variantIdStr
+
+          // Build product/variant name
+          const itemName = variant 
+            ? `${product.name || 'Unknown'} - ${variant.name}`
+            : product.name || 'Unknown'
+          const itemSku = product.sku || ''
+
+          productReports.push({
+            productId,
+            variantId,
+            productName: itemName,
+            sku: itemSku,
+            unit: product.unit || 'cái',
+            entries: [{
+              stt: 1,
+              documentNo: '',
+              documentDate: date_from,
+              description: 'Tồn đầu kỳ',
+              inQty: null,
+              inUnitPrice: null,
+              inAmount: null,
+              outQty: null,
+              outAmount: null,
+              balanceQty: opening.qty,
+              balanceAmount: openingAmount,
+            }],
+            totals: {
+              totalInQty: 0,
+              totalInAmount: 0,
+              totalOutQty: 0,
+              totalOutAmount: 0,
+              closingQty: opening.qty,
+              closingAmount: openingAmount,
             },
           })
         }

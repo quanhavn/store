@@ -924,11 +924,13 @@ export interface ExpenseBookReport {
 
 export interface InventoryBookReport {
   period: { from: string; to: string }
+  opening_balance: number
   entries: Array<{
     stt: number
     date: string
     product_name: string
     sku: string
+    variant_id: string | null
     movement_type: string
     quantity: number
     before_quantity: number
@@ -940,6 +942,7 @@ export interface InventoryBookReport {
     total_in: number
     total_out: number
     total_movements: number
+    closing_balance: number
   }
 }
 
@@ -952,7 +955,6 @@ export interface InventoryDetailEntry {
   inUnitPrice: number | null
   inAmount: number | null
   outQty: number | null
-  outUnitPrice: number | null
   outAmount: number | null
   balanceQty: number
   balanceAmount: number
@@ -960,6 +962,7 @@ export interface InventoryDetailEntry {
 
 export interface InventoryDetailProduct {
   productId: string
+  variantId: string | null
   productName: string
   sku: string
   unit: string

@@ -18,7 +18,6 @@ export interface InventoryDetailEntry {
   inUnitPrice: number | null
   inAmount: number | null
   outQty: number | null
-  outUnitPrice: number | null
   outAmount: number | null
   balanceQty: number
   balanceAmount: number
@@ -26,6 +25,7 @@ export interface InventoryDetailEntry {
 
 export interface InventoryDetailProduct {
   productId: string
+  variantId?: string | null
   productName: string
   sku: string
   unit: string
@@ -61,7 +61,6 @@ const HEADERS_ROW1 = [
   '',
   'Xuất trong kỳ',
   '',
-  '',
   'Tồn',
   '',
 ]
@@ -75,7 +74,6 @@ const HEADERS_ROW2 = [
   'Đơn giá',
   'Thành tiền',
   'SL',
-  'Đơn giá',
   'Thành tiền',
   'SL',
   'Thành tiền',
@@ -132,7 +130,6 @@ export function exportInventoryDetailBookExcel(
         entry.inUnitPrice,
         entry.inAmount,
         entry.outQty,
-        entry.outUnitPrice,
         entry.outAmount,
         entry.balanceQty,
         entry.balanceAmount,
@@ -154,7 +151,6 @@ export function exportInventoryDetailBookExcel(
       '',
       '',
       '',
-      '',
     ])
     rows.push([
       '',
@@ -165,7 +161,6 @@ export function exportInventoryDetailBookExcel(
       '',
       '',
       product.totals.totalOutQty,
-      '',
       product.totals.totalOutAmount,
       '',
       '',
@@ -175,7 +170,6 @@ export function exportInventoryDetailBookExcel(
       '',
       '',
       'Tồn cuối kỳ',
-      '',
       '',
       '',
       '',
@@ -196,29 +190,28 @@ export function exportInventoryDetailBookExcel(
       { wch: 12 },  // Nhập Đơn giá
       { wch: 14 },  // Nhập Tiền
       { wch: 8 },   // Xuất SL
-      { wch: 12 },  // Xuất Đơn giá
       { wch: 14 },  // Xuất Tiền
       { wch: 8 },   // Tồn SL
       { wch: 14 },  // Tồn Tiền
     ]
 
     worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
-      { s: { r: 3, c: 0 }, e: { r: 3, c: 11 } },
-      { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } },
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 10 } },
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 10 } },
       { s: { r: 6, c: 0 }, e: { r: 7, c: 0 } },  // STT
       { s: { r: 6, c: 1 }, e: { r: 6, c: 2 } },  // Chứng từ
       { s: { r: 6, c: 3 }, e: { r: 7, c: 3 } },  // Diễn giải
       { s: { r: 6, c: 4 }, e: { r: 6, c: 6 } },  // Nhập trong kỳ
-      { s: { r: 6, c: 7 }, e: { r: 6, c: 9 } },  // Xuất trong kỳ
-      { s: { r: 6, c: 10 }, e: { r: 6, c: 11 } }, // Tồn
+      { s: { r: 6, c: 7 }, e: { r: 6, c: 8 } },  // Xuất trong kỳ (2 columns now)
+      { s: { r: 6, c: 9 }, e: { r: 6, c: 10 } }, // Tồn
     ]
 
     const sheetName = product.sku.substring(0, 31).replace(/[\\/*?[\]:]/g, '')
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName || `SP${productIndex + 1}`)
-  })
+    })
 
   const excelBuffer = XLSX.write(workbook, {
     bookType: 'xlsx',
@@ -309,7 +302,7 @@ export async function exportInventoryDetailBookPDF(
         { content: 'CHỨNG TỪ', colSpan: 2, styles: { halign: 'center' } },
         { content: 'DIỄN GIẢI', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
         { content: 'NHẬP', colSpan: 3, styles: { halign: 'center' } },
-        { content: 'XUẤT', colSpan: 3, styles: { halign: 'center' } },
+        { content: 'XUẤT', colSpan: 2, styles: { halign: 'center' } },
         { content: 'TỒN', colSpan: 2, styles: { halign: 'center' } },
       ],
       [
@@ -319,7 +312,6 @@ export async function exportInventoryDetailBookPDF(
         { content: 'ĐƠN GIÁ', styles: { halign: 'center' } },
         { content: 'THÀNH TIỀN', styles: { halign: 'center' } },
         { content: 'SỐ LƯỢNG', styles: { halign: 'center' } },
-        { content: 'ĐƠN GIÁ', styles: { halign: 'center' } },
         { content: 'THÀNH TIỀN', styles: { halign: 'center' } },
         { content: 'SỐ LƯỢNG', styles: { halign: 'center' } },
         { content: 'THÀNH TIỀN', styles: { halign: 'center' } },
@@ -335,7 +327,6 @@ export async function exportInventoryDetailBookPDF(
       { content: formatCurrency(entry.inUnitPrice), styles: { halign: 'right' } },
       { content: formatCurrency(entry.inAmount), styles: { halign: 'right' } },
       { content: entry.outQty ?? '', styles: { halign: 'right' } },
-      { content: formatCurrency(entry.outUnitPrice), styles: { halign: 'right' } },
       { content: formatCurrency(entry.outAmount), styles: { halign: 'right' } },
       { content: entry.balanceQty, styles: { halign: 'right' } },
       { content: formatCurrency(entry.balanceAmount), styles: { halign: 'right' } },
@@ -353,7 +344,6 @@ export async function exportInventoryDetailBookPDF(
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
-      { content: '', styles: {} },
     ])
 
     tableBody.push([
@@ -365,7 +355,6 @@ export async function exportInventoryDetailBookPDF(
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: product.totals.totalOutQty, styles: { fontStyle: 'bold', halign: 'right' } },
-      { content: '', styles: {} },
       { content: formatCurrency(product.totals.totalOutAmount), styles: { fontStyle: 'bold', halign: 'right' } },
       { content: '', styles: {} },
       { content: '', styles: {} },
@@ -376,7 +365,6 @@ export async function exportInventoryDetailBookPDF(
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: 'Số dư cuối kỳ', styles: { fontStyle: 'bold', halign: 'left' } },
-      { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
       { content: '', styles: {} },
@@ -407,17 +395,16 @@ export async function exportInventoryDetailBookPDF(
       },
       columnStyles: {
         0: { cellWidth: 8 },   // STT
-        1: { cellWidth: 20 },  // Số hiệu
-        2: { cellWidth: 20 },  // Ngày
-        3: { cellWidth: 40 },  // Diễn giải
-        4: { cellWidth: 14 },  // Nhập SỐ LƯỢNG
-        5: { cellWidth: 20 },  // Nhập Đơn giá
-        6: { cellWidth: 22 },  // Nhập Thành tiền
-        7: { cellWidth: 14 },  // Xuất SL
-        8: { cellWidth: 20 },  // Xuất Đơn giá
-        9: { cellWidth: 22 },  // Xuất Thành tiền
-        10: { cellWidth: 14 }, // Tồn SL
-        11: { cellWidth: 22 }, // Tồn Thành tiền
+        1: { cellWidth: 22 },  // Số hiệu
+        2: { cellWidth: 22 },  // Ngày
+        3: { cellWidth: 45 },  // Diễn giải
+        4: { cellWidth: 16 },  // Nhập SỐ LƯỢNG
+        5: { cellWidth: 22 },  // Nhập Đơn giá
+        6: { cellWidth: 24 },  // Nhập Thành tiền
+        7: { cellWidth: 16 },  // Xuất SL
+        8: { cellWidth: 24 },  // Xuất Thành tiền
+        9: { cellWidth: 16 },  // Tồn SL
+        10: { cellWidth: 24 }, // Tồn Thành tiền
       },
       margin: { left: marginLeft, right: marginRight },
       didDrawPage: () => {

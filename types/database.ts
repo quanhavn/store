@@ -1294,6 +1294,11 @@ export interface ProductVariant {
   updated_at: string
   attributes?: ProductVariantAttribute[]
   variant_units?: VariantUnit[]
+  // Optional fields populated by backend when joining with variant_units
+  sell_price?: number | null
+  cost_price?: number | null
+  sku?: string | null
+  barcode?: string | null
 }
 
 export interface VariantUnit {

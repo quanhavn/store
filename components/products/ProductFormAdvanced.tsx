@@ -203,8 +203,9 @@ export function ProductFormAdvanced({
     }
 
     // Without units, just show variants with base unit
+    // Use -base suffix so handleVariantUnitChange updates variant state directly
     return variants.map(variant => ({
-      key: variant.id || `temp-${Date.now()}`,
+      key: `${variant.id}-base`,
       variant_id: variant.id,
       variant_name: variant.name || 'Unnamed',
       unit_name: baseUnit,
@@ -267,7 +268,7 @@ export function ProductFormAdvanced({
         // Handle both 'attributes' and 'product_variant_attributes' field names
         const attrs = (v as unknown as { product_variant_attributes?: Array<{ attribute_id: string; attribute_value_id: string }> }).product_variant_attributes || v.attributes || []
         
-        // Get base unit prices from variant_units
+        // Get variant_units if available (only returned when has_units=true)
         const variantUnits = (v as unknown as { variant_units?: Array<{ 
           unit_id: string
           sell_price?: number | null
@@ -283,13 +284,14 @@ export function ProductFormAdvanced({
           return unitId === baseUnit?.id || vu.product_units?.is_base_unit
         })
         
+        // Fallback: use variant-level prices when variant_units not available (case 1-1: variants without multi-unit)
         return {
           id: v.id,
-          sku: baseUnitEntry?.sku ?? undefined,
-          barcode: baseUnitEntry?.barcode ?? undefined,
+          sku: baseUnitEntry?.sku ?? v.sku ?? undefined,
+          barcode: baseUnitEntry?.barcode ?? v.barcode ?? undefined,
           name: v.name || undefined,
-          cost_price: baseUnitEntry?.cost_price ?? undefined,
-          sell_price: baseUnitEntry?.sell_price ?? undefined,
+          cost_price: baseUnitEntry?.cost_price ?? v.cost_price ?? undefined,
+          sell_price: baseUnitEntry?.sell_price ?? v.sell_price ?? undefined,
           quantity: v.quantity,
           min_stock: v.min_stock || undefined,
           attribute_values: attrs.map(a => ({
@@ -634,6 +636,23 @@ export function ProductFormAdvanced({
           onChange={(e) => handleVariantUnitChange(record.key, 'barcode', e.target.value)}
         />
       ),
+    },
+    {
+      title: '',
+      key: 'actions',
+      width: 50,
+      render: (_: unknown, record: VariantUnitRow) => {
+        // Only show delete for base unit rows (one per variant)
+        if (!record.key.endsWith('-base')) return null
+        return (
+          <Popconfirm 
+            title={t('variants.deleteConfirm')} 
+            onConfirm={() => handleDeleteVariant(record.variant_id!)}
+          >
+            <Button size="small" type="text" icon={<DeleteOutlined />} danger />
+          </Popconfirm>
+        )
+      },
     },
   ]
 
