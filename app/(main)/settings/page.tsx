@@ -4,6 +4,7 @@ import { Button, Card, Typography, App, Tabs } from 'antd'
 import { LogoutOutlined, ShopOutlined, UserOutlined, DollarOutlined, GlobalOutlined } from '@ant-design/icons'
 import { createClient } from '@/lib/supabase/client'
 import { clearCurrentStoreId } from '@/lib/stores/storeAwareStorage'
+import { STORAGE_KEYS } from '@/lib/constants'
 import { useRouter } from 'next/navigation'
 import { TaxSettingsForm, QuarterlyTaxSummary, TaxDeadlineWidget } from '@/components/tax'
 import { StoreInfoForm, LanguageSwitcher } from '@/components/settings'
@@ -22,7 +23,7 @@ export default function SettingsPage() {
     await supabase.auth.signOut()
     clearCurrentStoreId()
     // Clear onboarding draft to prevent data leak between accounts
-    localStorage.removeItem('onboarding_draft')
+    localStorage.removeItem(STORAGE_KEYS.ONBOARDING_DRAFT)
     message.success(tAuth('logout'))
     router.push('/login')
   }

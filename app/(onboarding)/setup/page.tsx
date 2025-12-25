@@ -9,30 +9,12 @@ import { TaxInfoStep } from '@/components/onboarding/TaxInfoStep'
 import { OnboardingSummary } from '@/components/onboarding/OnboardingSummary'
 import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from 'next-intl'
+import { STORAGE_KEYS, ONBOARDING_DEFAULTS, type OnboardingData, type OnboardingDraft } from '@/lib/constants'
 
 const { Title, Text } = Typography
 
-const ONBOARDING_DRAFT_KEY = 'onboarding_draft'
-
-export interface OnboardingData {
-  storeName: string
-  address: string
-  phone: string
-  email: string
-  taxCode: string
-  revenueTier: 'under_200m' | '200m_1b' | '1b_3b' | 'over_3b'
-  eInvoiceRequired: boolean
-}
-
-const initialData: OnboardingData = {
-  storeName: '',
-  address: '',
-  phone: '',
-  email: '',
-  taxCode: '',
-  revenueTier: 'under_200m',
-  eInvoiceRequired: false,
-}
+// Re-export for components that import from this file
+export type { OnboardingData } from '@/lib/constants'
 
 export default function SetupPage() {
   const router = useRouter()
@@ -40,7 +22,7 @@ export default function SetupPage() {
   const t = useTranslations('onboarding')
   const tCommon = useTranslations('common')
   const [current, setCurrent] = useState(0)
-  const [data, setData] = useState<OnboardingData>(initialData)
+  const [data, setData] = useState<OnboardingData>(ONBOARDING_DEFAULTS)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -54,7 +36,8 @@ export default function SetupPage() {
   // Save draft to localStorage
   const saveDraft = useCallback((newData: OnboardingData, step: number) => {
     try {
-      localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify({ data: newData, step }))
+      const draft: OnboardingDraft = { data: newData, step }
+      localStorage.setItem(STORAGE_KEYS.ONBOARDING_DRAFT, JSON.stringify(draft))
     } catch (error) {
       console.error('Failed to save draft:', error)
     }
@@ -63,7 +46,7 @@ export default function SetupPage() {
   // Clear draft from localStorage
   const clearDraft = useCallback(() => {
     try {
-      localStorage.removeItem(ONBOARDING_DRAFT_KEY)
+      localStorage.removeItem(STORAGE_KEYS.ONBOARDING_DRAFT)
     } catch (error) {
       console.error('Failed to clear draft:', error)
     }
@@ -76,13 +59,20 @@ export default function SetupPage() {
         const { data: { user } } = await supabase.auth.getUser()
         
         // Try to load draft from localStorage first
-        const savedDraft = localStorage.getItem(ONBOARDING_DRAFT_KEY)
+        const savedDraft = localStorage.getItem(STORAGE_KEYS.ONBOARDING_DRAFT)
         if (savedDraft) {
-          const { data: draftData, step } = JSON.parse(savedDraft)
-          setData(draftData)
-          setCurrent(step)
-        } else if (user?.user_metadata) {
-          // Fallback to user metadata
+          try {
+            const { data: draftData, step } = JSON.parse(savedDraft) as OnboardingDraft
+            setData(draftData)
+            setCurrent(step)
+          } catch {
+            // Corrupted draft data, clear it and continue
+            localStorage.removeItem(STORAGE_KEYS.ONBOARDING_DRAFT)
+          }
+        }
+        
+        // Fallback to user metadata if no valid draft
+        if (!savedDraft && user?.user_metadata) {
           const { phone } = user.user_metadata
           setData((prev) => ({
             ...prev,

@@ -5,6 +5,7 @@ import { Dropdown, Button, Tag, Spin, Modal, Form, Input, message } from 'antd'
 import { ShopOutlined, DownOutlined, CheckOutlined, PlusOutlined } from '@ant-design/icons'
 import { useTranslations } from 'next-intl'
 import { useCurrentStore } from '@/lib/hooks/useCurrentStore'
+import { STORAGE_KEYS, ONBOARDING_DEFAULTS, type OnboardingDraft } from '@/lib/constants'
 import type { MenuProps } from 'antd'
 
 export function StoreSwitcher() {
@@ -58,6 +59,17 @@ export function StoreSwitcher() {
   const handleCreateStore = async (values: { storeName: string; phone?: string }) => {
     setCreating(true)
     try {
+      // Save store info to localStorage for pre-fill in setup page
+      const draftData: OnboardingDraft = {
+        data: {
+          ...ONBOARDING_DEFAULTS,
+          storeName: values.storeName,
+          phone: values.phone || '',
+        },
+        step: 0,
+      }
+      localStorage.setItem(STORAGE_KEYS.ONBOARDING_DRAFT, JSON.stringify(draftData))
+      
       const result = await createStore(values.storeName, values.phone)
       if (!result.success) {
         message.error(result.error || t('createError'))
