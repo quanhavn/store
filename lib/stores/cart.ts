@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { createStoreAwareStorage } from './storeAwareStorage'
 
 export interface CartItem {
   product_id: string
@@ -160,6 +161,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'cart-storage',
+      storage: createStoreAwareStorage<CartStore>(),
     }
   )
 )

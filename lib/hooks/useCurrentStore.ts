@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/supabase/functions'
 import { createClient } from '@/lib/supabase/client'
+import { setCurrentStoreId } from '@/lib/stores/storeAwareStorage'
 import type { Database } from '@/types/database'
 
 type Store = Database['public']['Tables']['stores']['Row']
@@ -91,6 +92,7 @@ export function useCurrentStore(): UseCurrentStoreReturn {
   const switchStore = async (storeId: string) => {
     await api.store.switchStore(storeId)
     await queryClient.invalidateQueries({ queryKey: ['user-store'] })
+    setCurrentStoreId(storeId)
     window.location.reload()
   }
 
@@ -103,10 +105,18 @@ export function useCurrentStore(): UseCurrentStoreReturn {
       await queryClient.invalidateQueries({ queryKey: ['user-store'] })
       // Switch to the new store
       await api.store.switchStore(result.store_id)
+      setCurrentStoreId(result.store_id)
       window.location.reload()
     }
     return result
   }
+
+  // Sync current store ID to localStorage when data changes
+  useEffect(() => {
+    if (data?.store?.id) {
+      setCurrentStoreId(data.store.id)
+    }
+  }, [data?.store?.id])
 
   return {
     currentStore: data?.store ?? null,

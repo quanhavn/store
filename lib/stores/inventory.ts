@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { createStoreAwareStorage } from './storeAwareStorage'
 
 export type AdjustmentType = 'import' | 'export' | 'adjustment'
 
@@ -310,6 +311,7 @@ export const useInventoryStore = create<InventoryStore>()(
     }),
     {
       name: 'inventory-adjustment-storage',
+      storage: createStoreAwareStorage<InventoryStore>(),
     }
   )
 )

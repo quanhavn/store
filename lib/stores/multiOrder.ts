@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Customer } from '@/lib/supabase/functions'
+import { createStoreAwareStorage } from './storeAwareStorage'
 
 const generateId = () => Math.random().toString(36).substring(2, 10)
 
@@ -537,6 +538,7 @@ export const useMultiOrderStore = create<MultiOrderStore>()(
     }),
     {
       name: 'multi-order-storage',
+      storage: createStoreAwareStorage<MultiOrderStore>(),
     }
   )
 )
