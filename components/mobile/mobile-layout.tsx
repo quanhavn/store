@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons'
 import { useNavBadges } from '@/lib/hooks/useNavBadges'
 import { useTranslations } from 'next-intl'
+import { StoreSwitcher } from '@/components/store-switcher'
 
 type NavItemKey = 'home' | 'pos' | 'inventory' | 'finance' | 'menu'
 
@@ -56,6 +57,9 @@ export function MobileLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+      <header className="flex items-center justify-end px-3 py-2 bg-white border-b border-gray-200 safe-area-top">
+        <StoreSwitcher />
+      </header>
       <main className="flex-1 overflow-y-auto pb-16 touch-pan-y">
         {children}
       </main>

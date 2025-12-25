@@ -1400,3 +1400,31 @@ export interface StockCheckItem {
   variant?: ProductVariant
 }
 
+// Multi-store support types
+export interface UserStore {
+  id: string
+  user_id: string
+  store_id: string
+  role: 'owner' | 'manager' | 'staff'
+  is_default: boolean
+  created_at: string
+  store?: {
+    id: string
+    name: string
+    phone: string | null
+    address: string | null
+  }
+}
+
+export interface UserWithStores {
+  id: string
+  name: string | null
+  phone: string | null
+  role: string | null
+  active: boolean | null
+  store_id: string | null
+  created_at: string | null
+  current_store?: Tables<'stores'>
+  user_stores?: UserStore[]
+}
+

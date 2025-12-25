@@ -1,5 +1,5 @@
 import { createClient } from './client'
-import type { Database } from '@/types/database'
+import type { Database, UserStore, UserWithStores } from '@/types/database'
 
 type FunctionResponse<T> = {
   data: T | null
@@ -12,11 +12,40 @@ export async function callFunction<T>(
 ): Promise<T> {
   const supabase = createClient()
   
+  // Get current session
+  let { data: { session } } = await supabase.auth.getSession()
+  
+  if (!session) {
+    throw new Error('Not authenticated')
+  }
+  
+  // Check if token is about to expire (within 60 seconds) and refresh proactively
+  const expiresAt = session.expires_at
+  if (expiresAt && expiresAt * 1000 - Date.now() < 60000) {
+    const { data: { session: refreshedSession } } = await supabase.auth.refreshSession()
+    if (refreshedSession) {
+      session = refreshedSession
+    }
+  }
+  
   const { data, error } = await supabase.functions.invoke<T>(functionName, {
     body,
   })
 
   if (error) {
+    // If unauthorized, try to refresh session and retry once
+    if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+      const { data: { session: refreshedSession } } = await supabase.auth.refreshSession()
+      if (refreshedSession) {
+        const { data: retryData, error: retryError } = await supabase.functions.invoke<T>(functionName, {
+          body,
+        })
+        if (retryError) {
+          throw new Error(retryError.message || 'Function call failed')
+        }
+        return retryData as T
+      }
+    }
     throw new Error(error.message || 'Function call failed')
   }
 
@@ -55,6 +84,10 @@ export const api = {
     getUserStore: () => callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('get-user-store'),
     updateStore: (data: { name?: string; phone?: string; email?: string; address?: string; tax_code?: string }) =>
       callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('get-user-store', { action: 'update', ...data }),
+    getUserStores: () => callFunction<{ stores: UserStore[] }>('get-user-store', { action: 'list_stores' }),
+    switchStore: (store_id: string) => callFunction<{ success: boolean; user: UserWithStores }>('switch-store', { store_id }),
+    createStore: (store_name: string, phone?: string) => 
+      callFunction<{ success: boolean; store_id: string; store_name: string; error?: string }>('get-user-store', { action: 'create_store', store_name, phone }),
     updateEInvoiceConfig: (data: Record<string, unknown>) =>
       callFunction<{ store: Database['public']['Tables']['stores']['Row'] }>('store/einvoice-config', { action: 'update', ...data }),
     testViettelConnection: (config: Record<string, unknown>) =>

@@ -82,48 +82,30 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Check onboarding status for authenticated users (not on onboarding or auth pages)
-  if (user && !isAuthPage && !isOnboardingPage) {
+  // Check onboarding status using RPC (bypasses RLS)
+  if (user && !isAuthPage) {
     try {
-      // Check if user has completed onboarding
-      const { data: userData } = await supabase
-        .from('users')
-        .select('store_id, stores(onboarding_completed)')
-        .eq('id', user.id)
-        .single()
-
-      const storeData = userData?.stores as unknown as { onboarding_completed: boolean } | null
-      const needsOnboarding = !storeData || !storeData.onboarding_completed
-
-      if (needsOnboarding) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/setup'
-        return NextResponse.redirect(url)
-      }
-    } catch {
-      // If we can't check onboarding status, let the request through
-      // The page can handle showing appropriate error state
-    }
-  }
-
-  // Redirect users who have completed onboarding away from setup page
-  if (user && isOnboardingPage) {
-    try {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('store_id, stores(onboarding_completed)')
-        .eq('id', user.id)
-        .single()
-
-      const storeData = userData?.stores as unknown as { onboarding_completed: boolean } | null
+      const { data: status } = await supabase.rpc('check_onboarding_status')
       
-      if (storeData?.onboarding_completed) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
+      if (status) {
+        const needsOnboarding = status.needs_onboarding === true
+        
+        // User needs onboarding but not on setup page -> redirect to setup
+        if (needsOnboarding && !isOnboardingPage) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/setup'
+          return NextResponse.redirect(url)
+        }
+        
+        // User completed onboarding but on setup page -> redirect to dashboard
+        if (!needsOnboarding && isOnboardingPage) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/'
+          return NextResponse.redirect(url)
+        }
       }
     } catch {
-      // Let the request through if check fails
+      // If RPC fails, let the request through
     }
   }
 

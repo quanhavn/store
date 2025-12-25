@@ -47,6 +47,7 @@
     "description": "Mô tả",
     "type": "Loại",
     "category": "Danh mục",
+    "selectCategory": "Chọn danh mục",
     "quantity": "Số lượng",
     "unit": "Đơn vị",
     "price": "Giá",
@@ -1370,6 +1371,24 @@
     "using": "Có sử dụng",
     "notUsing": "Không sử dụng",
     "completeSetup": "Hoàn tất thiết lập"
+  },
+  "store": {
+    "noStore": "Chưa có cửa hàng",
+    "roleOwner": "Chủ",
+    "roleManager": "QL",
+    "roleStaff": "NV",
+    "switchStore": "Chuyển cửa hàng",
+    "createStore": "Tạo cửa hàng mới",
+    "create": "Tạo",
+    "cancel": "Hủy",
+    "storeName": "Tên cửa hàng",
+    "storeNamePlaceholder": "Nhập tên cửa hàng",
+    "storeNameRequired": "Vui lòng nhập tên cửa hàng",
+    "phone": "Số điện thoại",
+    "phonePlaceholder": "Nhập số điện thoại",
+    "createError": "Không thể tạo cửa hàng",
+    "maxStoresReached": "Tối đa {max} cửa hàng",
+    "storeLimit": "{current}/{max} cửa hàng"
   },
   "orders": {
     "orderDetail": "Chi tiết đơn hàng",

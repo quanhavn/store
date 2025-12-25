@@ -47,6 +47,7 @@
     "description": "Description",
     "type": "Type",
     "category": "Category",
+    "selectCategory": "Select category",
     "quantity": "Quantity",
     "unit": "Unit",
     "price": "Price",
@@ -1343,6 +1344,24 @@
     "using": "Using",
     "notUsing": "Not using",
     "completeSetup": "Complete Setup"
+  },
+  "store": {
+    "noStore": "No store",
+    "roleOwner": "Owner",
+    "roleManager": "Mgr",
+    "roleStaff": "Staff",
+    "switchStore": "Switch store",
+    "createStore": "Create new store",
+    "create": "Create",
+    "cancel": "Cancel",
+    "storeName": "Store name",
+    "storeNamePlaceholder": "Enter store name",
+    "storeNameRequired": "Please enter store name",
+    "phone": "Phone number",
+    "phonePlaceholder": "Enter phone number",
+    "createError": "Failed to create store",
+    "maxStoresReached": "Maximum {max} stores allowed",
+    "storeLimit": "{current}/{max} stores used"
   },
   "orders": {
     "orderDetail": "Order Details",

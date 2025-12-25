@@ -90,6 +90,20 @@ serve(async (req) => {
       throw error
     }
 
+    // Ensure store_membership exists (for multi-store support)
+    if (result?.store_id) {
+      await supabase
+        .from('store_memberships')
+        .upsert({
+          user_id: user.id,
+          store_id: result.store_id,
+          role: 'owner',
+          is_default: true,
+        }, {
+          onConflict: 'user_id,store_id',
+        })
+    }
+
     return successResponse(result)
   } catch (error) {
     console.error('Onboarding error:', error)
