@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Form, Input, Button, Card, Typography, App, Divider } from 'antd'
-import { ShopOutlined, PhoneOutlined, LockOutlined } from '@ant-design/icons'
+import { PhoneOutlined, LockOutlined, ShopOutlined } from '@ant-design/icons'
 import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from 'next-intl'
 
@@ -21,7 +21,6 @@ interface LoginFormData {
 }
 
 interface RegisterFormData {
-  storeName: string
   phone: string
   password: string
 }
@@ -61,13 +60,12 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
 
-      // Step 1: Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create auth user with phone only - store details collected during onboarding
+      const { error: authError } = await supabase.auth.signUp({
         email: phoneToEmail(values.phone),
         password: values.password,
         options: {
           data: {
-            store_name: values.storeName,
             phone: values.phone,
           },
         },
@@ -75,20 +73,9 @@ export default function LoginPage() {
 
       if (authError) throw authError
 
-      if (authData.user) {
-        // Step 2: Call the secure registration function to create store + user profile
-        // This function runs with SECURITY DEFINER to bypass RLS during registration
-        const { error: registerError } = await supabase
-          .rpc('register_store_and_user', {
-            p_store_name: values.storeName,
-            p_phone: values.phone,
-          } as never)
-
-        if (registerError) throw registerError
-      }
-
       message.success(t('registerSuccess'))
-      router.push('/')
+      // Redirect to onboarding setup instead of dashboard
+      router.push('/setup')
       router.refresh()
     } catch (error) {
       message.error(error instanceof Error ? error.message : t('registerError'))
@@ -129,33 +116,19 @@ export default function LoginPage() {
             onFinish={isRegister ? handleRegister : handleLogin}
             requiredMark={false}
           >
-            {isRegister && (
-              <Form.Item
-                name="storeName"
-                label={t('storeName')}
-                rules={[{ required: true, message: t('validation.storeNameRequired') }]}
-              >
-                <Input
-                  prefix={<ShopOutlined className="text-gray-400" />}
-                  placeholder={t('storeNamePlaceholder')}
-                  size="large"
-                />
-              </Form.Item>
-            )}
-
-            <Form.Item
+          <Form.Item
               name="phone"
               label={t('phone')}
               rules={[
                 { required: true, message: t('validation.phoneRequired') },
-                { pattern: /^[0-9]{10,11}$/, message: t('validation.phoneInvalid') },
+                { pattern: /^(03|05|07|08|09)[0-9]{8}$/, message: t('validation.phoneInvalid') },
               ]}
             >
               <Input
                 prefix={<PhoneOutlined className="text-gray-400" />}
                 placeholder={t('phonePlaceholder')}
                 size="large"
-                maxLength={11}
+                maxLength={10}
               />
             </Form.Item>
 

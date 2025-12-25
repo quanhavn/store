@@ -12,6 +12,11 @@ export function setCurrentStoreId(storeId: string): void {
   localStorage.setItem(CURRENT_STORE_KEY, storeId)
 }
 
+export function clearCurrentStoreId(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(CURRENT_STORE_KEY)
+}
+
 export function createStoreAwareStorage<T>(): PersistStorage<T> {
   return {
     getItem: (name: string): StorageValue<T> | null => {

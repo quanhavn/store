@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Form, Input, Button, Typography, Select, Switch, Space, Alert } from 'antd'
-import { FileTextOutlined, BankOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Typography, Select, Switch, Alert } from 'antd'
+import { FileTextOutlined } from '@ant-design/icons'
 import type { OnboardingData } from '@/app/(onboarding)/setup/page'
 
 const { Title, Text } = Typography
@@ -99,19 +99,21 @@ export function TaxInfoStep({ data, updateData, onNext, onPrev, onSkip }: TaxInf
         </Form.Item>
 
         <Form.Item className="!mb-0">
-          <Space className="w-full" direction="vertical">
-            <Button type="primary" htmlType="submit" block size="large">
-              {tCommon('continue')}
-            </Button>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button onClick={onPrev} size="large" className="flex-1">
+                {tCommon('back')}
+              </Button>
+              <Button type="primary" htmlType="submit" size="large" className="flex-[2]">
+                {tCommon('continue')}
+              </Button>
+            </div>
             {onSkip && (
-              <Button type="link" onClick={onSkip} block size="large">
+              <Button type="link" onClick={onSkip} block>
                 {tTax('skipForNow')}
               </Button>
             )}
-            <Button onClick={onPrev} block size="large">
-              {tCommon('back')}
-            </Button>
-          </Space>
+          </div>
         </Form.Item>
       </Form>
     </div>

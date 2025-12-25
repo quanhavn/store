@@ -1352,6 +1352,19 @@
     "formatTip3": "Bạn có thể điều chỉnh ghép cột ở bước tiếp theo"
   },
   "onboarding": {
+    "title": "Thiết lập cửa hàng",
+    "subtitle": "Hoàn tất thông tin để bắt đầu sử dụng",
+    "steps": {
+      "store": "Cửa hàng",
+      "tax": "Thuế",
+      "complete": "Hoàn tất"
+    },
+    "stepProgress": "Bước {current} / {total}",
+    "setupSuccess": "Thiết lập cửa hàng thành công!",
+    "setupError": "Không thể hoàn tất thiết lập",
+    "setupComplete": "Thiết lập hoàn tất!",
+    "setupCompleteSubtitle": "Cửa hàng của bạn đã sẵn sàng để sử dụng.",
+    "goToDashboard": "Vào trang quản lý",
     "revenueTiers": {
       "under200m": "Dưới 200 triệu/năm (Miễn thuế)",
       "200m1b": "200 triệu - 1 tỷ/năm",

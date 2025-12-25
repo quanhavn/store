@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Steps, Button, Card, Typography, App, Result, Spin } from 'antd'
 import { ShopOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons'
@@ -8,8 +8,11 @@ import { StoreInfoStep } from '@/components/onboarding/StoreInfoStep'
 import { TaxInfoStep } from '@/components/onboarding/TaxInfoStep'
 import { OnboardingSummary } from '@/components/onboarding/OnboardingSummary'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslations } from 'next-intl'
 
 const { Title, Text } = Typography
+
+const ONBOARDING_DRAFT_KEY = 'onboarding_draft'
 
 export interface OnboardingData {
   storeName: string
@@ -31,20 +34,40 @@ const initialData: OnboardingData = {
   eInvoiceRequired: false,
 }
 
-const steps = [
-  { title: 'Cửa hàng', icon: <ShopOutlined /> },
-  { title: 'Thuế', icon: <FileTextOutlined /> },
-  { title: 'Hoàn tất', icon: <CheckCircleOutlined /> },
-]
-
 export default function SetupPage() {
   const router = useRouter()
   const { message } = App.useApp()
+  const t = useTranslations('onboarding')
+  const tCommon = useTranslations('common')
   const [current, setCurrent] = useState(0)
   const [data, setData] = useState<OnboardingData>(initialData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+
+  const steps = [
+    { title: t('steps.store'), icon: <ShopOutlined /> },
+    { title: t('steps.tax'), icon: <FileTextOutlined /> },
+    { title: t('steps.complete'), icon: <CheckCircleOutlined /> },
+  ]
+
+  // Save draft to localStorage
+  const saveDraft = useCallback((newData: OnboardingData, step: number) => {
+    try {
+      localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify({ data: newData, step }))
+    } catch (error) {
+      console.error('Failed to save draft:', error)
+    }
+  }, [])
+
+  // Clear draft from localStorage
+  const clearDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(ONBOARDING_DRAFT_KEY)
+    } catch (error) {
+      console.error('Failed to clear draft:', error)
+    }
+  }, [])
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -52,11 +75,17 @@ export default function SetupPage() {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         
-        if (user?.user_metadata) {
-          const { store_name, phone } = user.user_metadata
+        // Try to load draft from localStorage first
+        const savedDraft = localStorage.getItem(ONBOARDING_DRAFT_KEY)
+        if (savedDraft) {
+          const { data: draftData, step } = JSON.parse(savedDraft)
+          setData(draftData)
+          setCurrent(step)
+        } else if (user?.user_metadata) {
+          // Fallback to user metadata
+          const { phone } = user.user_metadata
           setData((prev) => ({
             ...prev,
-            storeName: store_name || '',
             phone: phone || '',
           }))
         }
@@ -71,15 +100,27 @@ export default function SetupPage() {
   }, [])
 
   const updateData = (updates: Partial<OnboardingData>) => {
-    setData((prev) => ({ ...prev, ...updates }))
+    setData((prev) => {
+      const newData = { ...prev, ...updates }
+      saveDraft(newData, current)
+      return newData
+    })
   }
 
   const next = () => {
-    setCurrent((prev) => prev + 1)
+    setCurrent((prev) => {
+      const nextStep = prev + 1
+      saveDraft(data, nextStep)
+      return nextStep
+    })
   }
 
   const prev = () => {
-    setCurrent((prev) => prev - 1)
+    setCurrent((prev) => {
+      const prevStep = prev - 1
+      saveDraft(data, prevStep)
+      return prevStep
+    })
   }
 
   const handleSubmit = async () => {
@@ -100,13 +141,14 @@ export default function SetupPage() {
       })
 
       if (response.error) {
-        throw new Error(response.error.message || 'Không thể hoàn tất thiết lập')
+        throw new Error(response.error.message || t('setupError'))
       }
 
+      clearDraft()
       setIsComplete(true)
-      message.success('Thiết lập cửa hàng thành công!')
+      message.success(t('setupSuccess'))
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Có lỗi xảy ra')
+      message.error(error instanceof Error ? error.message : tCommon('errorOccurred'))
     } finally {
       setIsSubmitting(false)
     }
@@ -130,11 +172,11 @@ export default function SetupPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Result
           status="success"
-          title="Thiết lập hoàn tất!"
-          subTitle="Cửa hàng của bạn đã sẵn sàng để sử dụng."
+          title={t('setupComplete')}
+          subTitle={t('setupCompleteSubtitle')}
           extra={[
             <Button type="primary" size="large" key="dashboard" onClick={goToDashboard}>
-              Vào trang quản lý
+              {t('goToDashboard')}
             </Button>,
           ]}
         />
@@ -149,8 +191,8 @@ export default function SetupPage() {
           <div className="h-14 w-14 rounded-2xl bg-blue-500 flex items-center justify-center mx-auto mb-3">
             <ShopOutlined className="text-2xl text-white" />
           </div>
-          <Title level={4} className="!mb-1">Thiết lập cửa hàng</Title>
-          <Text type="secondary">Hoàn tất thông tin để bắt đầu sử dụng</Text>
+          <Title level={4} className="!mb-1">{t('title')}</Title>
+          <Text type="secondary">{t('subtitle')}</Text>
         </div>
 
         <Steps
@@ -178,7 +220,7 @@ export default function SetupPage() {
         </Card>
 
         <Text type="secondary" className="block text-center text-xs">
-          Bước {current + 1} / {steps.length}
+          {t('stepProgress', { current: current + 1, total: steps.length })}
         </Text>
       </div>
     </div>
